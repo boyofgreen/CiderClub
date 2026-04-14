@@ -1,0 +1,361 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ─── NextAuth Adapter Tables ──────────────────────────────────────────────────
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─── Users (OAuth accounts) ───────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  name          String?
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
+  role          String    @default("MEMBER") // ADMIN | MEMBER
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  accounts Account[]
+  sessions Session[]
+  member   Member?   @relation("UserMember")
+}
+
+// ─── Members ─────────────────────────────────────────────────────────────────
+
+model Member {
+  id        String  @id @default(cuid())
+  // Linked to OAuth User (optional — members can exist without an OAuth account)
+  userId    String? @unique
+  user      User?   @relation("UserMember", fields: [userId], references: [id], onDelete: SetNull)
+
+  // Contact info
+  email     String  @unique
+  firstName String
+  lastName  String
+  phone     String?
+  address1  String?
+  address2  String?
+  city      String?
+  state     String?
+  zip       String?
+
+  // Square
+  squareCustomerId String? @unique
+  squareCardId     String? // default card on file
+
+  // Club membership
+  planId              String
+  plan                Plan         @relation(fields: [planId], references: [id])
+  status              String       @default("ACTIVE") // ACTIVE | PAUSED | CANCELLED | WAITLIST
+  joinedAt            DateTime     @default(now())
+  pausedAt            DateTime?
+  pausedUntilQuarter  String?      // e.g. "2025-Q3" — auto-reactivate after this quarter
+  cancelledAt         DateTime?
+  cancellationReason  String?
+
+  // Referrals
+  referralCode       String  @unique @default(cuid())
+  referredByMemberId String?
+  referredBy         Member? @relation("Referrals", fields: [referredByMemberId], references: [id])
+  referrals          Member[] @relation("Referrals")
+
+  // Admin notes (CRM)
+  notes String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders             Order[]
+  emailLogs          EmailLog[]
+  memberTokens       MemberToken[]
+  waitlistEntries    WaitlistEntry[]
+  pickupAttendances  PickupAttendance[]
+}
+
+// ─── Magic Link / Member Access Tokens ───────────────────────────────────────
+
+model MemberToken {
+  id         String   @id @default(cuid())
+  memberId   String
+  member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
+  token      String   @unique
+  type       String   @default("GENERAL") // GENERAL | ORDER_ACCESS | PROFILE_UPDATE
+  resourceId String?  // e.g. orderId for ORDER_ACCESS tokens
+  expiresAt  DateTime
+  lastUsedAt DateTime?
+  createdAt  DateTime @default(now())
+}
+
+// ─── Plans ────────────────────────────────────────────────────────────────────
+
+model Plan {
+  id           String  @id @default(cuid())
+  name         String  @unique // "6-Pack Quarterly"
+  slug         String  @unique // "6-pack-quarterly"
+  description  String?
+  packsPerOrder Int              // units included per quarterly order
+  priceInCents  Int              // charged per quarter (in cents)
+  isActive      Boolean @default(true)
+  maxCapacity   Int?             // null = unlimited
+  sortOrder     Int     @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  members         Member[]
+  waitlistEntries WaitlistEntry[]
+}
+
+// ─── Products ─────────────────────────────────────────────────────────────────
+
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique
+  description String?
+  style       String?  // dry | semi-sweet | hopped | botanical | seasonal
+  abv         Float?
+  imageUrl    String?
+  isActive    Boolean  @default(true)
+  squareItemId String? // Square catalog item ID (optional sync)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  quarterProducts QuarterProduct[]
+  orderItems      OrderItem[]
+}
+
+// ─── Quarters ─────────────────────────────────────────────────────────────────
+
+model Quarter {
+  id     String @id @default(cuid())
+  label  String @unique // "2025-Q2"
+  year   Int
+  quarter Int               // 1-4
+  name  String?             // optional friendly name e.g. "Summer 2025"
+
+  // Key dates
+  startsAt       DateTime   // when customization opens
+  endsAt         DateTime   // customization deadline
+  pickupStartsAt DateTime?
+  pickupEndsAt   DateTime?  // auto-billing date if not picked up
+
+  status String @default("UPCOMING")
+  // UPCOMING | OPEN | LOCKED | BILLING | COMPLETED | ARCHIVED
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  products     QuarterProduct[]
+  orders       Order[]
+  pickupEvents PickupEvent[]
+}
+
+model QuarterProduct {
+  id        String  @id @default(cuid())
+  quarterId String
+  quarter   Quarter @relation(fields: [quarterId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  isDefault Boolean @default(false) // auto-added to orders if no customization
+  sortOrder Int     @default(0)
+
+  @@unique([quarterId, productId])
+}
+
+// ─── Orders ───────────────────────────────────────────────────────────────────
+
+model Order {
+  id       String @id @default(cuid())
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id])
+  quarterId String
+  quarter  Quarter @relation(fields: [quarterId], references: [id])
+
+  // Order status lifecycle:
+  // PENDING_CUSTOMIZATION → CUSTOMIZED → LOCKED → AWAITING_PICKUP
+  // → PICKED_UP → BILLED  (or PAYMENT_FAILED or CANCELLED)
+  status String @default("PENDING_CUSTOMIZATION")
+
+  totalInCents Int @default(0)
+
+  // Square payment
+  squarePaymentId      String?
+  squareReceiptUrl     String?
+  squarePaymentLinkId  String?
+  squarePaymentLinkUrl String?
+
+  // Pickup
+  pickupEventId String?
+  pickupEvent   PickupEvent? @relation(fields: [pickupEventId], references: [id])
+  pickedUpAt    DateTime?
+
+  // Billing
+  billedAt      DateTime?
+  billingMethod String?   // CARD_ON_FILE | PAYMENT_LINK | IN_PERSON
+
+  // Notes
+  adminNotes  String?
+  memberNotes String?
+
+  // Customization tracking
+  lastCustomizedAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items OrderItem[]
+
+  @@unique([memberId, quarterId])
+}
+
+model OrderItem {
+  id        String  @id @default(cuid())
+  orderId   String
+  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id])
+  quantity  Int     @default(1)
+  // unitPriceInCents: 0 = included in plan price; positive = add-on
+  unitPriceInCents Int @default(0)
+  createdAt DateTime @default(now())
+}
+
+// ─── Pickup Events ────────────────────────────────────────────────────────────
+
+model PickupEvent {
+  id        String  @id @default(cuid())
+  quarterId String
+  quarter   Quarter @relation(fields: [quarterId], references: [id])
+  title     String
+  location  String?
+  startsAt  DateTime
+  endsAt    DateTime
+  notes     String?
+  isPublic  Boolean @default(true)
+  maxSlots  Int?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  orders      Order[]
+  attendances PickupAttendance[]
+}
+
+model PickupAttendance {
+  id            String      @id @default(cuid())
+  memberId      String
+  member        Member      @relation(fields: [memberId], references: [id])
+  pickupEventId String
+  pickupEvent   PickupEvent @relation(fields: [pickupEventId], references: [id])
+  rsvpAt        DateTime    @default(now())
+  checkedInAt   DateTime?
+
+  @@unique([memberId, pickupEventId])
+}
+
+// ─── Waitlist ─────────────────────────────────────────────────────────────────
+
+model WaitlistEntry {
+  id       String  @id @default(cuid())
+  memberId String?
+  member   Member? @relation(fields: [memberId], references: [id])
+  email    String
+  name     String?
+  planId   String
+  plan     Plan    @relation(fields: [planId], references: [id])
+  position Int
+
+  notifiedAt  DateTime?
+  convertedAt DateTime? // when they became an active member
+
+  createdAt DateTime @default(now())
+}
+
+// ─── Email Campaigns ──────────────────────────────────────────────────────────
+
+model Campaign {
+  id             String   @id @default(cuid())
+  subject        String
+  bodyHtml       String
+  bodyText       String?
+  status         String   @default("DRAFT") // DRAFT | SCHEDULED | SENDING | SENT | CANCELLED
+  sentAt         DateTime?
+  scheduledAt    DateTime?
+  recipientFilter String?  // JSON: { "status": ["ACTIVE"], "planIds": [] }
+  sentCount      Int      @default(0)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+}
+
+// ─── Email Logs ───────────────────────────────────────────────────────────────
+
+model EmailLog {
+  id       String  @id @default(cuid())
+  memberId String?
+  member   Member? @relation(fields: [memberId], references: [id])
+  toEmail  String
+  subject  String
+  // WELCOME | ORDER_READY | ORDER_REMINDER | CUSTOMIZATION_CLOSING |
+  // RECEIPT | PAYMENT_FAILED | PICKUP_REMINDER | MAGIC_LINK |
+  // CAMPAIGN | WAITLIST_NOTIFICATION
+  type     String
+  resendId String? // Resend message ID for delivery tracking
+  status   String  @default("SENT") // SENT | FAILED | BOUNCED
+  metadata String? // JSON blob for template data
+  createdAt DateTime @default(now())
+}
+
+// ─── Analytics Snapshots ──────────────────────────────────────────────────────
+
+model AnalyticsSnapshot {
+  id               String   @id @default(cuid())
+  snapshotDate     DateTime @unique @default(now())
+  totalMembers     Int
+  activeMembers    Int
+  pausedMembers    Int
+  cancelledMembers Int
+  waitlistCount    Int
+  mrrInCents       Int // monthly recurring revenue approximation (qrr / 3)
+  qrrInCents       Int // quarterly recurring revenue
+  createdAt        DateTime @default(now())
+}
