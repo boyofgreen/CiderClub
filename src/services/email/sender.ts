@@ -14,20 +14,32 @@ interface SendEmailParams {
 export async function sendEmail(params: SendEmailParams): Promise<void> {
   let resendId: string | undefined
   let status = 'SENT'
-  let error: string | undefined
 
-  try {
-    const result = await resend.emails.send({
-      from: fromEmail,
-      to: params.to,
-      subject: params.subject,
-      html: params.html,
-    })
-    resendId = (result.data as { id?: string })?.id
-  } catch (err) {
+  if (!process.env.RESEND_API_KEY) {
+    console.warn('[Email] RESEND_API_KEY is not set — skipping send to', params.to)
     status = 'FAILED'
-    error = String(err)
-    console.error('[Email] Failed to send:', params.type, 'to', params.to, err)
+  } else {
+    try {
+      const result = await resend.emails.send({
+        from: fromEmail,
+        to: params.to,
+        subject: params.subject,
+        html: params.html,
+      })
+
+      if (result.error) {
+        status = 'FAILED'
+        console.error('[Email] Resend rejected send:', params.type, 'to', params.to)
+        console.error('[Email] Error:', JSON.stringify(result.error, null, 2))
+        console.error('[Email] From:', fromEmail)
+      } else {
+        resendId = (result.data as { id?: string })?.id
+        console.log('[Email] Sent', params.type, 'to', params.to, '— id:', resendId)
+      }
+    } catch (err) {
+      status = 'FAILED'
+      console.error('[Email] Exception sending:', params.type, 'to', params.to, err)
+    }
   }
 
   // Log every attempt
