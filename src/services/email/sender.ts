@@ -27,6 +27,7 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
   } catch (err) {
     status = 'FAILED'
     error = String(err)
+    console.error('[Email] Failed to send:', params.type, 'to', params.to, err)
   }
 
   // Log every attempt
