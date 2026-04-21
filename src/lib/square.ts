@@ -1,7 +1,9 @@
 import { Client, Environment } from 'square'
 
+const accessToken = process.env.SQUARE_ACCESS_TOKEN ?? 'sandbox-placeholder'
+
 export const squareClient = new Client({
-  accessToken: process.env.SQUARE_ACCESS_TOKEN!,
+  accessToken,
   environment:
     process.env.NODE_ENV === 'production'
       ? Environment.Production
@@ -13,6 +15,8 @@ export const squareCards = squareClient.cardsApi
 export const squarePayments = squareClient.paymentsApi
 export const squareCheckout = squareClient.checkoutApi
 export const squareOrders = squareClient.ordersApi
+
+export const squareConfigured = Boolean(process.env.SQUARE_ACCESS_TOKEN)
 
 /**
  * Square SDK uses BigInt for monetary amounts.
