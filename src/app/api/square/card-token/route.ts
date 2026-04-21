@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { result } = await squareClient.cardsApi.createCard({
+    const response = await squareClient.cards.create({
       idempotencyKey: `card-${member.id}-${Date.now()}`,
       sourceId,
       card: {
@@ -26,14 +26,14 @@ export async function POST(req: Request) {
       },
     })
 
-    if (!result.card?.id) throw new Error('No card ID returned from Square')
+    if (!response.card?.id) throw new Error('No card ID returned from Square')
 
     await prisma.member.update({
       where: { id: member.id },
-      data: { squareCardId: result.card.id },
+      data: { squareCardId: response.card.id },
     })
 
-    return NextResponse.json({ ok: true, cardBrand: result.card.cardBrand, last4: result.card.last4 })
+    return NextResponse.json({ ok: true, cardBrand: response.card.cardBrand, last4: response.card.last4 })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }

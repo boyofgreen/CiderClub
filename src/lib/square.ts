@@ -1,17 +1,14 @@
-import { Client } from 'square'
+import { SquareClient, SquareEnvironment } from 'square'
 
-const accessToken = process.env.SQUARE_ACCESS_TOKEN ?? 'sandbox-placeholder'
+const token = process.env.SQUARE_ACCESS_TOKEN ?? 'sandbox-placeholder'
 
-export const squareClient = new Client({
-  accessToken,
-  environment: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
+export const squareClient = new SquareClient({
+  token,
+  environment:
+    process.env.NODE_ENV === 'production'
+      ? SquareEnvironment.Production
+      : SquareEnvironment.Sandbox,
 })
-
-export const squareCustomers = squareClient.customersApi
-export const squareCards = squareClient.cardsApi
-export const squarePayments = squareClient.paymentsApi
-export const squareCheckout = squareClient.checkoutApi
-export const squareOrders = squareClient.ordersApi
 
 export const squareConfigured = Boolean(process.env.SQUARE_ACCESS_TOKEN)
 

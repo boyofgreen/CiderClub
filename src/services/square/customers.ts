@@ -1,4 +1,4 @@
-import { squareCustomers, serializeSquare } from '@/lib/square'
+import { squareClient } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'crypto'
 
@@ -16,7 +16,6 @@ interface MemberInfo {
 
 /** Create a Square customer and store the ID on the member record */
 export async function createSquareCustomer(member: MemberInfo): Promise<string> {
-  // First, check if a customer already exists with this email
   const existing = await searchSquareCustomerByEmail(member.email)
   if (existing) {
     await prisma.member.update({
@@ -26,7 +25,7 @@ export async function createSquareCustomer(member: MemberInfo): Promise<string> 
     return existing
   }
 
-  const { result } = await squareCustomers.createCustomer({
+  const response = await squareClient.customers.create({
     idempotencyKey: randomUUID(),
     givenName: member.firstName,
     familyName: member.lastName,
@@ -43,7 +42,7 @@ export async function createSquareCustomer(member: MemberInfo): Promise<string> 
       : undefined,
   })
 
-  const customerId = result.customer?.id
+  const customerId = response.customer?.id
   if (!customerId) throw new Error('Square customer creation failed')
 
   await prisma.member.update({
@@ -56,15 +55,13 @@ export async function createSquareCustomer(member: MemberInfo): Promise<string> 
 
 /** Push updated member info to Square */
 export async function syncSquareCustomer(member: MemberInfo): Promise<void> {
-  if (!member.id) return
-
   const dbMember = await prisma.member.findUnique({ where: { id: member.id } })
   if (!dbMember?.squareCustomerId) {
     await createSquareCustomer(member)
     return
   }
 
-  await squareCustomers.updateCustomer(dbMember.squareCustomerId, {
+  await squareClient.customers.update(dbMember.squareCustomerId, {
     givenName: member.firstName,
     familyName: member.lastName,
     emailAddress: member.email,
@@ -84,14 +81,14 @@ export async function syncSquareCustomer(member: MemberInfo): Promise<void> {
 /** Search Square for a customer by email; returns customerId or null */
 export async function searchSquareCustomerByEmail(email: string): Promise<string | null> {
   try {
-    const { result } = await squareCustomers.searchCustomers({
+    const response = await squareClient.customers.search({
       query: {
         filter: {
           emailAddress: { exact: email },
         },
       },
     })
-    return result.customers?.[0]?.id ?? null
+    return response.customers?.[0]?.id ?? null
   } catch {
     return null
   }

@@ -1,6 +1,5 @@
-import { squarePayments, squareCheckout, serializeSquare } from '@/lib/square'
+import { squareClient } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
-import { randomUUID } from 'crypto'
 
 interface ChargeParams {
   orderId: string
@@ -18,7 +17,7 @@ interface ChargeResult {
 
 /** Charge a saved card on file for an order */
 export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResult> {
-  const { result } = await squarePayments.createPayment({
+  const response = await squareClient.payments.create({
     idempotencyKey: `order-bill-${params.orderId}`,
     sourceId: params.squareCardId,
     customerId: params.squareCustomerId,
@@ -30,14 +29,13 @@ export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResu
     referenceId: params.orderId,
   })
 
-  const payment = result.payment
+  const payment = response.payment
   if (!payment?.id) throw new Error('Square payment failed — no payment ID returned')
 
   const paymentId = payment.id
   const receiptUrl = payment.receiptUrl ?? null
   const status = payment.status ?? 'UNKNOWN'
 
-  // Update order record
   await prisma.order.update({
     where: { id: params.orderId },
     data: {
@@ -61,8 +59,10 @@ interface PaymentLinkParams {
 }
 
 /** Generate a Square payment link for online payment */
-export async function createPaymentLink(params: PaymentLinkParams): Promise<{ url: string; linkId: string }> {
-  const { result } = await squareCheckout.createPaymentLink({
+export async function createPaymentLink(
+  params: PaymentLinkParams
+): Promise<{ url: string; linkId: string }> {
+  const response = await squareClient.checkout.paymentLinks.create({
     idempotencyKey: `order-link-${params.orderId}`,
     description: params.description,
     quickPay: {
@@ -81,10 +81,9 @@ export async function createPaymentLink(params: PaymentLinkParams): Promise<{ ur
     },
   })
 
-  const link = result.paymentLink
+  const link = response.paymentLink
   if (!link?.id || !link.url) throw new Error('Failed to create payment link')
 
-  // Store link on order
   await prisma.order.update({
     where: { id: params.orderId },
     data: {

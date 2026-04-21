@@ -1,4 +1,4 @@
-import { squareCards } from '@/lib/square'
+import { squareClient } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'crypto'
 
@@ -9,7 +9,7 @@ export async function saveCardOnFile(params: {
   cardNonce: string
   cardholderName?: string
 }): Promise<{ cardId: string; last4: string; brand: string }> {
-  const { result } = await squareCards.createCard({
+  const response = await squareClient.cards.create({
     idempotencyKey: randomUUID(),
     sourceId: params.cardNonce,
     card: {
@@ -18,13 +18,12 @@ export async function saveCardOnFile(params: {
     },
   })
 
-  if (!result.card?.id) throw new Error('Failed to save card')
+  if (!response.card?.id) throw new Error('Failed to save card')
 
-  const cardId = result.card.id
-  const last4 = result.card.last4 ?? '****'
-  const brand = result.card.cardBrand ?? 'UNKNOWN'
+  const cardId = response.card.id
+  const last4 = response.card.last4 ?? '****'
+  const brand = response.card.cardBrand ?? 'UNKNOWN'
 
-  // Store the card ID on the member record
   await prisma.member.update({
     where: { id: params.memberId },
     data: { squareCardId: cardId },
@@ -36,8 +35,8 @@ export async function saveCardOnFile(params: {
 /** Retrieve card details for display (last4, brand, expiry) */
 export async function getCardDetails(cardId: string) {
   try {
-    const { result } = await squareCards.retrieveCard(cardId)
-    const card = result.card
+    const response = await squareClient.cards.get(cardId)
+    const card = response.card
     if (!card) return null
     return {
       cardId: card.id!,
@@ -53,7 +52,7 @@ export async function getCardDetails(cardId: string) {
 
 /** Remove a card from Square and clear from member record */
 export async function removeCardOnFile(memberId: string, cardId: string): Promise<void> {
-  await squareCards.disableCard(cardId).catch(() => {})
+  await squareClient.cards.disable(cardId).catch(() => {})
   await prisma.member.update({
     where: { id: memberId },
     data: { squareCardId: null },
