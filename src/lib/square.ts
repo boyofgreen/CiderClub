@@ -1,13 +1,10 @@
-import { Client, Environment } from 'square'
+import { Client } from 'square'
 
 const accessToken = process.env.SQUARE_ACCESS_TOKEN ?? 'sandbox-placeholder'
 
 export const squareClient = new Client({
   accessToken,
-  environment:
-    process.env.NODE_ENV === 'production'
-      ? Environment.Production
-      : Environment.Sandbox,
+  environment: process.env.NODE_ENV === 'production' ? 'production' : 'sandbox',
 })
 
 export const squareCustomers = squareClient.customersApi
