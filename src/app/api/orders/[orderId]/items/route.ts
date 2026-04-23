@@ -74,7 +74,12 @@ export async function PUT(
 
   const updated = await prisma.order.findUnique({
     where: { id: params.orderId },
-    include: { items: { include: { product: true } } },
+    include: {
+      member: { include: { plan: true } },
+      quarter: true,
+      items: { include: { product: true } },
+      pickupEvent: true,
+    },
   })
   return NextResponse.json({ order: updated })
 }
