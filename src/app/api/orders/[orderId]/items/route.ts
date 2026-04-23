@@ -22,7 +22,7 @@ export async function PUT(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  if (order.status !== 'PENDING_CUSTOMIZATION') {
+  if (!['PENDING_CUSTOMIZATION', 'CUSTOMIZED'].includes(order.status)) {
     return NextResponse.json({ error: 'Order cannot be modified in its current state' }, { status: 409 })
   }
 
