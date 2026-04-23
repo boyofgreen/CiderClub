@@ -37,9 +37,9 @@ function LoginContent() {
         </div>
 
         <div className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
-          <h1 className="text-xl font-bold text-stone-900 text-center mb-2">Sign in</h1>
+          <h1 className="text-xl font-bold text-stone-900 text-center mb-2">Admin Sign In</h1>
           <p className="text-sm text-stone-500 text-center mb-6">
-            Admin portal sign-in via Google or Facebook
+            Sign in with the Google or Facebook account registered as an admin.
           </p>
 
           {errorMsg && <Alert type="error" message={errorMsg} className="mb-4" />}
@@ -73,13 +73,13 @@ function LoginContent() {
 
           <div className="mt-6 text-center border-t border-stone-100 pt-5">
             <p className="text-sm text-stone-500">
-              Member? Use your email link instead.
+              Not an admin? Members use email links.
             </p>
             <Link
               href="/magic/request"
               className="mt-2 inline-block text-sm font-medium text-brand-600 hover:text-brand-700"
             >
-              Get my access link →
+              Member access link →
             </Link>
           </div>
         </div>
