@@ -135,7 +135,9 @@ export default function AdminProductsPage() {
             <h3 className="font-semibold text-stone-900 mt-2">{p.name}</h3>
             <div className="flex gap-2 mt-1">
               {p.style && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">{p.style}</span>}
-              {p.abv && <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600">{p.abv}% ABV</span>}
+              <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600">
+                {p.abv != null ? `${p.abv}% ABV` : '— ABV'}
+              </span>
             </div>
             {p.description && <p className="mt-2 text-xs text-stone-500 line-clamp-2">{p.description}</p>}
           </div>
