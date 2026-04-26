@@ -31,18 +31,16 @@ export function ProductsTab({
     await fetch(`/api/quarters/${quarterId}/products`, {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId: qp.productId, isDefault: !qp.isDefault }),
+      body: JSON.stringify({ quarterProductId: qp.id, isDefault: !qp.isDefault }),
     })
     setSaving(null)
     router.refresh()
   }
 
-  async function removeProduct(productId: string) {
-    setSaving(productId)
-    await fetch(`/api/quarters/${quarterId}/products`, {
+  async function removeProduct(qp: QuarterProduct) {
+    setSaving(qp.id)
+    await fetch(`/api/quarters/${quarterId}/products?quarterProductId=${qp.id}`, {
       method: 'DELETE',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ productId }),
     })
     setSaving(null)
     router.refresh()
@@ -102,8 +100,8 @@ export function ProductsTab({
                 <Star className="h-4 w-4" fill={qp.isDefault ? 'currentColor' : 'none'} />
               </button>
               <button
-                onClick={() => removeProduct(qp.productId)}
-                disabled={saving === qp.productId}
+                onClick={() => removeProduct(qp)}
+                disabled={saving === qp.id}
                 className="flex h-7 w-7 items-center justify-center rounded-full text-stone-300 hover:bg-red-50 hover:text-red-500 transition"
               >
                 <X className="h-3.5 w-3.5" />
