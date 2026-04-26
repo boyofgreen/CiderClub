@@ -103,7 +103,7 @@ export default function NewCampaignPage() {
               className="font-mono text-xs"
             />
           )}
-          <p className="text-xs text-stone-400">Write HTML email content. Use {{'{'}{'{'}}firstName{{'}'}{{'}'}}}} to personalize.</p>
+          <p className="text-xs text-stone-400">Write HTML email content. Use {'{{firstName}}'} to personalize.</p>
         </div>
 
         <div className="flex gap-3 pt-2">
