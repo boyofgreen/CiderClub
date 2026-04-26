@@ -2,7 +2,26 @@ import { squareClient } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
 
 const CIDER_CLUB_CATEGORY = 'Cider Club'
-const ABV_ATTRIBUTE_NAME = 'abv'
+
+/** Match "ABV: 5.0%" anywhere in the description (case-insensitive) */
+const ABV_PATTERN = /ABV:\s*(\d+(?:\.\d+)?)\s*%?/i
+
+/** Extract ABV from a description and return the cleaned description + abv */
+function parseAbvFromDescription(description: string | null): { description: string | null; abv: number | null } {
+  if (!description) return { description, abv: null }
+  const match = description.match(ABV_PATTERN)
+  if (!match) return { description, abv: null }
+  const abv = parseFloat(match[1])
+  // Strip the ABV line so it doesn't render twice in the UI
+  const cleaned = description
+    .replace(ABV_PATTERN, '')
+    .replace(/\n{2,}/g, '\n')
+    .trim()
+  return {
+    description: cleaned.length > 0 ? cleaned : null,
+    abv: Number.isFinite(abv) ? abv : null,
+  }
+}
 
 /** Generate a URL-safe slug from a product name */
 function slugify(name: string): string {
@@ -19,24 +38,6 @@ async function findCiderClubCategoryId(): Promise<string | null> {
   for await (const obj of page) {
     if (obj.type === 'CATEGORY' && obj.categoryData?.name?.toLowerCase() === CIDER_CLUB_CATEGORY.toLowerCase()) {
       return obj.id
-    }
-  }
-  return null
-}
-
-/**
- * Read an ABV custom-attribute value from a catalog object's customAttributeValues map.
- * Square keys can be prefixed with the defining app ID ("abcd1234:abv"), so we match
- * by the attribute's `name` (case-insensitive) and accept either NUMBER or STRING types.
- */
-function extractAbv(customAttributes?: Record<string, { name?: string | null; numberValue?: string | null; stringValue?: string | null }>): number | null {
-  if (!customAttributes) return null
-  for (const value of Object.values(customAttributes)) {
-    if (value?.name?.toLowerCase() === ABV_ATTRIBUTE_NAME) {
-      const raw = value.numberValue ?? value.stringValue
-      if (raw == null) return null
-      const parsed = parseFloat(String(raw))
-      return Number.isFinite(parsed) ? parsed : null
     }
   }
   return null
@@ -76,9 +77,8 @@ export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
     }
 
     const name = item.itemData.name
-    const description = item.itemData.description ?? null
     const squareItemId = item.id
-    const abv = extractAbv(item.customAttributeValues)
+    const { description, abv } = parseAbvFromDescription(item.itemData.description ?? null)
 
     const existing = await prisma.product.findFirst({ where: { squareItemId } })
 
