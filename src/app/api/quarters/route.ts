@@ -23,7 +23,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json()
-  const { label, year, quarter, startsAt, endsAt, pickupStartsAt, pickupEndsAt } = body
+  const { label, name, year, quarter, startsAt, endsAt, pickupStartsAt, pickupEndsAt } = body
 
   if (!label || !year || !quarter || !startsAt || !endsAt) {
     return NextResponse.json(
@@ -32,17 +32,26 @@ export async function POST(req: Request) {
     )
   }
 
-  const q = await prisma.quarter.create({
-    data: {
-      label,
-      year: parseInt(String(year)),
-      quarter: parseInt(String(quarter)),
-      startsAt: new Date(startsAt),
-      endsAt: new Date(endsAt),
-      pickupStartsAt: pickupStartsAt ? new Date(pickupStartsAt) : null,
-      pickupEndsAt: pickupEndsAt ? new Date(pickupEndsAt) : null,
-      status: 'UPCOMING',
-    },
-  })
-  return NextResponse.json({ quarter: q }, { status: 201 })
+  try {
+    const q = await prisma.quarter.create({
+      data: {
+        label,
+        name: name || null,
+        year: parseInt(String(year)),
+        quarter: parseInt(String(quarter)),
+        startsAt: new Date(startsAt),
+        endsAt: new Date(endsAt),
+        pickupStartsAt: pickupStartsAt ? new Date(pickupStartsAt) : null,
+        pickupEndsAt: pickupEndsAt ? new Date(pickupEndsAt) : null,
+        status: 'UPCOMING',
+      },
+    })
+    return NextResponse.json({ quarter: q }, { status: 201 })
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err)
+    if (msg.includes('Unique constraint')) {
+      return NextResponse.json({ error: `A quarter with label "${label}" already exists.` }, { status: 409 })
+    }
+    return NextResponse.json({ error: msg }, { status: 500 })
+  }
 }

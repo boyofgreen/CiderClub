@@ -15,7 +15,7 @@ export async function GET(
   const quarter = await prisma.quarter.findUnique({
     where: { id: params.quarterId },
     include: {
-      quarterProducts: { include: { product: true } },
+      products: { include: { product: true } },
       orders: {
         include: {
           member: { select: { id: true, firstName: true, lastName: true, email: true } },

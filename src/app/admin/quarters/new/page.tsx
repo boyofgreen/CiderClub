@@ -29,10 +29,19 @@ export default function NewQuarterPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    setLoading(true)
     setError(null)
 
     const [year, q] = form.label.split('-Q').map(Number)
+    if (!form.label.match(/^\d{4}-Q[1-4]$/)) {
+      setError('Label must be in YYYY-Q# format (e.g. "2026-Q3").')
+      return
+    }
+    if (!form.startsAt || !form.endsAt) {
+      setError('Customization window open and close dates are required.')
+      return
+    }
+
+    setLoading(true)
     const res = await fetch('/api/quarters', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
