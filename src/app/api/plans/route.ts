@@ -20,7 +20,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json()
-  const { name, description, packsPerOrder, priceInCents, maxCapacity, sortOrder } = body
+  const { name, description, packsPerOrder, priceInCents, discountPercent, maxCapacity, sortOrder } = body
 
   if (!name || !packsPerOrder || !priceInCents) {
     return NextResponse.json({ error: 'name, packsPerOrder and priceInCents are required' }, { status: 400 })
@@ -33,6 +33,7 @@ export async function POST(req: Request) {
       description,
       packsPerOrder: parseInt(packsPerOrder),
       priceInCents: parseInt(priceInCents),
+      discountPercent: discountPercent != null ? parseInt(String(discountPercent)) : 0,
       maxCapacity: maxCapacity ? parseInt(maxCapacity) : null,
       sortOrder: sortOrder ?? 0,
     },

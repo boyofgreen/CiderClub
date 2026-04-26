@@ -135,6 +135,7 @@ model Plan {
   description  String?
   packsPerOrder Int              // units included per quarterly order
   priceInCents  Int              // charged per quarter (in cents)
+  discountPercent Int   @default(0) // tier discount applied at billing time (0-100)
   isActive      Boolean @default(true)
   maxCapacity   Int?             // null = unlimited
   sortOrder     Int     @default(0)
@@ -143,6 +144,7 @@ model Plan {
 
   members         Member[]
   waitlistEntries WaitlistEntry[]
+  quarterDefaults QuarterPlanDefault[]
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────
@@ -162,6 +164,7 @@ model Product {
   updatedAt   DateTime @updatedAt
 
   quarterProducts QuarterProduct[]
+  quarterDefaults QuarterPlanDefault[]
   orderItems      OrderItem[]
 }
 
@@ -187,20 +190,40 @@ model Quarter {
   updatedAt DateTime @updatedAt
 
   products     QuarterProduct[]
+  planDefaults QuarterPlanDefault[]
   orders       Order[]
   pickupEvents PickupEvent[]
 }
 
+// QuarterProduct is the "available products" list for a quarter — one row per product.
+// isDefault here means "default for everyone" (fallback when no per-plan default is set).
 model QuarterProduct {
   id        String  @id @default(cuid())
   quarterId String
   quarter   Quarter @relation(fields: [quarterId], references: [id], onDelete: Cascade)
   productId String
   product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
-  isDefault Boolean @default(false) // auto-added to orders if no customization
+  isDefault Boolean @default(false)
   sortOrder Int     @default(0)
 
   @@unique([quarterId, productId])
+}
+
+// Per-plan default selections for a quarter. When generating orders, these are
+// preferred over QuarterProduct.isDefault for a member's specific plan.
+model QuarterPlanDefault {
+  id        String  @id @default(cuid())
+  quarterId String
+  quarter   Quarter @relation(fields: [quarterId], references: [id], onDelete: Cascade)
+  planId    String
+  plan      Plan    @relation(fields: [planId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int     @default(1)
+  sortOrder Int     @default(0)
+  createdAt DateTime @default(now())
+
+  @@unique([quarterId, planId, productId])
 }
 
 // ─── Orders ───────────────────────────────────────────────────────────────────

@@ -10,7 +10,7 @@ import { Plus, Pencil, X } from 'lucide-react'
 
 type Plan = {
   id: string; name: string; slug: string; description: string | null
-  packsPerOrder: number; priceInCents: number; isActive: boolean
+  packsPerOrder: number; priceInCents: number; discountPercent: number; isActive: boolean
   maxCapacity: number | null; sortOrder: number
   _count: { members: number }
 }
@@ -19,7 +19,7 @@ export default function AdminPlansPage() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<Plan | null | 'new'>(null)
-  const [form, setForm] = useState({ name: '', description: '', packsPerOrder: '6', priceInCents: '4500', maxCapacity: '', sortOrder: '0' })
+  const [form, setForm] = useState({ name: '', description: '', packsPerOrder: '6', priceInCents: '4500', discountPercent: '0', maxCapacity: '', sortOrder: '0' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -33,6 +33,7 @@ export default function AdminPlansPage() {
       description: plan.description ?? '',
       packsPerOrder: plan.packsPerOrder.toString(),
       priceInCents: plan.priceInCents.toString(),
+      discountPercent: (plan.discountPercent ?? 0).toString(),
       maxCapacity: plan.maxCapacity?.toString() ?? '',
       sortOrder: plan.sortOrder.toString(),
     })
@@ -41,7 +42,7 @@ export default function AdminPlansPage() {
   }
 
   function openNew() {
-    setForm({ name: '', description: '', packsPerOrder: '6', priceInCents: '4500', maxCapacity: '', sortOrder: '0' })
+    setForm({ name: '', description: '', packsPerOrder: '6', priceInCents: '4500', discountPercent: '0', maxCapacity: '', sortOrder: '0' })
     setModal('new')
     setError(null)
   }
@@ -54,6 +55,7 @@ export default function AdminPlansPage() {
       description: form.description || null,
       packsPerOrder: parseInt(form.packsPerOrder),
       priceInCents: parseInt(form.priceInCents),
+      discountPercent: parseInt(form.discountPercent || '0'),
       maxCapacity: form.maxCapacity ? parseInt(form.maxCapacity) : null,
       sortOrder: parseInt(form.sortOrder),
     }
@@ -114,6 +116,10 @@ export default function AdminPlansPage() {
                   <span className="font-medium text-stone-700">{plan.packsPerOrder}</span>
                 </div>
                 <div className="flex justify-between">
+                  <span className="text-stone-500">Discount</span>
+                  <span className="font-medium text-stone-700">{plan.discountPercent ?? 0}%</span>
+                </div>
+                <div className="flex justify-between">
                   <span className="text-stone-500">Members</span>
                   <span className="font-medium text-stone-700">{plan._count.members}</span>
                 </div>
@@ -156,7 +162,10 @@ export default function AdminPlansPage() {
                 <Input label="Price (cents)" type="number" value={form.priceInCents} onChange={(e) => setForm({ ...form, priceInCents: e.target.value })} hint="e.g. 4500 = $45.00" />
                 <Input label="Items per order" type="number" value={form.packsPerOrder} onChange={(e) => setForm({ ...form, packsPerOrder: e.target.value })} />
               </div>
-              <Input label="Max capacity (optional)" type="number" value={form.maxCapacity} onChange={(e) => setForm({ ...form, maxCapacity: e.target.value })} hint="Leave blank for unlimited" />
+              <div className="grid gap-3 sm:grid-cols-2">
+                <Input label="Discount %" type="number" min="0" max="100" value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: e.target.value })} hint="Applied at billing time" />
+                <Input label="Max capacity (optional)" type="number" value={form.maxCapacity} onChange={(e) => setForm({ ...form, maxCapacity: e.target.value })} hint="Blank = unlimited" />
+              </div>
             </div>
 
             <div className="mt-5 flex gap-2">

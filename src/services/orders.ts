@@ -20,8 +20,20 @@ export async function generateQuarterOrders(
         include: { product: true },
         orderBy: { sortOrder: 'asc' },
       },
+      planDefaults: {
+        include: { product: true },
+        orderBy: { sortOrder: 'asc' },
+      },
     },
   })
+
+  // Group plan-specific defaults by planId for quick lookup
+  const planDefaultsByPlan = new Map<string, typeof quarter.planDefaults>()
+  for (const d of quarter.planDefaults) {
+    const existing = planDefaultsByPlan.get(d.planId) ?? []
+    existing.push(d)
+    planDefaultsByPlan.set(d.planId, existing)
+  }
 
   // Get all active members (not paused for this quarter or later)
   const members = await prisma.member.findMany({
@@ -50,36 +62,45 @@ export async function generateQuarterOrders(
       continue
     }
 
-    // Build items — fill from default products up to plan's packsPerOrder
     const packsNeeded = member.plan.packsPerOrder
-    const defaultProducts = quarter.products
     const items: { productId: string; quantity: number; unitPriceInCents: number }[] = []
-    let allocated = 0
 
-    for (const qp of defaultProducts) {
-      if (allocated >= packsNeeded) break
-      const qty = Math.min(1, packsNeeded - allocated)
-      items.push({ productId: qp.productId, quantity: qty, unitPriceInCents: 0 })
-      allocated += qty
-    }
-
-    // If not enough default products, repeat first default
-    if (allocated < packsNeeded && defaultProducts.length > 0) {
-      const firstProductId = defaultProducts[0].productId
-      const existing = items.find((i) => i.productId === firstProductId)
-      if (existing) {
-        existing.quantity += packsNeeded - allocated
-      } else {
-        items.push({ productId: firstProductId, quantity: packsNeeded - allocated, unitPriceInCents: 0 })
+    // Prefer plan-specific defaults; fall back to global isDefault products
+    const planDefaults = planDefaultsByPlan.get(member.planId)
+    if (planDefaults && planDefaults.length > 0) {
+      for (const d of planDefaults) {
+        items.push({ productId: d.productId, quantity: d.quantity, unitPriceInCents: 0 })
+      }
+    } else {
+      let allocated = 0
+      for (const qp of quarter.products) {
+        if (allocated >= packsNeeded) break
+        const qty = Math.min(1, packsNeeded - allocated)
+        items.push({ productId: qp.productId, quantity: qty, unitPriceInCents: 0 })
+        allocated += qty
+      }
+      // If not enough fallback products, repeat the first one
+      if (allocated < packsNeeded && quarter.products.length > 0) {
+        const firstProductId = quarter.products[0].productId
+        const matched = items.find((i) => i.productId === firstProductId)
+        if (matched) {
+          matched.quantity += packsNeeded - allocated
+        } else {
+          items.push({ productId: firstProductId, quantity: packsNeeded - allocated, unitPriceInCents: 0 })
+        }
       }
     }
+
+    // Apply the plan's discountPercent to the order total
+    const discount = Math.max(0, Math.min(100, member.plan.discountPercent ?? 0))
+    const totalInCents = Math.round(member.plan.priceInCents * (1 - discount / 100))
 
     const order = await prisma.order.create({
       data: {
         memberId: member.id,
         quarterId,
         status: 'PENDING_CUSTOMIZATION',
-        totalInCents: member.plan.priceInCents,
+        totalInCents,
         items: { create: items },
       },
     })

@@ -20,6 +20,10 @@ export default async function QuarterDetailPage({
     where: { id: params.quarterId },
     include: {
       products: { include: { product: true }, orderBy: { sortOrder: 'asc' } },
+      planDefaults: {
+        include: { product: true, plan: true },
+        orderBy: { sortOrder: 'asc' },
+      },
       orders: {
         include: { member: true },
         orderBy: { createdAt: 'desc' },
@@ -30,10 +34,10 @@ export default async function QuarterDetailPage({
 
   if (!quarter) notFound()
 
-  const allProducts = await prisma.product.findMany({
-    where: { isActive: true },
-    orderBy: { name: 'asc' },
-  })
+  const [allProducts, allPlans] = await Promise.all([
+    prisma.product.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } }),
+    prisma.plan.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' } }),
+  ])
 
   const orderStats = {
     total: quarter.orders.length,
@@ -88,6 +92,8 @@ export default async function QuarterDetailPage({
           quarterId={quarter.id}
           quarterProducts={quarter.products}
           allProducts={allProducts}
+          allPlans={allPlans}
+          planDefaults={quarter.planDefaults}
         />
 
         {/* Pickup events */}

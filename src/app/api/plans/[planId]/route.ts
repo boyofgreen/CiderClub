@@ -14,13 +14,14 @@ export async function PATCH(
   }
 
   const body = await req.json()
-  const allowed = ['name', 'description', 'packsPerOrder', 'priceInCents', 'maxCapacity', 'sortOrder', 'isActive']
+  const allowed = ['name', 'description', 'packsPerOrder', 'priceInCents', 'discountPercent', 'maxCapacity', 'sortOrder', 'isActive']
   const raw = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
 
   const data: Record<string, unknown> = { ...raw }
   if (raw.name) data.slug = slugify(raw.name as string)
   if (raw.packsPerOrder !== undefined) data.packsPerOrder = parseInt(String(raw.packsPerOrder))
   if (raw.priceInCents !== undefined) data.priceInCents = parseInt(String(raw.priceInCents))
+  if (raw.discountPercent !== undefined) data.discountPercent = parseInt(String(raw.discountPercent))
   if (raw.maxCapacity !== undefined) data.maxCapacity = raw.maxCapacity ? parseInt(String(raw.maxCapacity)) : null
 
   const plan = await prisma.plan.update({ where: { id: params.planId }, data })
