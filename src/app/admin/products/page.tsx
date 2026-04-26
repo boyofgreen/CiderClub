@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 import { Card } from '@/components/ui/Card'
-import { Beer, Plus, Pencil, X } from 'lucide-react'
+import { Beer, Plus, Pencil, X, RefreshCw } from 'lucide-react'
 
 type Product = {
   id: string; name: string; slug: string; description: string | null
@@ -32,6 +32,8 @@ export default function AdminProductsPage() {
   const [form, setForm] = useState({ name: '', description: '', style: '', abv: '', sortOrder: '0' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [syncing, setSyncing] = useState(false)
+  const [syncMessage, setSyncMessage] = useState<string | null>(null)
 
   const refresh = () =>
     fetch('/api/products').then((r) => r.json()).then((d) => setProducts(d.products ?? [])).finally(() => setLoading(false))
@@ -73,6 +75,21 @@ export default function AdminProductsPage() {
     setSaving(false)
   }
 
+  async function handleSyncFromSquare() {
+    setSyncing(true)
+    setSyncMessage(null)
+    setError(null)
+    const res = await fetch('/api/products/sync-from-square', { method: 'POST' })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) {
+      setSyncMessage(`Synced from Square: ${data.created} created, ${data.updated} updated, ${data.skipped} skipped (${data.total} total).`)
+      await refresh()
+    } else {
+      setError(data.error ?? 'Sync failed')
+    }
+    setSyncing(false)
+  }
+
   async function toggleActive(id: string, current: boolean) {
     await fetch(`/api/products/${id}`, {
       method: 'PATCH',
@@ -86,10 +103,18 @@ export default function AdminProductsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-stone-900">Products</h1>
-        <Button onClick={openNew} size="sm">
-          <Plus className="h-4 w-4" /> New Product
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={handleSyncFromSquare} loading={syncing} variant="secondary" size="sm">
+            <RefreshCw className="h-4 w-4" /> Sync from Square
+          </Button>
+          <Button onClick={openNew} size="sm">
+            <Plus className="h-4 w-4" /> New Product
+          </Button>
+        </div>
       </div>
+
+      {syncMessage && <Alert type="success" message={syncMessage} />}
+      {error && !modal && <Alert type="error" message={error} />}
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
         {products.map((p) => (
