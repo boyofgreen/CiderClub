@@ -80,13 +80,12 @@ export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
     const squareItemId = item.id
     const { description, abv } = parseAbvFromDescription(item.itemData.description ?? null)
 
-    // Pull price from the first variation (Square stores prices on variations, not items).
+    // Pull price and variation ID from the first variation.
     // Narrow the union type: variations are always ITEM_VARIATION objects.
     const firstVariation = item.itemData.variations?.[0]
-    const variationData = firstVariation?.type === 'ITEM_VARIATION'
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      ? (firstVariation as any).itemVariationData
-      : undefined
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const variationData = firstVariation?.type === 'ITEM_VARIATION' ? (firstVariation as any).itemVariationData : undefined
+    const squareVariationId: string | null = firstVariation?.id ?? null
     const squarePriceBigInt: bigint | undefined = variationData?.priceMoney?.amount
     const priceInCents = squarePriceBigInt != null ? Number(squarePriceBigInt) : null
 
@@ -99,6 +98,8 @@ export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
           name,
           description,
           abv,
+          squareVariationId,
+          // Always overwrite price from Square — Square is the source of truth
           ...(priceInCents != null && { priceInCents }),
         },
       })
@@ -118,6 +119,7 @@ export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
           abv,
           priceInCents: priceInCents ?? 2100,
           squareItemId,
+          squareVariationId,
           isActive: true,
         },
       })

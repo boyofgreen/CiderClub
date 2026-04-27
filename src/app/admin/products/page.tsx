@@ -10,7 +10,8 @@ import { Beer, Plus, Pencil, X, RefreshCw } from 'lucide-react'
 
 type Product = {
   id: string; name: string; slug: string; description: string | null
-  style: string | null; abv: number | null; priceInCents: number; isActive: boolean; sortOrder: number
+  style: string | null; abv: number | null; priceInCents: number
+  isActive: boolean; sortOrder: number; squareItemId: string | null
   _count?: { orderItems: number }
 }
 
@@ -52,6 +53,9 @@ export default function AdminProductsPage() {
     setModal(p)
     setError(null)
   }
+
+  const editingProduct = modal !== 'new' && modal !== null ? modal as Product : null
+  const priceFromSquare = !!editingProduct?.squareItemId
 
   async function handleSave() {
     setSaving(true)
@@ -175,7 +179,8 @@ export default function AdminProductsPage() {
                 type="number"
                 value={form.priceInCents}
                 onChange={(e) => setForm({ ...form, priceInCents: e.target.value })}
-                hint="e.g. 2100 = $21.00, 2500 = $25.00"
+                disabled={priceFromSquare}
+                hint={priceFromSquare ? 'Set in Square — sync to update' : 'e.g. 2100 = $21.00'}
               />
             </div>
             <div className="mt-5 flex gap-2">

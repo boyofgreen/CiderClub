@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
 import { chargeCardOnFile, createPaymentLink } from '@/services/square/payments'
+import { adjustInventoryForOrder } from '@/services/square/inventory'
 import { sendEmail, buildReceiptEmail, buildPaymentFailedEmail } from '@/services/email/sender'
 import { appUrl } from '@/lib/resend'
 import { getMemberPortalToken } from '@/services/orders'
@@ -40,6 +41,11 @@ export async function billOrder(
       where: { id: orderId },
       data: { status: 'BILLED', billedAt: new Date(), billingMethod: 'IN_PERSON' },
     })
+    // Adjust Square inventory now that the sale is complete
+    await adjustInventoryForOrder(orderId, order.items.map((i) => ({
+      squareVariationId: i.product.squareVariationId,
+      quantity: i.quantity,
+    }))).catch((err) => console.error(`[inventory] Failed for order ${orderId}:`, err))
     return { orderId, success: true, method }
   }
 
@@ -55,6 +61,12 @@ export async function billOrder(
         amountInCents: order.totalInCents,
         note: `${order.quarter.label} cider order for ${member.firstName} ${member.lastName}`,
       })
+
+      // Adjust Square inventory now that payment succeeded
+      await adjustInventoryForOrder(orderId, order.items.map((i) => ({
+        squareVariationId: i.product.squareVariationId,
+        quantity: i.quantity,
+      }))).catch((err) => console.error(`[inventory] Failed for order ${orderId}:`, err))
 
       // Send receipt email
       const token = await getMemberPortalToken(member.id)

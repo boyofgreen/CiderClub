@@ -159,7 +159,8 @@ model Product {
   imageUrl     String?
   priceInCents Int      @default(2100) // per-bottle price, e.g. 2100 = $21.00
   isActive     Boolean  @default(true)
-  squareItemId String?  // Square catalog item ID (optional sync)
+  squareItemId      String?  // Square catalog ITEM id (for reference)
+  squareVariationId String?  // Square catalog ITEM_VARIATION id (used for inventory)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
