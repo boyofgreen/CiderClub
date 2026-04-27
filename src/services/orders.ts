@@ -69,31 +69,32 @@ export async function generateQuarterOrders(
     const planDefaults = planDefaultsByPlan.get(member.planId)
     if (planDefaults && planDefaults.length > 0) {
       for (const d of planDefaults) {
-        items.push({ productId: d.productId, quantity: d.quantity, unitPriceInCents: 0 })
+        items.push({ productId: d.productId, quantity: d.quantity, unitPriceInCents: d.product.priceInCents })
       }
     } else {
       let allocated = 0
       for (const qp of quarter.products) {
         if (allocated >= packsNeeded) break
         const qty = Math.min(1, packsNeeded - allocated)
-        items.push({ productId: qp.productId, quantity: qty, unitPriceInCents: 0 })
+        items.push({ productId: qp.productId, quantity: qty, unitPriceInCents: qp.product.priceInCents })
         allocated += qty
       }
       // If not enough fallback products, repeat the first one
       if (allocated < packsNeeded && quarter.products.length > 0) {
-        const firstProductId = quarter.products[0].productId
-        const matched = items.find((i) => i.productId === firstProductId)
+        const firstProduct = quarter.products[0]
+        const matched = items.find((i) => i.productId === firstProduct.productId)
         if (matched) {
           matched.quantity += packsNeeded - allocated
         } else {
-          items.push({ productId: firstProductId, quantity: packsNeeded - allocated, unitPriceInCents: 0 })
+          items.push({ productId: firstProduct.productId, quantity: packsNeeded - allocated, unitPriceInCents: firstProduct.product.priceInCents })
         }
       }
     }
 
-    // Apply the plan's discountPercent to the order total
+    // Sum item prices then apply plan discount
     const discount = Math.max(0, Math.min(100, member.plan.discountPercent ?? 0))
-    const totalInCents = Math.round(member.plan.priceInCents * (1 - discount / 100))
+    const subtotal = items.reduce((sum, i) => sum + i.quantity * i.unitPriceInCents, 0)
+    const totalInCents = Math.round(subtotal * (1 - discount / 100))
 
     const order = await prisma.order.create({
       data: {

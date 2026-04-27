@@ -5,11 +5,12 @@ import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 import { Card } from '@/components/ui/Card'
+import { formatCents } from '@/lib/utils'
 import { Beer, Plus, Pencil, X, RefreshCw } from 'lucide-react'
 
 type Product = {
   id: string; name: string; slug: string; description: string | null
-  style: string | null; abv: number | null; isActive: boolean; sortOrder: number
+  style: string | null; abv: number | null; priceInCents: number; isActive: boolean; sortOrder: number
   _count?: { orderItems: number }
 }
 
@@ -29,7 +30,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<Product | null | 'new'>(null)
-  const [form, setForm] = useState({ name: '', description: '', style: '', abv: '', sortOrder: '0' })
+  const [form, setForm] = useState({ name: '', description: '', style: '', abv: '', priceInCents: '2100', sortOrder: '0' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
@@ -41,13 +42,13 @@ export default function AdminProductsPage() {
   useEffect(() => { refresh() }, [])
 
   function openNew() {
-    setForm({ name: '', description: '', style: '', abv: '', sortOrder: '0' })
+    setForm({ name: '', description: '', style: '', abv: '', priceInCents: '2100', sortOrder: '0' })
     setModal('new')
     setError(null)
   }
 
   function openEdit(p: Product) {
-    setForm({ name: p.name, description: p.description ?? '', style: p.style ?? '', abv: p.abv?.toString() ?? '', sortOrder: p.sortOrder.toString() })
+    setForm({ name: p.name, description: p.description ?? '', style: p.style ?? '', abv: p.abv?.toString() ?? '', priceInCents: (p.priceInCents ?? 2100).toString(), sortOrder: p.sortOrder.toString() })
     setModal(p)
     setError(null)
   }
@@ -61,6 +62,7 @@ export default function AdminProductsPage() {
       description: form.description || null,
       style: form.style || null,
       abv: form.abv ? parseFloat(form.abv) : null,
+      priceInCents: parseInt(form.priceInCents) || 2100,
       sortOrder: parseInt(form.sortOrder),
     }
     const url = isNew ? '/api/products' : `/api/products/${(modal as Product).id}`
@@ -133,10 +135,13 @@ export default function AdminProductsPage() {
               </div>
             </div>
             <h3 className="font-semibold text-stone-900 mt-2">{p.name}</h3>
-            <div className="flex gap-2 mt-1">
+            <div className="flex flex-wrap gap-2 mt-1">
               {p.style && <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs text-amber-700">{p.style}</span>}
               <span className="rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-600">
                 {p.abv != null ? `${p.abv}% ABV` : '— ABV'}
+              </span>
+              <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs text-green-700 font-medium">
+                {formatCents(p.priceInCents ?? 2100)}
               </span>
             </div>
             {p.description && <p className="mt-2 text-xs text-stone-500 line-clamp-2">{p.description}</p>}
@@ -165,6 +170,13 @@ export default function AdminProductsPage() {
                 </div>
                 <Input label="ABV %" type="number" step="0.1" value={form.abv} onChange={(e) => setForm({ ...form, abv: e.target.value })} />
               </div>
+              <Input
+                label="Price (cents)"
+                type="number"
+                value={form.priceInCents}
+                onChange={(e) => setForm({ ...form, priceInCents: e.target.value })}
+                hint="e.g. 2100 = $21.00, 2500 = $25.00"
+              />
             </div>
             <div className="mt-5 flex gap-2">
               <Button variant="secondary" onClick={() => setModal(null)} className="flex-1">Cancel</Button>

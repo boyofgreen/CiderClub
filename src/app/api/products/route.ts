@@ -19,7 +19,7 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json()
-  const { name, description, style, abv, squareItemId, sortOrder } = body
+  const { name, description, style, abv, priceInCents, squareItemId, sortOrder } = body
 
   if (!name) {
     return NextResponse.json({ error: 'name is required' }, { status: 400 })
@@ -32,6 +32,7 @@ export async function POST(req: Request) {
       description,
       style,
       abv: abv ? parseFloat(String(abv)) : null,
+      priceInCents: priceInCents ? parseInt(String(priceInCents)) : 2100,
       squareItemId,
       sortOrder: sortOrder ?? 0,
     },

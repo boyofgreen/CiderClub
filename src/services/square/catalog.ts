@@ -37,7 +37,7 @@ async function findCiderClubCategoryId(): Promise<string | null> {
   const page = await squareClient.catalog.list({ types: 'CATEGORY' })
   for await (const obj of page) {
     if (obj.type === 'CATEGORY' && obj.categoryData?.name?.toLowerCase() === CIDER_CLUB_CATEGORY.toLowerCase()) {
-      return obj.id
+      return obj.id ?? null
     }
   }
   return null
@@ -80,16 +80,30 @@ export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
     const squareItemId = item.id
     const { description, abv } = parseAbvFromDescription(item.itemData.description ?? null)
 
+    // Pull price from the first variation (Square stores prices on variations, not items).
+    // Narrow the union type: variations are always ITEM_VARIATION objects.
+    const firstVariation = item.itemData.variations?.[0]
+    const variationData = firstVariation?.type === 'ITEM_VARIATION'
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      ? (firstVariation as any).itemVariationData
+      : undefined
+    const squarePriceBigInt: bigint | undefined = variationData?.priceMoney?.amount
+    const priceInCents = squarePriceBigInt != null ? Number(squarePriceBigInt) : null
+
     const existing = await prisma.product.findFirst({ where: { squareItemId } })
 
     if (existing) {
       await prisma.product.update({
         where: { id: existing.id },
-        data: { name, description, abv },
+        data: {
+          name,
+          description,
+          abv,
+          ...(priceInCents != null && { priceInCents }),
+        },
       })
       updated++
     } else {
-      // Build a unique slug — append a counter if there's a collision
       let slug = slugify(name)
       let suffix = 1
       while (await prisma.product.findUnique({ where: { slug } })) {
@@ -102,6 +116,7 @@ export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
           slug,
           description,
           abv,
+          priceInCents: priceInCents ?? 2100,
           squareItemId,
           isActive: true,
         },

@@ -4,9 +4,11 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { slugify } from '@/lib/utils'
 
-export async function GET() {
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url)
+  const includeArchived = searchParams.get('all') === 'true'
   const plans = await prisma.plan.findMany({
-    where: { isActive: true },
+    where: includeArchived ? {} : { isActive: true },
     include: { _count: { select: { members: true } } },
     orderBy: { sortOrder: 'asc' },
   })

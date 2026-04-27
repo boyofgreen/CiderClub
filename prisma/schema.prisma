@@ -156,9 +156,10 @@ model Product {
   description String?
   style       String?  // dry | semi-sweet | hopped | botanical | seasonal
   abv         Float?
-  imageUrl    String?
-  isActive    Boolean  @default(true)
-  squareItemId String? // Square catalog item ID (optional sync)
+  imageUrl     String?
+  priceInCents Int      @default(2100) // per-bottle price, e.g. 2100 = $21.00
+  isActive     Boolean  @default(true)
+  squareItemId String?  // Square catalog item ID (optional sync)
   sortOrder   Int      @default(0)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt

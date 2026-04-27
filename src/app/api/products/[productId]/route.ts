@@ -14,12 +14,13 @@ export async function PATCH(
   }
 
   const body = await req.json()
-  const allowed = ['name', 'description', 'style', 'abv', 'squareItemId', 'isActive', 'sortOrder', 'imageUrl']
+  const allowed = ['name', 'description', 'style', 'abv', 'priceInCents', 'squareItemId', 'isActive', 'sortOrder', 'imageUrl']
   const raw = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
 
   const data: Record<string, unknown> = { ...raw }
   if (raw.name) data.slug = slugify(raw.name as string)
   if (raw.abv !== undefined) data.abv = raw.abv ? parseFloat(String(raw.abv)) : null
+  if (raw.priceInCents !== undefined) data.priceInCents = parseInt(String(raw.priceInCents))
   if (raw.sortOrder !== undefined) data.sortOrder = parseInt(String(raw.sortOrder))
 
   const product = await prisma.product.update({ where: { id: params.productId }, data })

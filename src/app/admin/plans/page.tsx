@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 import { Card } from '@/components/ui/Card'
-import { Plus, Pencil, X } from 'lucide-react'
+import { Plus, Pencil, X, Archive, RotateCcw } from 'lucide-react'
 
 type Plan = {
   id: string; name: string; slug: string; description: string | null
@@ -18,14 +18,22 @@ type Plan = {
 export default function AdminPlansPage() {
   const [plans, setPlans] = useState<Plan[]>([])
   const [loading, setLoading] = useState(true)
+  const [showArchived, setShowArchived] = useState(false)
   const [modal, setModal] = useState<Plan | null | 'new'>(null)
-  const [form, setForm] = useState({ name: '', description: '', packsPerOrder: '6', priceInCents: '4500', discountPercent: '0', maxCapacity: '', sortOrder: '0' })
+  const [form, setForm] = useState({ name: '', description: '', packsPerOrder: '6', priceInCents: '6300', discountPercent: '0', maxCapacity: '', sortOrder: '0' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  useEffect(() => {
-    fetch('/api/plans').then((r) => r.json()).then((d) => setPlans(d.plans ?? [])).finally(() => setLoading(false))
-  }, [])
+  const refresh = () =>
+    fetch('/api/plans?all=true')
+      .then((r) => r.json())
+      .then((d) => setPlans(d.plans ?? []))
+      .finally(() => setLoading(false))
+
+  useEffect(() => { refresh() }, [])
+
+  const visiblePlans = showArchived ? plans : plans.filter((p) => p.isActive)
+  const archivedCount = plans.filter((p) => !p.isActive).length
 
   function openEdit(plan: Plan) {
     setForm({
@@ -42,7 +50,7 @@ export default function AdminPlansPage() {
   }
 
   function openNew() {
-    setForm({ name: '', description: '', packsPerOrder: '6', priceInCents: '4500', discountPercent: '0', maxCapacity: '', sortOrder: '0' })
+    setForm({ name: '', description: '', packsPerOrder: '6', priceInCents: '6300', discountPercent: '0', maxCapacity: '', sortOrder: '0' })
     setModal('new')
     setError(null)
   }
@@ -71,8 +79,7 @@ export default function AdminPlansPage() {
 
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
-      const refreshed = await fetch('/api/plans').then((r) => r.json())
-      setPlans(refreshed.plans ?? [])
+      await refresh()
       setModal(null)
     } else {
       setError(data.error ?? 'Failed to save plan.')
@@ -80,21 +87,40 @@ export default function AdminPlansPage() {
     setSaving(false)
   }
 
+  async function toggleArchive(plan: Plan) {
+    await fetch(`/api/plans/${plan.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ isActive: !plan.isActive }),
+    })
+    await refresh()
+  }
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-stone-900">Club Plans</h1>
-        <Button onClick={openNew} size="sm">
-          <Plus className="h-4 w-4" /> New Plan
-        </Button>
+        <div className="flex items-center gap-3">
+          {archivedCount > 0 && (
+            <button
+              onClick={() => setShowArchived(!showArchived)}
+              className="text-sm text-stone-500 hover:text-stone-700"
+            >
+              {showArchived ? 'Hide archived' : `Show archived (${archivedCount})`}
+            </button>
+          )}
+          <Button onClick={openNew} size="sm">
+            <Plus className="h-4 w-4" /> New Plan
+          </Button>
+        </div>
       </div>
 
       {loading ? (
         <p className="text-stone-500">Loading…</p>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {plans.map((plan) => (
-            <Card key={plan.id}>
+          {visiblePlans.map((plan) => (
+            <Card key={plan.id} className={!plan.isActive ? 'opacity-60' : ''}>
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold text-stone-900">{plan.name}</h3>
@@ -102,14 +128,25 @@ export default function AdminPlansPage() {
                     <p className="text-sm text-stone-500 mt-0.5">{plan.description}</p>
                   )}
                 </div>
-                <button onClick={() => openEdit(plan)} className="text-stone-400 hover:text-brand-600 transition">
-                  <Pencil className="h-4 w-4" />
-                </button>
+                <div className="flex items-center gap-1">
+                  {plan.isActive && (
+                    <button onClick={() => openEdit(plan)} className="p-1 text-stone-400 hover:text-brand-600 transition">
+                      <Pencil className="h-4 w-4" />
+                    </button>
+                  )}
+                  <button
+                    onClick={() => toggleArchive(plan)}
+                    className="p-1 text-stone-400 hover:text-stone-600 transition"
+                    title={plan.isActive ? 'Archive plan' : 'Restore plan'}
+                  >
+                    {plan.isActive ? <Archive className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
+                  </button>
+                </div>
               </div>
               <div className="mt-4 space-y-1.5 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-stone-500">Price</span>
-                  <span className="font-semibold text-stone-800">{formatCents(plan.priceInCents)}/qtr</span>
+                  <span className="text-stone-500">Est. price/qtr</span>
+                  <span className="font-semibold text-stone-800">{formatCents(plan.priceInCents)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-stone-500">Items per order</span>
@@ -133,7 +170,7 @@ export default function AdminPlansPage() {
               <div className={`mt-3 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
                 plan.isActive ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'
               }`}>
-                {plan.isActive ? 'Active' : 'Inactive'}
+                {plan.isActive ? 'Active' : 'Archived'}
               </div>
             </Card>
           ))}
@@ -159,11 +196,17 @@ export default function AdminPlansPage() {
               <Input label="Plan name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
               <Textarea label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
               <div className="grid gap-3 sm:grid-cols-2">
-                <Input label="Price (cents)" type="number" value={form.priceInCents} onChange={(e) => setForm({ ...form, priceInCents: e.target.value })} hint="e.g. 4500 = $45.00" />
+                <Input
+                  label="Est. price (cents)"
+                  type="number"
+                  value={form.priceInCents}
+                  onChange={(e) => setForm({ ...form, priceInCents: e.target.value })}
+                  hint="Display only — actual total comes from product prices"
+                />
                 <Input label="Items per order" type="number" value={form.packsPerOrder} onChange={(e) => setForm({ ...form, packsPerOrder: e.target.value })} />
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
-                <Input label="Discount %" type="number" min="0" max="100" value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: e.target.value })} hint="Applied at billing time" />
+                <Input label="Discount %" type="number" min="0" max="100" value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: e.target.value })} hint="Applied to order subtotal" />
                 <Input label="Max capacity (optional)" type="number" value={form.maxCapacity} onChange={(e) => setForm({ ...form, maxCapacity: e.target.value })} hint="Blank = unlimited" />
               </div>
             </div>
