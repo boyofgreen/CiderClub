@@ -25,9 +25,12 @@ export async function POST() {
 
   try {
     const result = await syncCiderClubProductsFromSquare()
+    // Return 200 even if some individual products errored — partial success
     return NextResponse.json(result)
   } catch (err) {
-    const message = err instanceof Error ? err.message : 'Sync failed'
+    // Top-level failure (auth error, category not found, network issue)
+    const message = err instanceof Error ? err.message : String(err)
+    console.error('[sync-from-square] Fatal error:', err)
     return NextResponse.json({ error: message }, { status: 500 })
   }
 }

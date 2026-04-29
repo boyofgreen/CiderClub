@@ -88,10 +88,12 @@ export default function AdminProductsPage() {
     const res = await fetch('/api/products/sync-from-square', { method: 'POST' })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
-      setSyncMessage(`Synced from Square: ${data.created} created, ${data.updated} updated, ${data.skipped} skipped (${data.total} total).`)
+      const parts = [`Synced from Square: ${data.created} created, ${data.updated} updated, ${data.skipped} skipped (${data.total} total).`]
+      if (data.errors?.length) parts.push(`Errors: ${(data.errors as string[]).join('; ')}`)
+      setSyncMessage(parts.join(' '))
       await refresh()
     } else {
-      setError(data.error ?? 'Sync failed')
+      setError(data.error ?? 'Sync failed — check server logs for details.')
     }
     setSyncing(false)
   }
