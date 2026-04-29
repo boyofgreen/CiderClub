@@ -82,6 +82,7 @@ function buildOrderBody(params: {
         type: 'PICKUP' as const,
         state: 'PROPOSED' as const,
         pickupDetails: {
+          scheduleType: 'ASAP' as const,
           note: `${params.quarterLabel} Cider Club quarterly pickup`,
           recipient: {
             displayName: params.memberName,
