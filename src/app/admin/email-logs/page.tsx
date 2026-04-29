@@ -31,11 +31,23 @@ export default async function EmailLogsPage({
   const types = ['WELCOME', 'ORDER_READY', 'ORDER_REMINDER', 'RECEIPT', 'PAYMENT_FAILED',
     'PICKUP_REMINDER', 'MAGIC_LINK', 'CAMPAIGN', 'CUSTOMIZATION_CLOSING']
 
+  const problemCount = await prisma.emailLog.count({
+    where: { status: { in: ['BOUNCED', 'COMPLAINED', 'FAILED'] } },
+  })
+
   const totalPages = Math.ceil(total / pageSize)
 
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold text-stone-900">Email Logs</h1>
+
+      {problemCount > 0 && (
+        <div className="flex items-center gap-3 rounded-xl bg-orange-50 border border-orange-200 px-4 py-3">
+          <span className="text-sm text-orange-700">
+            <strong>{problemCount} emails</strong> have delivery problems (bounced, spam complaint, or failed to send).
+          </span>
+        </div>
+      )}
 
       {/* Type filter */}
       <div className="flex flex-wrap gap-2">

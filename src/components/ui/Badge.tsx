@@ -54,6 +54,10 @@ export function StatusBadge({ status }: { status: string }) {
     ARCHIVED: { label: 'Archived', color: 'gray' },
     DRAFT: { label: 'Draft', color: 'gray' },
     SENT: { label: 'Sent', color: 'green' },
+    DELIVERED: { label: 'Delivered', color: 'green' },
+    DELAYED: { label: 'Delayed', color: 'yellow' },
+    BOUNCED: { label: 'Bounced', color: 'red' },
+    COMPLAINED: { label: 'Spam', color: 'red' },
     FAILED: { label: 'Failed', color: 'red' },
     CANCELLED_STATUS: { label: 'Cancelled', color: 'red' },
   }

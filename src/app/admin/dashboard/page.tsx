@@ -22,6 +22,7 @@ export default async function AdminDashboardPage() {
     recentOrders,
     upcomingPickup,
     failedOrders,
+    emailIssues,
   ] = await Promise.all([
     prisma.member.count({ where: { status: 'ACTIVE' } }),
     prisma.member.count({ where: { status: 'PAUSED' } }),
@@ -40,6 +41,7 @@ export default async function AdminDashboardPage() {
       include: { quarter: true },
     }),
     prisma.order.count({ where: { status: 'PAYMENT_FAILED' } }),
+    prisma.emailLog.count({ where: { status: { in: ['BOUNCED', 'COMPLAINED', 'FAILED'] } } }),
   ])
 
   // Calculate QRR from active members × plan prices
@@ -74,6 +76,17 @@ export default async function AdminDashboardPage() {
             <strong>{failedOrders} orders</strong> have payment failures.{' '}
             <Link href="/admin/orders?status=PAYMENT_FAILED" className="underline font-medium">
               Review now →
+            </Link>
+          </p>
+        </div>
+      )}
+      {emailIssues > 0 && (
+        <div className="flex items-center gap-3 rounded-xl bg-orange-50 border border-orange-200 px-4 py-3">
+          <AlertTriangle className="h-5 w-5 text-orange-500 shrink-0" />
+          <p className="text-sm text-orange-700">
+            <strong>{emailIssues} emails</strong> bounced, were marked as spam, or failed to send.{' '}
+            <Link href="/admin/email-logs" className="underline font-medium">
+              View email logs →
             </Link>
           </p>
         </div>
