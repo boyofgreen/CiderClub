@@ -68,24 +68,14 @@
 
   /* ── Saloon / public design styles ────────────────────── */
 
-  /* Paper grain texture background */
+  /* Subtle paper texture */
   .paper-bg {
     background-color: var(--paper);
     background-image:
-      radial-gradient(circle, rgba(201,161,74,0.06) 1px, transparent 1px),
-      radial-gradient(circle, rgba(201,161,74,0.04) 1px, transparent 1px);
-    background-size: 20px 20px, 37px 37px;
-    background-position: 0 0, 10px 10px;
-  }
-
-  /* Cream variant of paper bg */
-  .cream-bg {
-    background-color: var(--cream);
-    background-image:
-      radial-gradient(circle, rgba(201,161,74,0.05) 1px, transparent 1px),
-      radial-gradient(circle, rgba(201,161,74,0.03) 1px, transparent 1px);
-    background-size: 20px 20px, 37px 37px;
-    background-position: 0 0, 10px 10px;
+      radial-gradient(rgba(156,122,46,0.04) 1px, transparent 1px),
+      radial-gradient(rgba(156,122,46,0.03) 1px, transparent 1px);
+    background-size: 22px 22px, 13px 13px;
+    background-position: 0 0, 11px 11px;
   }
 
   /* Smallcaps utility — used for eyebrows, nav links, column headers */
@@ -158,28 +148,25 @@
     box-shadow: none;
   }
 
-  /* Ghost navy button — outlined, for secondary actions */
+  /* Ghost navy button — outlined, cream text, for use on dark backgrounds */
   .btn-ghost-navy {
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    gap: 8px;
-    padding: 13px 28px;
-    background-color: transparent;
-    color: var(--navy);
-    font-family: var(--font-sans, system-ui, sans-serif);
-    font-size: 11px;
-    font-weight: 700;
-    letter-spacing: 0.18em;
-    text-transform: uppercase;
-    border: 1.5px solid var(--navy);
-    cursor: pointer;
-    transition: background-color 0.15s, color 0.15s;
-  }
-  .btn-ghost-navy:hover {
-    background-color: var(--navy);
+    gap: 10px;
+    padding: 13px 26px;
+    background: transparent;
     color: var(--cream);
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    border: 1px solid var(--rule-strong);
+    cursor: pointer;
+    transition: background-color 0.15s;
   }
+  .btn-ghost-navy:hover { background-color: rgba(247,241,227,0.08); }
 
   /* Ghost cream button — outlined, for secondary actions on navy bg */
   .btn-ghost-cream {
@@ -204,28 +191,22 @@
     background-color: rgba(247,241,227,0.08);
   }
 
-  /* Saloon form field — paper bg, bottom-only gold border */
+  /* Saloon form field — cream bg, full border + heavier bottom gold border */
   .field-saloon {
     display: block;
     width: 100%;
     padding: 12px 14px;
-    background-color: var(--paper);
+    background: var(--cream);
+    border: 1px solid var(--rule);
+    border-bottom: 1.5px solid var(--gold-deep);
     color: var(--ink);
     font-family: var(--font-sans, system-ui, sans-serif);
     font-size: 15px;
-    border: none;
-    border-bottom: 1.5px solid var(--gold-deep);
     outline: none;
     transition: border-color 0.15s;
   }
-  .field-saloon::placeholder {
-    color: var(--ink-soft);
-    opacity: 0.5;
-  }
-  .field-saloon:focus {
-    border-bottom-color: var(--gold);
-    background-color: #fff;
-  }
+  .field-saloon::placeholder { color: rgba(74,67,52,0.45); }
+  .field-saloon:focus { border-color: var(--terracotta); }
 
   /* Saloon label — smallcaps above field */
   .label-saloon {
@@ -250,10 +231,75 @@
     margin-top: 4px;
   }
 
-  /* Gold hairline rule */
+  /* Gold hairline rule — gradient fade */
   .rule-gold {
-    border: none;
-    border-top: 1px solid var(--rule);
+    border: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--rule-strong) 20%, var(--rule-strong) 80%, transparent);
+  }
+
+  /* Flourish — centered text with rules on both sides */
+  .flourish {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    color: var(--gold);
+  }
+  .flourish::before, .flourish::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--rule-strong), transparent);
+  }
+  .flourish-dark::before, .flourish-dark::after {
+    background: linear-gradient(90deg, transparent, rgba(231,200,122,0.5), transparent);
+  }
+
+  /* Paper card — used in registration and content boxes */
+  .paper-card {
+    background: var(--paper);
+    border: 1px solid var(--rule);
+    box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 4px 14px rgba(26,37,64,0.06);
+  }
+
+  /* Star divider — ✦ ✦ ✦ between rules */
+  .star-divider {
+    display: inline-block;
+    color: var(--gold);
+    font-size: 10px;
+    letter-spacing: 8px;
+    padding: 0 8px;
+  }
+
+  /* Stamp badge — navy bg, gold text, smallcaps */
+  .stamp {
+    display: inline-block;
+    padding: 6px 14px;
+    background: var(--navy);
+    color: var(--gold);
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 10px;
+    letter-spacing: 0.28em;
+    font-weight: 700;
+    text-transform: uppercase;
+  }
+
+  /* Terracotta underline link */
+  .link-saloon {
+    color: var(--terracotta);
+    text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 1px;
+  }
+  .link-saloon:hover { color: var(--terracotta-deep); }
+
+  /* Diamond mark — rotated square */
+  .diamond {
+    display: inline-block;
+    transform: rotate(45deg);
+    width: 6px;
+    height: 6px;
+    background: currentColor;
   }
 
   /* Bottle frame — cream-deep bg with inset gold border */
