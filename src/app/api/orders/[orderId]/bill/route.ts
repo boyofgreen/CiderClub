@@ -12,7 +12,8 @@ export async function POST(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { method } = await req.json()
+  const body = await req.json().catch(() => ({}))
+  const { method } = body
   if (!['CARD_ON_FILE', 'PAYMENT_LINK', 'IN_PERSON'].includes(method)) {
     return NextResponse.json({ error: 'Invalid billing method' }, { status: 400 })
   }
