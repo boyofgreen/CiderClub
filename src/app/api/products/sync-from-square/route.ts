@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
 import { syncCiderClubProductsFromSquare } from '@/services/square/catalog'
 
 export async function POST() {
@@ -15,6 +16,12 @@ export async function POST() {
       { status: 500 }
     )
   }
+
+  // Backfill any products with null priceInCents (created before the pricing feature)
+  await prisma.product.updateMany({
+    where: { priceInCents: null as unknown as number },
+    data: { priceInCents: 2100 },
+  })
 
   try {
     const result = await syncCiderClubProductsFromSquare()
