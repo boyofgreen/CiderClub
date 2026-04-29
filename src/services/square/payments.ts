@@ -1,12 +1,23 @@
 import { squareClient } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
+import type { Square } from 'square'
+
+export interface LineItemParam {
+  productName: string
+  squareVariationId: string | null
+  quantity: number
+  unitPriceInCents: number
+}
 
 interface ChargeParams {
   orderId: string
   squareCustomerId: string
   squareCardId: string
-  amountInCents: number
-  note?: string
+  memberName: string
+  memberEmail: string
+  quarterLabel: string
+  discountPercent: number
+  items: LineItemParam[]
 }
 
 interface ChargeResult {
@@ -15,64 +26,149 @@ interface ChargeResult {
   status: string
 }
 
-/** Charge a saved card on file for an order */
+interface PaymentLinkParams {
+  orderId: string
+  memberEmail: string
+  memberName: string
+  quarterLabel: string
+  discountPercent: number
+  items: LineItemParam[]
+  redirectUrl?: string
+}
+
+/** Build the Square Order body shared by both card-on-file and payment-link flows */
+function buildOrderBody(params: {
+  locationId: string
+  squareCustomerId?: string
+  internalOrderId: string
+  memberName: string
+  memberEmail: string
+  quarterLabel: string
+  discountPercent: number
+  items: LineItemParam[]
+}): Square.Order {
+  const lineItems = params.items.map((item) => ({
+    // Link to catalog variation so Square shows the real product name on the receipt.
+    // basePriceMoney always overrides the catalog price so the charge matches our records.
+    ...(item.squareVariationId ? { catalogObjectId: item.squareVariationId } : {}),
+    name: item.productName,
+    quantity: String(item.quantity),
+    basePriceMoney: {
+      amount: BigInt(item.unitPriceInCents),
+      currency: 'USD' as const,
+    },
+  }))
+
+  const discounts =
+    params.discountPercent > 0
+      ? [
+          {
+            name: `${params.discountPercent}% member discount`,
+            type: 'FIXED_PERCENTAGE' as const,
+            percentage: String(params.discountPercent),
+            scope: 'ORDER' as const,
+          },
+        ]
+      : []
+
+  return {
+    locationId: params.locationId,
+    ...(params.squareCustomerId ? { customerId: params.squareCustomerId } : {}),
+    referenceId: params.internalOrderId,
+    lineItems,
+    discounts,
+    fulfillments: [
+      {
+        type: 'PICKUP' as const,
+        state: 'PROPOSED' as const,
+        pickupDetails: {
+          note: `${params.quarterLabel} Cider Club quarterly pickup`,
+          recipient: {
+            displayName: params.memberName,
+            emailAddress: params.memberEmail,
+          },
+        },
+      },
+    ],
+  }
+}
+
+/** Charge a saved card on file, creating a proper itemized Square Order first */
 export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResult> {
-  const response = await squareClient.payments.create({
+  const locationId = process.env.SQUARE_LOCATION_ID
+  if (!locationId) throw new Error('SQUARE_LOCATION_ID is not configured')
+
+  // 1. Create a Square Order with line items and pickup fulfillment
+  const orderResponse = await squareClient.orders.create({
+    idempotencyKey: `order-create-${params.orderId}`,
+    order: buildOrderBody({
+      locationId,
+      squareCustomerId: params.squareCustomerId,
+      internalOrderId: params.orderId,
+      memberName: params.memberName,
+      memberEmail: params.memberEmail,
+      quarterLabel: params.quarterLabel,
+      discountPercent: params.discountPercent,
+      items: params.items,
+    }),
+  })
+
+  const squareOrder = orderResponse.order
+  if (!squareOrder?.id) throw new Error('Square order creation failed — no order ID returned')
+
+  const squareOrderTotal = Number(squareOrder.totalMoney?.amount ?? 0)
+
+  // 2. Pay the Square Order
+  const paymentResponse = await squareClient.payments.create({
     idempotencyKey: `order-bill-${params.orderId}`,
     sourceId: params.squareCardId,
     customerId: params.squareCustomerId,
+    orderId: squareOrder.id,
     amountMoney: {
-      amount: BigInt(params.amountInCents),
+      amount: BigInt(squareOrderTotal),
       currency: 'USD',
     },
-    note: params.note ?? 'Cider Club quarterly order',
-    referenceId: params.orderId,
   })
 
-  const payment = response.payment
+  const payment = paymentResponse.payment
   if (!payment?.id) throw new Error('Square payment failed — no payment ID returned')
-
-  const paymentId = payment.id
-  const receiptUrl = payment.receiptUrl ?? null
-  const status = payment.status ?? 'UNKNOWN'
 
   await prisma.order.update({
     where: { id: params.orderId },
     data: {
       status: 'BILLED',
-      squarePaymentId: paymentId,
-      squareReceiptUrl: receiptUrl,
+      totalInCents: squareOrderTotal, // reconcile with Square's calculated total
+      squarePaymentId: payment.id,
+      squareReceiptUrl: payment.receiptUrl ?? null,
       billedAt: new Date(),
       billingMethod: 'CARD_ON_FILE',
     },
   })
 
-  return { paymentId, receiptUrl, status }
+  return { paymentId: payment.id, receiptUrl: payment.receiptUrl ?? null, status: payment.status ?? 'UNKNOWN' }
 }
 
-interface PaymentLinkParams {
-  orderId: string
-  amountInCents: number
-  memberEmail: string
-  description: string
-  redirectUrl?: string
-}
-
-/** Generate a Square payment link for online payment */
+/** Generate a Square payment link backed by a proper itemized order */
 export async function createPaymentLink(
   params: PaymentLinkParams
 ): Promise<{ url: string; linkId: string }> {
+  const locationId = process.env.SQUARE_LOCATION_ID
+  if (!locationId) throw new Error('SQUARE_LOCATION_ID is not configured')
+
+  const clubName = process.env.NEXT_PUBLIC_CLUB_NAME ?? 'Cider Club'
+
   const response = await squareClient.checkout.paymentLinks.create({
     idempotencyKey: `order-link-${params.orderId}`,
-    description: params.description,
-    quickPay: {
-      name: params.description,
-      priceMoney: {
-        amount: BigInt(params.amountInCents),
-        currency: 'USD',
-      },
-      locationId: process.env.SQUARE_LOCATION_ID!,
-    },
+    description: `${clubName} — ${params.quarterLabel} order`,
+    order: buildOrderBody({
+      locationId,
+      internalOrderId: params.orderId,
+      memberName: params.memberName,
+      memberEmail: params.memberEmail,
+      quarterLabel: params.quarterLabel,
+      discountPercent: params.discountPercent,
+      items: params.items,
+    }),
     checkoutOptions: {
       redirectUrl: params.redirectUrl,
     },

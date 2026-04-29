@@ -58,8 +58,16 @@ export async function billOrder(
         orderId,
         squareCustomerId: member.squareCustomerId,
         squareCardId: member.squareCardId,
-        amountInCents: order.totalInCents,
-        note: `${order.quarter.label} cider order for ${member.firstName} ${member.lastName}`,
+        memberName: `${member.firstName} ${member.lastName}`,
+        memberEmail: member.email,
+        quarterLabel: order.quarter.label,
+        discountPercent: member.plan.discountPercent ?? 0,
+        items: order.items.map((i) => ({
+          productName: i.product.name,
+          squareVariationId: i.product.squareVariationId,
+          quantity: i.quantity,
+          unitPriceInCents: i.unitPriceInCents || i.product.priceInCents || 2100,
+        })),
       })
 
       // Adjust Square inventory now that payment succeeded
@@ -111,12 +119,18 @@ export async function billOrder(
 
   if (method === 'PAYMENT_LINK') {
     try {
-      const clubName = process.env.NEXT_PUBLIC_CLUB_NAME ?? 'Cider Club'
       const result = await createPaymentLink({
         orderId,
-        amountInCents: order.totalInCents,
         memberEmail: member.email,
-        description: `${clubName} — ${order.quarter.label} order`,
+        memberName: `${member.firstName} ${member.lastName}`,
+        quarterLabel: order.quarter.label,
+        discountPercent: member.plan.discountPercent ?? 0,
+        items: order.items.map((i) => ({
+          productName: i.product.name,
+          squareVariationId: i.product.squareVariationId,
+          quantity: i.quantity,
+          unitPriceInCents: i.unitPriceInCents || i.product.priceInCents || 2100,
+        })),
         redirectUrl: `${appUrl}/member/orders/${orderId}`,
       })
 
