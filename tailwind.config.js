@@ -4,6 +4,7 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Admin / legacy brand scale (amber-orange) — keep so admin UI doesn't break
         brand: {
           50:  '#fef9f0',
           100: '#fdefd6',
@@ -17,9 +18,16 @@ module.exports = {
           900: '#78350f',
           950: '#451a03',
         },
+        // Public / saloon design tokens
+        navy:       { DEFAULT: '#1a2540', deep: '#131c33', soft: '#2a3654' },
+        gold:       { DEFAULT: '#c9a14a', bright: '#e7c87a', deep: '#9c7a2e' },
+        cream:      { DEFAULT: '#f7f1e3', deep: '#efe6cf', paper: '#fbf6e9' },
+        terracotta: { DEFAULT: '#b65a3c', deep: '#8a4128' },
+        ink:        { DEFAULT: '#1d1a14', soft: '#4a4334' },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
+        serif: ['var(--font-serif)', 'Georgia', 'serif'],
+        sans:  ['var(--font-sans)', 'system-ui', 'sans-serif'],
       },
     },
   },

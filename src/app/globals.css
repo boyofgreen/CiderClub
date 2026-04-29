@@ -4,12 +4,30 @@
 
 @layer base {
   :root {
+    /* Legacy admin tokens */
     --brand-primary: #d97706;
     --brand-dark: #78350f;
+
+    /* Saloon design tokens */
+    --navy:           #1a2540;
+    --navy-deep:      #131c33;
+    --navy-soft:      #2a3654;
+    --gold:           #c9a14a;
+    --gold-bright:    #e7c87a;
+    --gold-deep:      #9c7a2e;
+    --cream:          #f7f1e3;
+    --cream-deep:     #efe6cf;
+    --paper:          #fbf6e9;
+    --terracotta:     #b65a3c;
+    --terracotta-deep:#8a4128;
+    --ink:            #1d1a14;
+    --ink-soft:       #4a4334;
+    --rule:           rgba(201, 161, 74, 0.35);
+    --rule-strong:    rgba(201, 161, 74, 0.7);
   }
 
   html {
-    font-family: Inter, system-ui, sans-serif;
+    font-family: var(--font-sans, 'Inter', system-ui, sans-serif);
     -webkit-font-smoothing: antialiased;
   }
 
@@ -23,6 +41,7 @@
 }
 
 @layer components {
+  /* ── Admin / legacy styles ─────────────────────────────── */
   .btn-primary {
     @apply inline-flex items-center justify-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:opacity-50 disabled:cursor-not-allowed;
   }
@@ -45,5 +64,219 @@
 
   .label {
     @apply block text-sm font-medium text-stone-700 mb-1;
+  }
+
+  /* ── Saloon / public design styles ────────────────────── */
+
+  /* Paper grain texture background */
+  .paper-bg {
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(circle, rgba(201,161,74,0.06) 1px, transparent 1px),
+      radial-gradient(circle, rgba(201,161,74,0.04) 1px, transparent 1px);
+    background-size: 20px 20px, 37px 37px;
+    background-position: 0 0, 10px 10px;
+  }
+
+  /* Cream variant of paper bg */
+  .cream-bg {
+    background-color: var(--cream);
+    background-image:
+      radial-gradient(circle, rgba(201,161,74,0.05) 1px, transparent 1px),
+      radial-gradient(circle, rgba(201,161,74,0.03) 1px, transparent 1px);
+    background-size: 20px 20px, 37px 37px;
+    background-position: 0 0, 10px 10px;
+  }
+
+  /* Smallcaps utility — used for eyebrows, nav links, column headers */
+  .smallcaps {
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  /* Saloon primary button — terracotta, square corners, flat hard shadow */
+  .btn-saloon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background-color: var(--terracotta);
+    color: var(--cream);
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border: none;
+    box-shadow: 0 2px 0 var(--terracotta-deep);
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+  }
+  .btn-saloon:hover {
+    background-color: var(--terracotta-deep);
+    transform: translateY(-1px);
+  }
+  .btn-saloon:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+  .btn-saloon:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    transform: none;
+  }
+
+  /* Gold CTA button — for use on navy backgrounds */
+  .btn-gold {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 14px 28px;
+    background-color: var(--gold);
+    color: var(--navy-deep);
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border: none;
+    box-shadow: 0 2px 0 var(--gold-deep);
+    cursor: pointer;
+    transition: background-color 0.15s, transform 0.1s;
+  }
+  .btn-gold:hover {
+    background-color: var(--gold-bright);
+    transform: translateY(-1px);
+  }
+  .btn-gold:active {
+    transform: translateY(0);
+    box-shadow: none;
+  }
+
+  /* Ghost navy button — outlined, for secondary actions */
+  .btn-ghost-navy {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 28px;
+    background-color: transparent;
+    color: var(--navy);
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border: 1.5px solid var(--navy);
+    cursor: pointer;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .btn-ghost-navy:hover {
+    background-color: var(--navy);
+    color: var(--cream);
+  }
+
+  /* Ghost cream button — outlined, for secondary actions on navy bg */
+  .btn-ghost-cream {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 28px;
+    background-color: transparent;
+    color: var(--cream);
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border: 1.5px solid rgba(247,241,227,0.5);
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+  .btn-ghost-cream:hover {
+    border-color: var(--cream);
+    background-color: rgba(247,241,227,0.08);
+  }
+
+  /* Saloon form field — paper bg, bottom-only gold border */
+  .field-saloon {
+    display: block;
+    width: 100%;
+    padding: 12px 14px;
+    background-color: var(--paper);
+    color: var(--ink);
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 15px;
+    border: none;
+    border-bottom: 1.5px solid var(--gold-deep);
+    outline: none;
+    transition: border-color 0.15s;
+  }
+  .field-saloon::placeholder {
+    color: var(--ink-soft);
+    opacity: 0.5;
+  }
+  .field-saloon:focus {
+    border-bottom-color: var(--gold);
+    background-color: #fff;
+  }
+
+  /* Saloon label — smallcaps above field */
+  .label-saloon {
+    display: block;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 6px;
+  }
+
+  /* Field hint — italic, subdued */
+  .field-hint {
+    display: block;
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 11px;
+    font-style: italic;
+    color: var(--ink-soft);
+    opacity: 0.7;
+    margin-top: 4px;
+  }
+
+  /* Gold hairline rule */
+  .rule-gold {
+    border: none;
+    border-top: 1px solid var(--rule);
+  }
+
+  /* Bottle frame — cream-deep bg with inset gold border */
+  .bottle-frame {
+    position: relative;
+    background-color: var(--cream-deep);
+    border: 1px solid var(--gold);
+    overflow: hidden;
+  }
+  .bottle-frame::after {
+    content: '';
+    position: absolute;
+    inset: 6px;
+    border: 1px solid var(--rule);
+    pointer-events: none;
+  }
+
+  /* Star-field hero background */
+  .hero-bg {
+    background-color: var(--navy);
+    background-image:
+      radial-gradient(circle at 20% 40%, rgba(201,161,74,0.08) 0%, transparent 40%),
+      radial-gradient(circle at 80% 20%, rgba(201,161,74,0.05) 0%, transparent 35%),
+      radial-gradient(circle at 60% 80%, rgba(201,161,74,0.06) 0%, transparent 30%);
   }
 }
