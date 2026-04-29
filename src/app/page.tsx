@@ -1,253 +1,486 @@
 import Link from 'next/link'
-import { Beer, Package, CreditCard, Mail, CheckCircle, ArrowRight, Users, Star } from 'lucide-react'
+import Image from 'next/image'
+import { prisma } from '@/lib/prisma'
 
-const clubName = process.env.NEXT_PUBLIC_CLUB_NAME ?? 'Cider Club'
+// Hardcoded tier copy — names/perks are final per design handoff
+const TIER_COPY = [
+  {
+    level: 'Level I',
+    name: 'The Pickers',
+    bottles: 3,
+    blurb: '"A fine place to start — three of our best, hand-picked."',
+    perks: [
+      'Member discount: 10% off bottles',
+      '5% off everything else',
+      'One free pour each visit',
+      'Pickup party invite',
+    ],
+  },
+  {
+    level: 'Level II',
+    name: 'The Pressers',
+    bottles: 6,
+    blurb: '"Our most-loved tier — six bottles, open bar, and a front-row seat."',
+    featured: true,
+    perks: [
+      'Member discount: 15% off bottles',
+      '5% off everything else',
+      'Free pour for you + a guest',
+      'Open-bar pickup parties',
+      'Early access to new releases',
+      'Pickup party invite',
+    ],
+  },
+  {
+    level: 'Level III',
+    name: 'Cellar Crew',
+    bottles: 9,
+    blurb: '"For the devoted — nine bottles and first pick of every batch."',
+    perks: [
+      'Member discount: 20% off bottles',
+      '10% off everything else',
+      'Free pour for you + a guest',
+      'Open-bar pickup parties',
+      'First access to limited releases',
+      'Free barrel-room reservation',
+    ],
+  },
+]
+
+const LINEUP_FALLBACK = [
+  { name: 'Cherry Bloom',      style: 'Dry · Sparkling',      abv: 7.6, img: '/brand/cherry.jpg' },
+  { name: 'Pineapple Paradise', style: 'Sweet · Tropical',    abv: 5.8, img: '/brand/pineapple.jpg' },
+  { name: 'Lemongrass Lush',   style: 'Botanical · Bright',   abv: 6.4, img: '/brand/lemongrass.jpg' },
+  { name: 'Black Bart',        style: "Gentleman's Cider",    abv: 6.8, img: '/brand/bottles-shelf.jpg' },
+]
+
+const IMG_KEYWORDS: [string, string][] = [
+  ['cherry', '/brand/cherry.jpg'],
+  ['pineapple', '/brand/pineapple.jpg'],
+  ['lemon', '/brand/lemongrass.jpg'],
+  ['lush', '/brand/lemongrass.jpg'],
+]
+const FALLBACK_IMGS = ['/brand/cherry.jpg', '/brand/pineapple.jpg', '/brand/lemongrass.jpg', '/brand/bottles-shelf.jpg']
+
+async function getPageData() {
+  try {
+    const [plans, products, memberCount] = await Promise.all([
+      prisma.plan.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' } }),
+      prisma.product.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' }, take: 4 }),
+      prisma.member.count({ where: { status: 'ACTIVE' } }),
+    ])
+    return { plans, products, memberCount }
+  } catch {
+    return { plans: [], products: [], memberCount: 142 }
+  }
+}
 
 export default async function LandingPage() {
-  // Fetch active plans for pricing section
-  let plans: Array<{
-    id: string
-    name: string
-    description: string | null
-    packsPerOrder: number
-    priceInCents: number
-  }> = []
+  const { plans, products, memberCount } = await getPageData()
 
-  try {
-    const { prisma } = await import('@/lib/prisma')
-    plans = await prisma.plan.findMany({
-      where: { isActive: true },
-      orderBy: { sortOrder: 'asc' },
-    })
-  } catch {
-    // Plans will be empty if DB not yet set up
-  }
+  const lineup = products.length > 0
+    ? products.map((p, i) => {
+        const lower = p.name.toLowerCase()
+        const img = IMG_KEYWORDS.find(([k]) => lower.includes(k))?.[1] ?? FALLBACK_IMGS[i % 4]
+        return { name: p.name, style: [p.style].filter(Boolean).join(' · '), abv: p.abv, img }
+      })
+    : LINEUP_FALLBACK
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Nav */}
-      <header className="border-b border-stone-100 bg-white/95 backdrop-blur sticky top-0 z-20">
-        <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6">
-          <div className="flex items-center gap-2">
-            <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
-              <Beer className="h-4 w-4 text-white" />
+    <div style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+
+      {/* ── NAV ─────────────────────────────────────────────────────── */}
+      <header style={{ backgroundColor: 'var(--cream-deep)', borderBottom: '1px solid var(--rule)', position: 'sticky', top: 0, zIndex: 30 }}>
+        <div className="mx-auto flex items-center justify-between" style={{ maxWidth: 1280, padding: '18px 56px' }}>
+          <Link href="/" className="flex items-center gap-3" style={{ textDecoration: 'none' }}>
+            <Image src="/brand/logo.png" alt="Hill Country Cider House" width={48} height={56} style={{ objectFit: 'contain', width: 48, height: 'auto' }} />
+            <div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 18, color: 'var(--ink)', lineHeight: 1.1 }}>
+                Hill Country
+              </div>
+              <div style={{ fontSize: 9, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)' }}>
+                CIDER HOUSE
+              </div>
             </div>
-            <span className="font-bold text-stone-900">{clubName}</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <Link
-              href="/magic/request"
-              className="text-sm font-medium text-stone-600 hover:text-stone-900"
-            >
-              Member Login
+          </Link>
+
+          <nav className="hidden lg:flex items-center" style={{ gap: 32 }}>
+            {['TASTING ROOM', 'APPLE TREES', 'ABOUT', 'CONTACT'].map((label) => (
+              <a key={label} href="https://www.hillcountryciderhouse.com" target="_blank" rel="noopener noreferrer"
+                style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-soft)', textDecoration: 'none' }}>
+                {label}
+              </a>
+            ))}
+            <Link href="/register"
+              style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--navy)', textDecoration: 'none', borderBottom: '2px solid var(--gold)', paddingBottom: 2 }}>
+              JOIN THE CLUB
             </Link>
-            <Link
-              href="/register"
-              className="btn-primary text-sm"
-            >
-              Join the Club
+            <Link href="/magic/request"
+              style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-soft)', opacity: 0.65, textDecoration: 'none' }}>
+              MEMBER SIGN-IN
             </Link>
-          </div>
+          </nav>
         </div>
       </header>
 
-      {/* Hero */}
-      <section className="relative overflow-hidden bg-gradient-to-br from-brand-950 via-brand-900 to-brand-800 py-24 text-center">
-        <div className="absolute inset-0 opacity-10"
-          style={{ backgroundImage: 'radial-gradient(circle at 25% 50%, #fbbf24 0%, transparent 50%), radial-gradient(circle at 75% 20%, #f59e0b 0%, transparent 40%)' }}
-        />
-        <div className="relative mx-auto max-w-3xl px-4">
-          <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-brand-800/50 px-4 py-1.5 text-sm font-medium text-amber-300 ring-1 ring-amber-500/30">
-            <Star className="h-3.5 w-3.5" />
-            Quarterly Craft Cider Club
+      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      <section className="hero-bg" style={{ padding: '100px 56px 120px' }}>
+        <div className="mx-auto" style={{ maxWidth: 1280, display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 80, alignItems: 'center' }}>
+
+          {/* Left */}
+          <div>
+            <div className="flex items-center gap-4" style={{ marginBottom: 32 }}>
+              <div style={{ height: 1, width: 40, backgroundColor: 'var(--gold)', flexShrink: 0 }} />
+              <span style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)' }}>
+                A QUARTERLY CIDER CLUB ✦ COMFORT, TEXAS
+              </span>
+            </div>
+
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(56px,6vw,92px)', fontWeight: 400, lineHeight: 0.96, letterSpacing: '-0.01em', color: 'var(--cream)', margin: '0 0 32px' }}>
+              Pull up<br />a chair.<br />
+              <em style={{ color: 'var(--gold-bright)' }}>You're family</em><br />
+              now.
+            </h1>
+
+            <p style={{ fontSize: 19, lineHeight: 1.55, color: 'rgba(247,241,227,0.78)', maxWidth: 540, margin: '0 0 40px' }}>
+              Four times a year, we set aside a small batch of our best ciders for the people who make this place feel like home. Pick the bottles you love. Bring a friend. We'll keep the porch light on.
+            </p>
+
+            <div className="flex flex-wrap items-center gap-4" style={{ marginBottom: 48 }}>
+              <Link href="/register" className="btn-gold">Join the Club →</Link>
+              <a href="#lineup" className="btn-ghost-navy">View the Lineup</a>
+            </div>
+
+            <div style={{ borderTop: '1px solid var(--rule)', paddingTop: 32 }}>
+              <div className="flex items-start gap-12 flex-wrap">
+                {[
+                  { value: String(memberCount || 142), label: 'Members' },
+                  { value: '23', label: 'Ciders Released' },
+                  { value: '4×', label: 'Pickup Parties / yr' },
+                ].map(({ value, label }) => (
+                  <div key={label}>
+                    <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 36, color: 'var(--gold-bright)', lineHeight: 1 }}>
+                      {value}
+                    </div>
+                    <div style={{ fontSize: 10, letterSpacing: '0.18em', fontWeight: 600, textTransform: 'uppercase', color: 'rgba(247,241,227,0.5)', marginTop: 6 }}>
+                      {label}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
-          <h1 className="text-4xl font-bold tracking-tight text-white sm:text-5xl lg:text-6xl">
-            Your Favorite Ciders,<br />
-            <span className="text-amber-400">Delivered Every Quarter</span>
-          </h1>
-          <p className="mt-6 text-lg text-amber-100/80 max-w-xl mx-auto">
-            Join {clubName} and receive a curated selection of our finest small-batch ciders
-            four times a year. Customize every box to match your taste.
-          </p>
-          <div className="mt-10 flex flex-col items-center gap-4 sm:flex-row sm:justify-center">
-            <Link href="/register" className="btn-primary px-8 py-3 text-base">
-              Join the Club <ArrowRight className="h-4 w-4" />
-            </Link>
-            <a href="#plans" className="text-sm font-medium text-amber-200 hover:text-white transition">
-              View Plans →
-            </a>
+
+          {/* Right — bottle collage */}
+          <div className="relative hidden lg:block" style={{ height: 520 }}>
+            {/* Cherry Bloom */}
+            <div style={{ position: 'absolute', bottom: 0, left: 20, transform: 'rotate(3deg)', width: 260 }}>
+              <div className="bottle-frame" style={{ width: 260, height: 340, position: 'relative' }}>
+                <Image src="/brand/cherry.jpg" alt="Cherry Bloom" fill sizes="260px" style={{ objectFit: 'cover' }} />
+              </div>
+              <div style={{ backgroundColor: 'var(--cream)', padding: '6px 12px', marginTop: 8, display: 'inline-block' }}>
+                <span style={{ fontSize: 11, fontFamily: 'var(--font-serif)', fontStyle: 'italic', color: 'var(--ink)' }}>Cherry Bloom · 7.6%</span>
+              </div>
+            </div>
+
+            {/* Pineapple Paradise */}
+            <div style={{ position: 'absolute', top: 30, right: 0, transform: 'rotate(-4deg)', width: 240 }}>
+              <div className="bottle-frame" style={{ width: 240, height: 220, position: 'relative' }}>
+                <Image src="/brand/pineapple.jpg" alt="Pineapple Paradise" fill sizes="240px" style={{ objectFit: 'cover' }} />
+              </div>
+              <div style={{ backgroundColor: 'var(--terracotta)', padding: '6px 12px', marginTop: 8, display: 'inline-block' }}>
+                <span style={{ fontSize: 11, fontFamily: 'var(--font-serif)', fontStyle: 'italic', color: 'var(--cream)' }}>Pineapple Paradise</span>
+              </div>
+            </div>
+
+            {/* Members-only stamp */}
+            <div style={{
+              position: 'absolute', bottom: 80, right: 10,
+              width: 130, height: 130, borderRadius: '50%',
+              border: '2px solid var(--gold)',
+              transform: 'rotate(-8deg)',
+              backgroundColor: 'rgba(26,37,64,0.88)',
+              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+              textAlign: 'center', gap: 2,
+            }}>
+              <div style={{ fontSize: 8, letterSpacing: '0.2em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', lineHeight: 1.5 }}>
+                MEMBERS<br />ONLY
+              </div>
+              <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 28, color: 'var(--gold-bright)', lineHeight: 1 }}>
+                20%
+              </div>
+              <div style={{ fontSize: 8, letterSpacing: '0.2em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)' }}>
+                OFF BOTTLES
+              </div>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* How it works */}
-      <section className="py-20 bg-brand-50">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-stone-900">How It Works</h2>
-            <p className="mt-3 text-stone-600">Simple, flexible, and delicious</p>
+      {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
+      <section style={{ backgroundColor: 'var(--cream)', padding: '120px 56px' }}>
+        <div className="mx-auto" style={{ maxWidth: 1280 }}>
+          <div className="text-center" style={{ marginBottom: 64 }}>
+            <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--terracotta)', marginBottom: 16 }}>
+              HOW IT WORKS
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(40px,4vw,64px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--ink)', margin: '0 0 24px' }}>
+              <em>Four seasons,</em> four good reasons
+            </h2>
+            <div className="flex items-center justify-center gap-3">
+              <div className="rule-gold" style={{ width: 60 }} />
+              <span className="star-divider">✦ ✦ ✦</span>
+              <div className="rule-gold" style={{ width: 60 }} />
+            </div>
           </div>
-          <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+
+          {/* 4-col grid — 1px gold gap creates divider lines */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 1, backgroundColor: 'var(--rule)' }}>
             {[
-              {
-                icon: Users,
-                step: '1',
-                title: 'Join the Club',
-                desc: 'Pick your plan size and sign up. No account password needed.',
-              },
-              {
-                icon: Mail,
-                step: '2',
-                title: 'Get Notified',
-                desc: "Each quarter we'll email you when your order is ready to customize.",
-              },
-              {
-                icon: Package,
-                step: '3',
-                title: 'Choose Your Ciders',
-                desc: 'Click your personal link and swap in your favorites from our lineup.',
-              },
-              {
-                icon: CreditCard,
-                step: '4',
-                title: 'Pick Up & Pay',
-                desc: "Pick up at our quarterly event. We'll charge your card at pickup.",
-              },
-            ].map((item) => (
-              <div key={item.step} className="relative text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-brand-600 shadow-lg">
-                  <item.icon className="h-6 w-6 text-white" />
+              { roman: 'I.', title: 'Saddle Up', body: 'Pick your tier, tell us a bit about yourself, and drop a card on file. Takes about two minutes.' },
+              { roman: 'II.', title: 'We Holler', body: "When the new quarter opens, you'll get an email with a personal link to your order." },
+              { roman: 'III.', title: 'Pick Your Bottles', body: 'Swap in your favorites from the seasonal lineup. Or keep our picks — your call, always.' },
+              { roman: 'IV.', title: 'Come On Down', body: 'Pick up at our quarterly party. We charge your card on file and hand you your haul.' },
+            ].map(({ roman, title, body }) => (
+              <div key={roman} style={{ backgroundColor: 'var(--cream)', padding: '48px 36px' }}>
+                <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 56, fontWeight: 400, color: 'var(--gold-deep)', lineHeight: 1, marginBottom: 20 }}>
+                  {roman}
                 </div>
-                <div className="absolute -top-2 right-[calc(50%-28px)] translate-x-full h-5 w-5 rounded-full bg-brand-200 text-xs font-bold text-brand-800 flex items-center justify-center">
-                  {item.step}
-                </div>
-                <h3 className="font-semibold text-stone-900">{item.title}</h3>
-                <p className="mt-1.5 text-sm text-stone-600">{item.desc}</p>
+                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 400, color: 'var(--ink)', margin: '0 0 12px' }}>
+                  {title}
+                </h3>
+                <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--ink-soft)', margin: 0 }}>
+                  {body}
+                </p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Plans */}
-      <section id="plans" className="py-20">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-stone-900">Club Plans</h2>
-            <p className="mt-3 text-stone-600">Billed quarterly. Cancel or pause anytime.</p>
+      {/* ── TIER CARDS ───────────────────────────────────────────────── */}
+      <section style={{ backgroundColor: 'var(--cream-deep)', padding: '120px 56px' }}>
+        <div className="mx-auto" style={{ maxWidth: 1280 }}>
+          <div className="text-center" style={{ marginBottom: 64 }}>
+            <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-soft)', marginBottom: 16 }}>
+              THREE TIERS
+            </div>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(40px,4vw,64px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--ink)', margin: '0 0 16px' }}>
+              Choose your <em>seat at the table</em>
+            </h2>
+            <p style={{ fontSize: 15, lineHeight: 1.55, color: 'var(--ink-soft)', margin: 0 }}>
+              Billed quarterly when you pick up. Pause whenever you'd like. Cancel any time, no hard feelings.
+            </p>
           </div>
 
-          {plans.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {plans.map((plan, i) => (
-                <div
-                  key={plan.id}
-                  className={`relative rounded-2xl border p-8 ${
-                    i === 1
-                      ? 'border-brand-500 bg-brand-600 text-white shadow-xl'
-                      : 'border-stone-200 bg-white shadow-sm'
-                  }`}
-                >
-                  {i === 1 && (
-                    <div className="absolute -top-3 left-1/2 -translate-x-1/2 rounded-full bg-amber-400 px-3 py-0.5 text-xs font-bold text-amber-900">
-                      Most Popular
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 28, alignItems: 'start' }}>
+            {TIER_COPY.map((tier, i) => {
+              const plan = plans[i] ?? null
+              const featured = !!tier.featured
+              const fallbackPrices = ['$65', '$120', '$170']
+              return (
+                <div key={tier.level} style={{ position: 'relative', paddingTop: featured ? 16 : 0 }}>
+                  {featured && (
+                    <div style={{
+                      position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
+                      backgroundColor: 'var(--terracotta)', color: 'var(--cream)',
+                      fontSize: 10, letterSpacing: '0.18em', fontWeight: 700, textTransform: 'uppercase',
+                      padding: '5px 18px', whiteSpace: 'nowrap',
+                    }}>
+                      ★ Most Picked ★
                     </div>
                   )}
-                  <h3 className={`text-xl font-bold ${i === 1 ? 'text-white' : 'text-stone-900'}`}>
-                    {plan.name}
-                  </h3>
-                  {plan.description && (
-                    <p className={`mt-2 text-sm ${i === 1 ? 'text-amber-100' : 'text-stone-500'}`}>
-                      {plan.description}
-                    </p>
-                  )}
-                  <div className="mt-4">
-                    <span className={`text-4xl font-bold ${i === 1 ? 'text-white' : 'text-stone-900'}`}>
-                      ${(plan.priceInCents / 100).toFixed(0)}
-                    </span>
-                    <span className={`text-sm ml-1 ${i === 1 ? 'text-amber-200' : 'text-stone-500'}`}>
-                      / quarter
-                    </span>
+
+                  <div style={{
+                    backgroundColor: featured ? 'var(--navy)' : 'var(--paper)',
+                    border: `1px solid ${featured ? 'var(--gold)' : 'var(--rule)'}`,
+                    boxShadow: featured
+                      ? '0 30px 60px rgba(26,37,64,0.25)'
+                      : '0 1px 0 rgba(255,255,255,0.6) inset, 0 4px 14px rgba(26,37,64,0.06)',
+                  }}>
+                    {/* Level + name + bottles */}
+                    <div style={{ padding: '36px 32px 28px', textAlign: 'center', borderBottom: `1px solid ${featured ? 'var(--rule-strong)' : 'var(--rule)'}` }}>
+                      <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 18, color: featured ? 'var(--gold)' : 'var(--gold-deep)', marginBottom: 8 }}>
+                        {tier.level}
+                      </div>
+                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 38, fontWeight: 400, color: featured ? 'var(--cream)' : 'var(--ink)', margin: '0 0 12px' }}>
+                        {tier.name}
+                      </h3>
+                      <div style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: featured ? 'rgba(247,241,227,0.5)' : 'var(--ink-soft)' }}>
+                        {tier.bottles} BOTTLES · EVERY QUARTER
+                      </div>
+                    </div>
+
+                    {/* Price */}
+                    <div style={{ padding: '28px 32px', textAlign: 'center', borderBottom: `1px solid ${featured ? 'var(--rule-strong)' : 'var(--rule)'}` }}>
+                      <div className="flex items-baseline justify-center" style={{ gap: 4 }}>
+                        <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 64, fontWeight: 400, color: featured ? 'var(--gold-bright)' : 'var(--ink)', lineHeight: 1 }}>
+                          {plan ? `$${Math.round(plan.priceInCents / 100)}` : fallbackPrices[i]}
+                        </span>
+                        <span style={{ fontSize: 14, color: featured ? 'rgba(247,241,227,0.5)' : 'var(--ink-soft)' }}>/ quarter</span>
+                      </div>
+                      <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 14, color: featured ? 'rgba(247,241,227,0.7)' : 'var(--ink-soft)', margin: '12px 0 0' }}>
+                        {tier.blurb}
+                      </p>
+                    </div>
+
+                    {/* Perks + CTA */}
+                    <div style={{ padding: '24px 32px 32px' }}>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                        {tier.perks.map((perk) => (
+                          <li key={perk} className="flex items-start gap-2.5" style={{ fontSize: 14, color: featured ? 'rgba(247,241,227,0.82)' : 'var(--ink-soft)' }}>
+                            <span style={{ color: featured ? 'var(--gold-bright)' : 'var(--terracotta)', marginTop: 2, flexShrink: 0, fontSize: 10 }}>✦</span>
+                            {perk}
+                          </li>
+                        ))}
+                      </ul>
+                      <Link
+                        href={plan ? `/register?plan=${plan.id}` : '/register'}
+                        style={{ display: 'block', textAlign: 'center' }}
+                        className={featured ? 'btn-gold' : 'btn-saloon'}
+                      >
+                        Saddle Up →
+                      </Link>
+                    </div>
                   </div>
-                  <ul className="mt-6 space-y-2">
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className={`h-4 w-4 shrink-0 ${i === 1 ? 'text-amber-300' : 'text-green-500'}`} />
-                      <span className={i === 1 ? 'text-amber-100' : 'text-stone-700'}>
-                        {plan.packsPerOrder} bottles per quarter
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className={`h-4 w-4 shrink-0 ${i === 1 ? 'text-amber-300' : 'text-green-500'}`} />
-                      <span className={i === 1 ? 'text-amber-100' : 'text-stone-700'}>
-                        Customize every order
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className={`h-4 w-4 shrink-0 ${i === 1 ? 'text-amber-300' : 'text-green-500'}`} />
-                      <span className={i === 1 ? 'text-amber-100' : 'text-stone-700'}>
-                        Pause or cancel anytime
-                      </span>
-                    </li>
-                    <li className="flex items-center gap-2 text-sm">
-                      <CheckCircle className={`h-4 w-4 shrink-0 ${i === 1 ? 'text-amber-300' : 'text-green-500'}`} />
-                      <span className={i === 1 ? 'text-amber-100' : 'text-stone-700'}>
-                        Early access to seasonal releases
-                      </span>
-                    </li>
-                  </ul>
-                  <Link
-                    href={`/register?plan=${plan.id}`}
-                    className={`mt-8 block rounded-xl py-3 text-center text-sm font-semibold transition ${
-                      i === 1
-                        ? 'bg-white text-brand-700 hover:bg-amber-50'
-                        : 'bg-brand-600 text-white hover:bg-brand-700'
-                    }`}
-                  >
-                    Get Started →
-                  </Link>
                 </div>
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-12 text-stone-500">
-              <p>Club plans coming soon. Check back shortly!</p>
-            </div>
-          )}
-        </div>
-      </section>
+              )
+            })}
+          </div>
 
-      {/* CTA */}
-      <section className="py-20 bg-stone-900">
-        <div className="mx-auto max-w-2xl px-4 text-center">
-          <h2 className="text-3xl font-bold text-white">Ready to Join?</h2>
-          <p className="mt-4 text-stone-400">
-            Sign up today — no passwords, no hassle. Just great cider delivered to you every quarter.
-          </p>
-          <Link href="/register" className="mt-8 inline-flex btn-primary px-8 py-3 text-base">
-            Join {clubName} <ArrowRight className="h-4 w-4" />
-          </Link>
-          <p className="mt-4 text-xs text-stone-600">
+          <p className="text-center" style={{ marginTop: 40, fontSize: 14, color: 'var(--ink-soft)' }}>
             Already a member?{' '}
-            <Link href="/magic/request" className="text-stone-400 underline hover:text-white">
-              Get your access link
-            </Link>
+            <Link href="/magic/request" className="link-saloon">Get your access link →</Link>
           </p>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="border-t border-stone-800 bg-stone-900 py-8">
-        <div className="mx-auto max-w-6xl px-4 sm:px-6">
-          <div className="flex flex-col items-center justify-between gap-4 sm:flex-row">
-            <div className="flex items-center gap-2">
-              <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-brand-600">
-                <Beer className="h-3.5 w-3.5 text-white" />
+      {/* ── LINEUP ───────────────────────────────────────────────────── */}
+      <section id="lineup" className="hero-bg" style={{ padding: '120px 56px' }}>
+        <div className="mx-auto" style={{ maxWidth: 1280 }}>
+          <div className="flex items-end justify-between flex-wrap gap-8" style={{ borderBottom: '1px solid var(--rule)', paddingBottom: 32, marginBottom: 48 }}>
+            <div>
+              <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 12 }}>
+                THIS QUARTER'S POUR
               </div>
-              <span className="text-sm font-semibold text-stone-300">{clubName}</span>
+              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(40px,4vw,64px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--cream)', margin: 0 }}>
+                Spring '26 <em>Lineup</em>
+              </h2>
             </div>
-            <p className="text-xs text-stone-600">
-              &copy; {new Date().getFullYear()} {clubName}. All rights reserved.
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(247,241,227,0.6)', maxWidth: 300, margin: 0, textAlign: 'right' }}>
+              Eight ciders are on tap this quarter. Members can mix any combination — defaults are set, but the choice is always yours.
             </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
+            {lineup.map((bottle) => (
+              <div key={bottle.name}>
+                <div className="bottle-frame" style={{ position: 'relative', paddingBottom: '133%' }}>
+                  <Image src={bottle.img} alt={bottle.name} fill sizes="(max-width:768px) 50vw, 25vw" style={{ objectFit: 'cover' }} />
+                </div>
+                <div style={{ marginTop: 20 }}>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 24, color: 'var(--cream)' }}>
+                    {bottle.name}
+                  </div>
+                  <div style={{ fontSize: 9, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', marginTop: 4 }}>
+                    {bottle.style}{bottle.abv ? ` · ${bottle.abv}%` : ''}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOUNDER LETTER ───────────────────────────────────────────── */}
+      <section style={{ backgroundColor: 'var(--cream)', padding: '120px 56px' }}>
+        <div className="mx-auto text-center" style={{ maxWidth: 720 }}>
+          <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 80, color: 'var(--gold)', lineHeight: 0.8, marginBottom: 24 }}>
+            "
+          </div>
+          <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 32, lineHeight: 1.4, color: 'var(--ink)', margin: 0 }}>
+            We started pressing apples in our backyard with a hand crank and a stubborn streak. Eight years on, this club is how we say thank you to the folks who showed up early — and stayed.
+          </p>
+          <div style={{ height: 1, width: 80, backgroundColor: 'var(--gold)', margin: '48px auto 24px' }} />
+          <div style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--terracotta)' }}>
+            — THE FOUNDERS, COMFORT TX
+          </div>
+        </div>
+      </section>
+
+      {/* ── FOOTER ───────────────────────────────────────────────────── */}
+      <footer style={{ backgroundColor: 'var(--navy-deep)', padding: '80px 56px 40px' }}>
+        <div className="mx-auto" style={{ maxWidth: 1280 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 48, paddingBottom: 48, borderBottom: '1px solid var(--rule)' }}>
+            {/* Col 1 */}
+            <div>
+              <div style={{ marginBottom: 20 }}>
+                <Image src="/brand/logo.png" alt="Hill Country Cider House" width={70} height={82} style={{ objectFit: 'contain', width: 70, height: 'auto' }} />
+              </div>
+              <p style={{ fontSize: 13, lineHeight: 1.6, color: 'rgba(247,241,227,0.5)', margin: 0 }}>
+                Small-batch craft cider, pressed and bottled in the Texas Hill Country since 2020.
+              </p>
+            </div>
+
+            {/* Link cols */}
+            {([
+              {
+                heading: 'VISIT',
+                items: [
+                  { label: 'Tasting Room', href: 'https://www.hillcountryciderhouse.com' },
+                  { label: 'Saturdays in Comfort', href: null },
+                  { label: 'Apple Trees', href: 'https://www.hillcountryciderhouse.com' },
+                  { label: 'Supper Club', href: null },
+                ],
+              },
+              {
+                heading: 'CLUB',
+                items: [
+                  { label: 'Join the Club', href: '/register' },
+                  { label: 'Member Sign-in', href: '/magic/request' },
+                  { label: 'FAQs', href: null },
+                  { label: 'Pickup Schedule', href: null },
+                ],
+              },
+              {
+                heading: 'REACH US',
+                items: [
+                  { label: 'hello@hillcountryciderhouse.com', href: 'mailto:hello@hillcountryciderhouse.com' },
+                  { label: '(830) 344-0441', href: 'tel:+18303440441' },
+                  { label: 'Comfort, Texas', href: null },
+                  { label: '@hillcountrycider', href: null },
+                ],
+              },
+            ] as const).map(({ heading, items }) => (
+              <div key={heading}>
+                <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold-bright)', marginBottom: 20 }}>
+                  {heading}
+                </div>
+                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
+                  {items.map(({ label, href }) => (
+                    <li key={label}>
+                      {href ? (
+                        <Link href={href} style={{ fontSize: 13, color: 'rgba(247,241,227,0.5)', textDecoration: 'none' }}
+                          {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+                          {label}
+                        </Link>
+                      ) : (
+                        <span style={{ fontSize: 13, color: 'rgba(247,241,227,0.5)' }}>{label}</span>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+
+          <div className="flex items-center justify-between flex-wrap gap-4" style={{ marginTop: 32 }}>
+            <span style={{ fontSize: 10, letterSpacing: '0.14em', fontWeight: 600, textTransform: 'uppercase', color: 'rgba(247,241,227,0.28)' }}>
+              © 2026 Hill Country Cider House · Small Batch · Quality Cider
+            </span>
+            <span style={{ fontSize: 10, letterSpacing: '0.14em', fontWeight: 600, textTransform: 'uppercase', color: 'rgba(247,241,227,0.28)' }}>
+              Drink responsibly · 21+
+            </span>
           </div>
         </div>
       </footer>
