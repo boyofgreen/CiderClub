@@ -17,11 +17,10 @@ export async function POST() {
     )
   }
 
-  // Backfill any products with null priceInCents (created before the pricing feature)
-  await prisma.product.updateMany({
-    where: { priceInCents: null as unknown as number },
-    data: { priceInCents: 2100 },
-  })
+  // Backfill any products with null priceInCents (created before the pricing feature).
+  // Use raw SQL because priceInCents is non-nullable in the Prisma schema so the
+  // typed client rejects null in a where clause.
+  await prisma.$executeRaw`UPDATE "Product" SET "priceInCents" = 2100 WHERE "priceInCents" IS NULL`
 
   try {
     const result = await syncCiderClubProductsFromSquare()
