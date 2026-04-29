@@ -20,6 +20,9 @@ export async function POST(
 
   try {
     const result = await billOrder(params.orderId, method)
+    if (!result.success) {
+      return NextResponse.json({ error: result.error ?? 'Billing failed' }, { status: 400 })
+    }
     return NextResponse.json({ ok: true, ...result })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })

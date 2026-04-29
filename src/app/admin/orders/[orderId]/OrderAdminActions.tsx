@@ -35,7 +35,7 @@ export function OrderAdminActions({
       body: JSON.stringify({ method }),
     })
     const data = await res.json().catch(() => ({}))
-    if (res.ok) {
+    if (res.ok && data.success !== false) {
       setResult(data.paymentLinkUrl ? `Payment link created` : 'Billed successfully!')
       router.refresh()
     } else {

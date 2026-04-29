@@ -94,6 +94,7 @@ export async function billOrder(
 
       return { orderId, success: true, method, paymentId: result.paymentId }
     } catch (err) {
+      console.error(`[billing] chargeCardOnFile failed for order ${orderId}:`, err)
       // Mark as failed and notify member
       await prisma.order.update({
         where: { id: orderId },
