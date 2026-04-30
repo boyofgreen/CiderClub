@@ -8,7 +8,10 @@ interface CardProps {
 
 export function Card({ children, className, padding = true }: CardProps) {
   return (
-    <div className={cn('rounded-xl border border-stone-200 bg-white shadow-sm', padding && 'p-6', className)}>
+    <div
+      className={cn('border bg-cream-paper shadow-sm', padding && 'p-6', className)}
+      style={{ borderColor: 'var(--rule)' }}
+    >
       {children}
     </div>
   )
@@ -19,7 +22,14 @@ export function CardHeader({ children, className }: { children: React.ReactNode;
 }
 
 export function CardTitle({ children, className }: { children: React.ReactNode; className?: string }) {
-  return <h3 className={cn('text-base font-semibold text-stone-900', className)}>{children}</h3>
+  return (
+    <h3
+      className={cn('text-base font-semibold text-stone-900', className)}
+      style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 600 }}
+    >
+      {children}
+    </h3>
+  )
 }
 
 export function KpiCard({

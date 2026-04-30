@@ -25,10 +25,12 @@ export default async function MemberOrdersPage() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-stone-900">My Orders</h1>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
+        My Orders
+      </h1>
 
       {orders.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-300 p-12 text-center">
+        <div className="border border-dashed p-12 text-center" style={{ borderColor: 'var(--rule-strong)' }}>
           <ShoppingBag className="mx-auto h-10 w-10 text-stone-300" />
           <p className="mt-3 font-medium text-stone-500">No orders yet</p>
           <p className="mt-1 text-sm text-stone-400">
@@ -41,7 +43,8 @@ export default async function MemberOrdersPage() {
             <Link
               key={order.id}
               href={`/member/orders/${order.id}`}
-              className="block rounded-xl border border-stone-200 bg-white p-5 hover:border-brand-300 hover:shadow-sm transition"
+              className="block bg-cream-paper p-5 transition hover:bg-cream border"
+              style={{ borderColor: 'var(--rule)' }}
             >
               <div className="flex items-start justify-between">
                 <div>
@@ -68,7 +71,8 @@ export default async function MemberOrdersPage() {
                 {order.items.map((item) => (
                   <span
                     key={item.id}
-                    className="rounded-full bg-stone-100 px-2.5 py-1 text-xs text-stone-600"
+                    className="px-2.5 py-1 text-xs text-stone-600"
+                    style={{ backgroundColor: 'var(--cream-deep)' }}
                   >
                     {item.product.name} ×{item.quantity}
                   </span>

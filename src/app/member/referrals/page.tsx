@@ -3,7 +3,7 @@ import { getAppSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { formatDate } from '@/lib/utils'
 import { Card } from '@/components/ui/Card'
-import { Gift, Users, Copy } from 'lucide-react'
+import { Gift, Users } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Referrals' }
@@ -35,15 +35,19 @@ export default async function MemberReferralsPage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold text-stone-900">Referrals</h1>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
+        Referrals
+      </h1>
 
       <Card>
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-green-100">
-            <Gift className="h-6 w-6 text-green-600" />
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center" style={{ backgroundColor: 'var(--cream-deep)' }}>
+            <Gift className="h-6 w-6 text-terracotta" />
           </div>
           <div className="flex-1">
-            <h2 className="font-semibold text-stone-900">Share the love</h2>
+            <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 600, fontSize: 18, color: 'var(--ink)' }}>
+              Share the love
+            </h2>
             <p className="mt-1 text-sm text-stone-600">
               Share your personal link with friends. When they join, they'll be linked to you.
             </p>
@@ -51,19 +55,18 @@ export default async function MemberReferralsPage() {
         </div>
 
         <div className="mt-4">
-          <label className="label">Your referral link</label>
-          <div className="flex gap-2">
+          <label className="label-saloon">Your referral link</label>
+          <div className="flex gap-2 mt-1.5">
             <input
               readOnly
               value={referralLink}
-              className="input flex-1 text-xs"
+              className="field-saloon flex-1 text-xs"
             />
             <button
-              onClick={undefined}
-              className="btn-secondary flex items-center gap-1.5 px-3"
+              className="btn-saloon flex items-center gap-1.5"
+              style={{ fontSize: 10, padding: '12px 16px', whiteSpace: 'nowrap' }}
               data-copy={referralLink}
             >
-              <Copy className="h-4 w-4" />
               Copy
             </button>
           </div>
@@ -76,8 +79,8 @@ export default async function MemberReferralsPage() {
       {/* People they referred */}
       <Card>
         <div className="flex items-center gap-2 mb-4">
-          <Users className="h-4 w-4 text-stone-500" />
-          <h2 className="font-semibold text-stone-900">
+          <Users className="h-4 w-4" style={{ color: 'var(--ink-soft)' }} />
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 600, fontSize: 18, color: 'var(--ink)' }}>
             Friends You've Referred ({member.referrals.length})
           </h2>
         </div>
@@ -90,7 +93,11 @@ export default async function MemberReferralsPage() {
         ) : (
           <div className="space-y-2">
             {member.referrals.map((ref) => (
-              <div key={ref.id} className="flex items-center justify-between rounded-lg bg-stone-50 px-4 py-3">
+              <div
+                key={ref.id}
+                className="flex items-center justify-between px-4 py-3"
+                style={{ backgroundColor: 'var(--cream-deep)' }}
+              >
                 <div>
                   <span className="font-medium text-stone-800">
                     {ref.firstName} {ref.lastName}
@@ -98,7 +105,7 @@ export default async function MemberReferralsPage() {
                   <span className="ml-2 text-sm text-stone-500">{ref.plan.name}</span>
                 </div>
                 <div className="text-right">
-                  <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                  <span className={`text-xs font-medium px-2 py-0.5 ${
                     ref.status === 'ACTIVE' ? 'bg-green-100 text-green-700' :
                     ref.status === 'PAUSED' ? 'bg-yellow-100 text-yellow-700' :
                     'bg-stone-100 text-stone-500'

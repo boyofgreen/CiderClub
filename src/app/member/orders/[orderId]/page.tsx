@@ -41,7 +41,6 @@ export default function OrderDetailPage() {
       .then((r) => r.json())
       .then((data) => {
         setOrder(data.order)
-        // Build initial selections map
         const sel: Record<string, number> = {}
         data.order.items.forEach((i: OrderItem) => { sel[i.productId] = i.quantity })
         setSelections(sel)
@@ -68,7 +67,6 @@ export default function OrderDetailPage() {
     setSelections((prev) => {
       const current = prev[productId] ?? 0
       const next = Math.max(0, current + delta)
-      // Don't exceed total packs allowed
       const newTotal = totalSelected - current + next
       if (newTotal > packsPerOrder) return prev
       return { ...prev, [productId]: next }
@@ -103,11 +101,11 @@ export default function OrderDetailPage() {
   return (
     <div className="space-y-6 max-w-2xl">
       <div className="flex items-center gap-3">
-        <Link href="/member/orders" className="text-stone-500 hover:text-stone-700">
+        <Link href="/member/orders" style={{ color: 'var(--ink-soft)' }}>
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-stone-900">
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 22, color: 'var(--ink)' }}>
             {order.quarter.label} Order
             {order.quarter.name ? ` — ${order.quarter.name}` : ''}
           </h1>
@@ -132,20 +130,22 @@ export default function OrderDetailPage() {
         <Card>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h2 className="font-semibold text-stone-900">Customize Your Order</h2>
+              <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 600, fontSize: 18, color: 'var(--ink)' }}>
+                Customize Your Order
+              </h2>
               <p className="text-sm text-stone-500 mt-0.5">
                 Select {packsPerOrder} bottles total
               </p>
             </div>
-            <div className={`text-sm font-bold ${totalSelected === packsPerOrder ? 'text-green-600' : 'text-brand-600'}`}>
+            <div className={`text-sm font-bold ${totalSelected === packsPerOrder ? 'text-green-600' : 'text-terracotta'}`}>
               {totalSelected}/{packsPerOrder} selected
             </div>
           </div>
 
           {/* Progress bar */}
-          <div className="mb-6 h-2 rounded-full bg-stone-100">
+          <div className="mb-6 h-2 bg-stone-100">
             <div
-              className={`h-2 rounded-full transition-all ${totalSelected === packsPerOrder ? 'bg-green-500' : 'bg-brand-500'}`}
+              className={`h-2 transition-all ${totalSelected === packsPerOrder ? 'bg-green-500' : 'bg-terracotta'}`}
               style={{ width: `${(totalSelected / packsPerOrder) * 100}%` }}
             />
           </div>
@@ -154,10 +154,14 @@ export default function OrderDetailPage() {
             {quarterProducts.map(({ product }) => (
               <div
                 key={product.id}
-                className="flex items-center gap-4 rounded-xl border border-stone-200 p-4 hover:border-stone-300 transition"
+                className="flex items-center gap-4 p-4 transition border hover:border-gold/50"
+                style={{ borderColor: 'var(--rule)' }}
               >
-                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-brand-50">
-                  <Beer className="h-5 w-5 text-brand-600" />
+                <div
+                  className="flex h-10 w-10 shrink-0 items-center justify-center"
+                  style={{ backgroundColor: 'var(--cream-deep)' }}
+                >
+                  <Beer className="h-5 w-5 text-gold-deep" />
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-stone-800 truncate">{product.name}</p>
@@ -169,7 +173,7 @@ export default function OrderDetailPage() {
                   <button
                     onClick={() => adjust(product.id, -1)}
                     disabled={(selections[product.id] ?? 0) === 0}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-stone-300 text-stone-600 hover:bg-stone-50 disabled:opacity-30"
+                    className="flex h-8 w-8 items-center justify-center border border-stone-300 text-stone-600 hover:bg-stone-50 disabled:opacity-30"
                   >
                     <Minus className="h-3.5 w-3.5" />
                   </button>
@@ -179,7 +183,7 @@ export default function OrderDetailPage() {
                   <button
                     onClick={() => adjust(product.id, 1)}
                     disabled={totalSelected >= packsPerOrder}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-stone-300 text-stone-600 hover:bg-stone-50 disabled:opacity-30"
+                    className="flex h-8 w-8 items-center justify-center border border-stone-300 text-stone-600 hover:bg-stone-50 disabled:opacity-30"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
@@ -189,6 +193,7 @@ export default function OrderDetailPage() {
           </div>
 
           <Button
+            variant="saloon"
             onClick={handleSave}
             loading={saving}
             disabled={totalSelected !== packsPerOrder}
@@ -209,12 +214,18 @@ export default function OrderDetailPage() {
         </Card>
       ) : (
         <Card>
-          <h2 className="font-semibold text-stone-900 mb-4">Your Order</h2>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 600, fontSize: 18, color: 'var(--ink)', marginBottom: 16 }}>
+            Your Order
+          </h2>
           <div className="space-y-2">
             {order.items.map((item) => (
-              <div key={item.productId} className="flex items-center justify-between rounded-lg bg-stone-50 px-4 py-3">
+              <div
+                key={item.productId}
+                className="flex items-center justify-between px-4 py-3"
+                style={{ backgroundColor: 'var(--cream-deep)' }}
+              >
                 <div className="flex items-center gap-3">
-                  <Beer className="h-4 w-4 text-brand-500" />
+                  <Beer className="h-4 w-4 text-gold-deep" />
                   <div>
                     <p className="font-medium text-stone-800">{item.product.name}</p>
                     {item.product.style && (
@@ -238,7 +249,9 @@ export default function OrderDetailPage() {
       {/* Pickup info */}
       {order.pickupEvent && (
         <Card>
-          <h2 className="font-semibold text-stone-900 mb-3">Pickup Details</h2>
+          <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 600, fontSize: 18, color: 'var(--ink)', marginBottom: 12 }}>
+            Pickup Details
+          </h2>
           <div className="space-y-1">
             <p className="text-stone-700">{order.pickupEvent.title}</p>
             <p className="text-sm text-stone-500">{formatDate(order.pickupEvent.startsAt)}</p>

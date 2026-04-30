@@ -27,13 +27,15 @@ export default async function MemberPickupsPage() {
 
   return (
     <div className="space-y-8">
-      <h1 className="text-2xl font-bold text-stone-900">Pickup Events</h1>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
+        Pickup Events
+      </h1>
 
       {/* Upcoming */}
       <div>
-        <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 mb-3">Upcoming</h2>
+        <p className="smallcaps mb-3" style={{ color: 'var(--ink-soft)' }}>Upcoming</p>
         {upcoming.length === 0 ? (
-          <div className="rounded-xl border border-dashed border-stone-300 p-8 text-center text-stone-500">
+          <div className="border border-dashed p-8 text-center text-stone-500" style={{ borderColor: 'var(--rule-strong)' }}>
             No upcoming pickup events scheduled yet.
           </div>
         ) : (
@@ -41,8 +43,11 @@ export default async function MemberPickupsPage() {
             {upcoming.map((event) => (
               <Card key={event.id}>
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-brand-100">
-                    <Calendar className="h-6 w-6 text-brand-700" />
+                  <div
+                    className="flex h-12 w-12 shrink-0 items-center justify-center"
+                    style={{ backgroundColor: 'var(--cream-deep)' }}
+                  >
+                    <Calendar className="h-6 w-6 text-terracotta" />
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-stone-900">{event.title}</h3>
@@ -63,7 +68,9 @@ export default async function MemberPickupsPage() {
                       )}
                     </div>
                     {event.notes && (
-                      <p className="mt-2 text-sm text-stone-500 bg-stone-50 rounded-lg p-2">{event.notes}</p>
+                      <p className="mt-2 text-sm text-stone-500 p-2" style={{ backgroundColor: 'var(--cream-deep)' }}>
+                        {event.notes}
+                      </p>
                     )}
                   </div>
                 </div>
@@ -76,10 +83,14 @@ export default async function MemberPickupsPage() {
       {/* Past */}
       {past.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 mb-3">Past Events</h2>
+          <p className="smallcaps mb-3" style={{ color: 'var(--ink-soft)' }}>Past Events</p>
           <div className="space-y-2">
             {past.map((event) => (
-              <div key={event.id} className="flex items-center justify-between rounded-xl border border-stone-200 bg-white px-4 py-3 opacity-60">
+              <div
+                key={event.id}
+                className="flex items-center justify-between border px-4 py-3 opacity-60"
+                style={{ backgroundColor: 'var(--cream-paper)', borderColor: 'var(--rule)' }}
+              >
                 <div>
                   <span className="font-medium text-stone-700">{event.title}</span>
                   <span className="ml-2 text-sm text-stone-400">{event.quarter.label}</span>

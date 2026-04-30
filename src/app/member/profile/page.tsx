@@ -68,7 +68,9 @@ export default function MemberProfilePage() {
 
   return (
     <div className="max-w-2xl space-y-6">
-      <h1 className="text-2xl font-bold text-stone-900">My Profile</h1>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
+        My Profile
+      </h1>
 
       {/* Membership info */}
       <Card>
@@ -94,7 +96,7 @@ export default function MemberProfilePage() {
             }`}>{member.status}</span>
           </div>
         </div>
-        <div className="mt-4 pt-4 border-t border-stone-100">
+        <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
           <p className="text-xs text-stone-500">
             To pause or cancel your membership, email us or contact us directly.
           </p>
@@ -105,7 +107,7 @@ export default function MemberProfilePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <User className="h-4 w-4 text-stone-500" />
+            <User className="h-4 w-4" style={{ color: 'var(--ink-soft)' }} />
             <CardTitle>Personal Information</CardTitle>
           </div>
         </CardHeader>
@@ -164,7 +166,7 @@ export default function MemberProfilePage() {
               onChange={(e) => update('zip', e.target.value)}
             />
           </div>
-          <Button type="submit" loading={saving}>
+          <Button variant="saloon" type="submit" loading={saving}>
             Save Changes
           </Button>
         </form>
@@ -174,12 +176,12 @@ export default function MemberProfilePage() {
       <Card>
         <CardHeader>
           <div className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4 text-stone-500" />
+            <CreditCard className="h-4 w-4" style={{ color: 'var(--ink-soft)' }} />
             <CardTitle>Payment Method</CardTitle>
           </div>
         </CardHeader>
         {member.squareCardId ? (
-          <div className="flex items-center justify-between rounded-lg bg-stone-50 px-4 py-3">
+          <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'var(--cream-deep)' }}>
             <div className="flex items-center gap-3">
               <CreditCard className="h-5 w-5 text-stone-400" />
               <span className="text-sm font-medium text-stone-700">Card on file</span>
@@ -187,7 +189,7 @@ export default function MemberProfilePage() {
             <span className="text-xs text-stone-400">Managed via Square</span>
           </div>
         ) : (
-          <div className="rounded-lg border border-dashed border-stone-300 p-4 text-center">
+          <div className="border border-dashed p-4 text-center" style={{ borderColor: 'var(--rule-strong)' }}>
             <CreditCard className="mx-auto h-8 w-8 text-stone-300 mb-2" />
             <p className="text-sm text-stone-500">No payment method on file</p>
             <p className="text-xs text-stone-400 mt-1">
