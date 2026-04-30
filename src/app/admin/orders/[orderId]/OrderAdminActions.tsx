@@ -65,14 +65,14 @@ export function OrderAdminActions({
         </button>
 
         {open && (
-          <div className="absolute right-0 top-full mt-1 z-20 w-56 rounded-xl border border-stone-200 bg-white shadow-lg py-1">
+          <div className="absolute right-0 top-full mt-1 z-20 w-56 border bg-cream-paper shadow-lg py-1" style={{ borderColor: 'var(--rule)' }}>
             {canBill && (
               <>
                 {memberHasCard && (
                   <button
                     onClick={() => bill('CARD_ON_FILE')}
                     disabled={loading}
-                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
                   >
                     <DollarSign className="h-4 w-4 text-green-500" /> Charge Card on File
                   </button>
@@ -80,14 +80,14 @@ export function OrderAdminActions({
                 <button
                   onClick={() => bill('PAYMENT_LINK')}
                   disabled={loading}
-                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
                 >
                   <ExternalLink className="h-4 w-4 text-blue-500" /> Send Payment Link
                 </button>
                 <button
                   onClick={() => bill('IN_PERSON')}
                   disabled={loading}
-                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+                  className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
                 >
                   <DollarSign className="h-4 w-4 text-amber-500" /> Mark Paid (In Person)
                 </button>
@@ -97,9 +97,9 @@ export function OrderAdminActions({
               <button
                 onClick={markPickedUp}
                 disabled={loading}
-                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+                className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
               >
-                <Package className="h-4 w-4 text-brand-500" /> Mark Picked Up
+                <Package className="h-4 w-4 text-terracotta" /> Mark Picked Up
               </button>
             )}
           </div>
@@ -111,7 +111,7 @@ export function OrderAdminActions({
           href={paymentLinkUrl}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-xs text-brand-600 hover:text-brand-700 underline"
+          className="text-xs text-terracotta hover:text-terracotta-deep underline"
         >
           View payment link →
         </a>

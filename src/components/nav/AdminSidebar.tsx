@@ -1,9 +1,9 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { signOut } from 'next-auth/react'
-import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
   Users,
@@ -17,7 +17,6 @@ import {
   LogOut,
   Beer,
   Megaphone,
-  Clock,
 } from 'lucide-react'
 
 const nav = [
@@ -34,26 +33,59 @@ const nav = [
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
 ]
 
+const LINK_BASE: React.CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 10,
+  padding: '8px 12px',
+  fontFamily: 'var(--font-sans)',
+  fontSize: 10,
+  fontWeight: 700,
+  letterSpacing: '0.16em',
+  textTransform: 'uppercase',
+  textDecoration: 'none',
+  transition: 'color 0.15s, background-color 0.15s',
+  borderLeft: '2px solid transparent',
+}
+
 export function AdminSidebar() {
   const pathname = usePathname()
 
   return (
-    <div className="flex h-full w-60 flex-col border-r border-stone-200 bg-white">
-      {/* Logo */}
-      <div className="flex h-16 items-center gap-2 border-b border-stone-200 px-6">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-brand-600">
-          <Beer className="h-4 w-4 text-white" />
+    <div
+      className="flex h-full w-60 flex-col"
+      style={{ backgroundColor: 'var(--navy)', borderRight: '1px solid var(--rule)' }}
+    >
+      {/* Logo / wordmark */}
+      <div
+        className="flex h-16 items-center gap-3 px-5"
+        style={{ borderBottom: '1px solid var(--rule)' }}
+      >
+        <Image
+          src="/brand/logo.png"
+          alt="Hill Country Cider House"
+          width={28}
+          height={28}
+          style={{ objectFit: 'contain' }}
+        />
+        <div className="flex flex-col leading-none" style={{ gap: 3 }}>
+          <span style={{ fontFamily: 'var(--font-serif)', fontSize: 12, fontWeight: 400, color: 'var(--cream)', letterSpacing: '0.02em' }}>
+            Hill Country
+          </span>
+          <span style={{ fontFamily: 'var(--font-sans)', fontSize: 7.5, fontWeight: 700, letterSpacing: '0.28em', textTransform: 'uppercase', color: 'var(--gold)' }}>
+            Cider House
+          </span>
         </div>
-        <span className="font-bold text-stone-900">
-          {process.env.NEXT_PUBLIC_CLUB_NAME ?? 'CiderClub'}
-        </span>
-        <span className="ml-auto rounded bg-brand-100 px-1.5 py-0.5 text-xs font-semibold text-brand-700">
+        <span
+          className="ml-auto"
+          style={{ fontFamily: 'var(--font-sans)', fontSize: 8, fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase', color: 'var(--gold)', backgroundColor: 'rgba(201,161,74,0.12)', padding: '3px 7px', border: '1px solid rgba(201,161,74,0.3)' }}
+        >
           Admin
         </span>
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 overflow-y-auto p-3">
+      <nav className="flex-1 overflow-y-auto p-2">
         <ul className="space-y-0.5">
           {nav.map(({ href, label, icon: Icon }) => {
             const active = pathname === href || (href !== '/admin/dashboard' && pathname.startsWith(href))
@@ -61,14 +93,14 @@ export function AdminSidebar() {
               <li key={href}>
                 <Link
                   href={href}
-                  className={cn(
-                    'flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition',
-                    active
-                      ? 'bg-brand-50 text-brand-700'
-                      : 'text-stone-600 hover:bg-stone-50 hover:text-stone-900'
-                  )}
+                  style={{
+                    ...LINK_BASE,
+                    color: active ? 'var(--gold)' : 'rgba(247,241,227,0.65)',
+                    borderLeftColor: active ? 'var(--gold)' : 'transparent',
+                    backgroundColor: active ? 'rgba(201,161,74,0.08)' : 'transparent',
+                  }}
                 >
-                  <Icon className="h-4 w-4 shrink-0" />
+                  <Icon className="h-3.5 w-3.5 shrink-0" />
                   {label}
                 </Link>
               </li>
@@ -77,13 +109,20 @@ export function AdminSidebar() {
         </ul>
       </nav>
 
-      {/* Bottom: sign out */}
-      <div className="border-t border-stone-200 p-3">
+      {/* Sign out */}
+      <div style={{ borderTop: '1px solid var(--rule)', padding: '8px' }}>
         <button
           onClick={() => signOut({ callbackUrl: '/login' })}
-          className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-stone-600 transition hover:bg-stone-50 hover:text-stone-900"
+          style={{
+            ...LINK_BASE,
+            width: '100%',
+            color: 'rgba(247,241,227,0.45)',
+            background: 'transparent',
+            border: 'none',
+            cursor: 'pointer',
+          }}
         >
-          <LogOut className="h-4 w-4" />
+          <LogOut className="h-3.5 w-3.5" />
           Sign out
         </button>
       </div>

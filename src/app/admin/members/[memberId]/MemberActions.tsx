@@ -64,11 +64,11 @@ export function MemberActions({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 w-56 rounded-xl border border-stone-200 bg-white shadow-lg py-1">
+        <div className="absolute right-0 top-full mt-1 z-20 w-56 border bg-cream-paper shadow-lg py-1" style={{ borderColor: 'var(--rule)' }}>
           {status !== 'PAUSED' && status !== 'CANCELLED' && (
             <button
               onClick={() => { setAction('PAUSE'); setOpen(false) }}
-              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
             >
               <Pause className="h-4 w-4 text-yellow-500" /> Pause Membership
             </button>
@@ -76,7 +76,7 @@ export function MemberActions({
           {status !== 'CANCELLED' && (
             <button
               onClick={() => { setAction('CANCEL'); setOpen(false) }}
-              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
             >
               <UserX className="h-4 w-4 text-red-500" /> Cancel Membership
             </button>
@@ -84,14 +84,14 @@ export function MemberActions({
           {(status === 'PAUSED' || status === 'CANCELLED') && (
             <button
               onClick={() => { setAction('REACTIVATE'); setOpen(false) }}
-              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
             >
               <UserCheck className="h-4 w-4 text-green-500" /> Reactivate
             </button>
           )}
           <button
             onClick={() => { handleSquareSync(); setOpen(false) }}
-            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
           >
             <RefreshCw className="h-4 w-4 text-blue-500" /> Sync to Square
           </button>
@@ -101,7 +101,7 @@ export function MemberActions({
       {/* Confirmation modal */}
       {action && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-sm bg-cream-paper p-6 shadow-xl">
             <h3 className="font-bold text-stone-900 mb-3">
               {action === 'PAUSE' ? 'Pause Membership' :
                action === 'CANCEL' ? 'Cancel Membership' :

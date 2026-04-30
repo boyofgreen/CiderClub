@@ -63,12 +63,12 @@ export default function NewQuarterPage() {
         <Link href="/admin/quarters" className="text-stone-500 hover:text-stone-700">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-2xl font-bold text-stone-900">New Quarter</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(20px,3vw,28px)', color: 'var(--ink)' }}>New Quarter</h1>
       </div>
 
       {error && <Alert type="error" message={error} />}
 
-      <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+      <div className="border bg-cream-paper p-6 shadow-sm" style={{ borderColor: 'var(--rule)' }}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-2">
             <Input

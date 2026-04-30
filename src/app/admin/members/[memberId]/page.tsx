@@ -47,11 +47,11 @@ export default async function MemberDetailPage({
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-brand-100 text-lg font-bold text-brand-700">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full text-lg font-bold text-terracotta" style={{ backgroundColor: 'var(--cream-deep)' }}>
               {member.firstName[0]}{member.lastName[0]}
             </div>
             <div>
-              <h1 className="text-2xl font-bold text-stone-900">
+              <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(20px,3vw,28px)', color: 'var(--ink)' }}>
                 {member.firstName} {member.lastName}
               </h1>
               <div className="flex items-center gap-2 mt-0.5">
@@ -72,7 +72,7 @@ export default async function MemberDetailPage({
             <div className="space-y-2 text-sm">
               <div className="flex items-center gap-2 text-stone-600">
                 <Mail className="h-4 w-4 text-stone-400" />
-                <a href={`mailto:${member.email}`} className="hover:text-brand-600 break-all">
+                <a href={`mailto:${member.email}`} className="hover:text-terracotta break-all">
                   {member.email}
                 </a>
               </div>
@@ -131,7 +131,7 @@ export default async function MemberDetailPage({
                   href={`https://squareup.com/dashboard/customers/${member.squareCustomerId}`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="flex items-center gap-1 text-brand-600 hover:text-brand-700"
+                  className="flex items-center gap-1 text-terracotta hover:text-terracotta-deep"
                 >
                   View <ExternalLink className="h-3.5 w-3.5" />
                 </a>
@@ -144,7 +144,7 @@ export default async function MemberDetailPage({
               <h2 className="font-semibold text-stone-900 mb-2">Referred By</h2>
               <Link
                 href={`/admin/members/${member.referredBy.id}`}
-                className="text-sm text-brand-600 hover:text-brand-700"
+                className="text-sm text-terracotta hover:text-terracotta-deep"
               >
                 {member.referredBy.firstName} {member.referredBy.lastName}
               </Link>
@@ -171,7 +171,7 @@ export default async function MemberDetailPage({
                   <Link
                     key={order.id}
                     href={`/admin/orders/${order.id}`}
-                    className="flex items-center justify-between py-2.5 hover:text-brand-600 transition"
+                    className="flex items-center justify-between py-2.5 hover:text-terracotta transition"
                   >
                     <span className="text-sm font-medium text-stone-700">{order.quarter.label}</span>
                     <div className="flex items-center gap-3">

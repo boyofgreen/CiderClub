@@ -9,41 +9,41 @@ export const metadata: Metadata = { title: 'Quarters' }
 
 export default async function AdminQuartersPage() {
   const quarters = await prisma.quarter.findMany({
-    include: {
-      _count: { select: { orders: true, products: true, pickupEvents: true } },
-    },
+    include: { _count: { select: { orders: true, products: true, pickupEvents: true } } },
     orderBy: [{ year: 'desc' }, { quarter: 'desc' }],
   })
 
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-stone-900">Quarters</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
+          Quarters
+        </h1>
         <Link href="/admin/quarters/new" className="btn-primary text-sm">
           <Plus className="h-4 w-4" /> New Quarter
         </Link>
       </div>
 
       {quarters.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-300 p-12 text-center">
+        <div className="border border-dashed p-12 text-center" style={{ borderColor: 'var(--rule-strong)' }}>
           <Calendar className="mx-auto h-10 w-10 text-stone-300 mb-3" />
           <p className="font-medium text-stone-500">No quarters yet</p>
-          <Link href="/admin/quarters/new" className="mt-3 inline-block text-sm text-brand-600 hover:text-brand-700">
+          <Link href="/admin/quarters/new" className="mt-3 inline-block text-sm text-terracotta hover:text-terracotta-deep">
             Create your first quarter →
           </Link>
         </div>
       ) : (
-        <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+        <div className="border bg-cream-paper shadow-sm overflow-hidden" style={{ borderColor: 'var(--rule)' }}>
           <div className="divide-y divide-stone-100">
             {quarters.map((q) => (
               <Link
                 key={q.id}
                 href={`/admin/quarters/${q.id}`}
-                className="flex items-center justify-between px-6 py-4 hover:bg-stone-50 transition"
+                className="flex items-center justify-between px-6 py-4 hover:bg-cream-deep transition"
               >
                 <div className="flex items-center gap-4">
-                  <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-brand-50">
-                    <Calendar className="h-5 w-5 text-brand-600" />
+                  <div className="flex h-10 w-10 shrink-0 items-center justify-center" style={{ backgroundColor: 'var(--cream-deep)' }}>
+                    <Calendar className="h-5 w-5 text-terracotta" />
                   </div>
                   <div>
                     <div className="flex items-center gap-2">

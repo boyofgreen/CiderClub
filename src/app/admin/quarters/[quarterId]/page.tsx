@@ -60,7 +60,7 @@ export default async function QuarterDetailPage({
         </Link>
         <div className="flex-1">
           <div className="flex items-center gap-3">
-            <h1 className="text-2xl font-bold text-stone-900">{quarter.label}</h1>
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(20px,3vw,28px)', color: 'var(--ink)' }}>{quarter.label}</h1>
             {quarter.name && <span className="text-lg text-stone-500">— {quarter.name}</span>}
             <StatusBadge status={quarter.status} />
           </div>
@@ -79,7 +79,7 @@ export default async function QuarterDetailPage({
           { label: 'Billed', value: orderStats.billed },
           { label: 'Revenue', value: formatCents(orderStats.revenue) },
         ].map((stat) => (
-          <div key={stat.label} className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm">
+          <div key={stat.label} className="border bg-cream-paper p-4 shadow-sm" style={{ borderColor: 'var(--rule)' }}>
             <p className="text-xs text-stone-500">{stat.label}</p>
             <p className="text-xl font-bold text-stone-900 mt-0.5">{stat.value}</p>
           </div>
@@ -100,14 +100,14 @@ export default async function QuarterDetailPage({
         <Card>
           <div className="flex items-center justify-between mb-4">
             <h2 className="font-semibold text-stone-900">Pickup Events</h2>
-            <Link href={`/admin/pickups?quarter=${quarter.id}`} className="text-xs text-brand-600 hover:text-brand-700">
+            <Link href={`/admin/pickups?quarter=${quarter.id}`} className="text-xs text-terracotta hover:text-terracotta-deep">
               Add event →
             </Link>
           </div>
           {quarter.pickupEvents.length === 0 ? (
             <p className="text-sm text-stone-400 py-4 text-center">
               No pickup events yet.{' '}
-              <Link href={`/admin/pickups?quarter=${quarter.id}`} className="text-brand-600 underline">
+              <Link href={`/admin/pickups?quarter=${quarter.id}`} className="text-terracotta underline">
                 Schedule one
               </Link>
             </p>
@@ -117,7 +117,7 @@ export default async function QuarterDetailPage({
                 <Link
                   key={event.id}
                   href={`/admin/pickups/${event.id}`}
-                  className="flex items-center justify-between rounded-lg border border-stone-200 px-4 py-3 hover:bg-stone-50 transition"
+                  className="flex items-center justify-between rounded-lg border px-4 py-3 hover:bg-cream-deep transition" style={{ borderColor: 'var(--rule)' }}
                 >
                   <div>
                     <p className="font-medium text-stone-700 text-sm">{event.title}</p>
@@ -132,10 +132,10 @@ export default async function QuarterDetailPage({
       </div>
 
       {/* Orders table */}
-      <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+      <div className="border bg-cream-paper shadow-sm overflow-hidden" style={{ borderColor: 'var(--rule)' }}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
           <h2 className="font-semibold text-stone-900">Orders ({orderStats.total})</h2>
-          <Link href={`/admin/orders?quarter=${quarter.id}`} className="text-xs text-brand-600 hover:text-brand-700">
+          <Link href={`/admin/orders?quarter=${quarter.id}`} className="text-xs text-terracotta hover:text-terracotta-deep">
             View all →
           </Link>
         </div>
@@ -149,7 +149,7 @@ export default async function QuarterDetailPage({
               <Link
                 key={order.id}
                 href={`/admin/orders/${order.id}`}
-                className="flex items-center justify-between px-6 py-3 hover:bg-stone-50 transition"
+                className="flex items-center justify-between px-6 py-3 hover:bg-cream-deep transition"
               >
                 <span className="text-sm font-medium text-stone-800">
                   {order.member.firstName} {order.member.lastName}

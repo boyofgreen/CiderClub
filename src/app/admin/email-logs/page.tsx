@@ -14,7 +14,6 @@ export default async function EmailLogsPage({
   const page = parseInt(searchParams.page ?? '1')
   const pageSize = 50
   const type = searchParams.type
-
   const where = type ? { type } : {}
 
   const [logs, total] = await Promise.all([
@@ -39,10 +38,12 @@ export default async function EmailLogsPage({
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold text-stone-900">Email Logs</h1>
+      <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
+        Email Logs
+      </h1>
 
       {problemCount > 0 && (
-        <div className="flex items-center gap-3 rounded-xl bg-orange-50 border border-orange-200 px-4 py-3">
+        <div className="flex items-center gap-3 bg-orange-50 border border-orange-200 px-4 py-3">
           <span className="text-sm text-orange-700">
             <strong>{problemCount} emails</strong> have delivery problems (bounced, spam complaint, or failed to send).
           </span>
@@ -51,37 +52,30 @@ export default async function EmailLogsPage({
 
       {/* Type filter */}
       <div className="flex flex-wrap gap-2">
-        <Link href="/admin/email-logs" className={`rounded-full px-3 py-1.5 text-xs font-medium border transition ${!type ? 'bg-stone-900 text-white border-stone-900' : 'border-stone-300 text-stone-600 hover:bg-stone-50'}`}>
+        <Link href="/admin/email-logs" className={`px-3 py-1.5 text-xs font-medium border transition ${!type ? 'bg-stone-900 text-white border-stone-900' : 'border-stone-300 text-stone-600 hover:bg-stone-50'}`}>
           All
         </Link>
         {types.map((t) => (
-          <Link key={t} href={`/admin/email-logs?type=${t}`} className={`rounded-full px-3 py-1.5 text-xs font-medium border transition ${type === t ? 'bg-stone-900 text-white border-stone-900' : 'border-stone-300 text-stone-600 hover:bg-stone-50'}`}>
+          <Link key={t} href={`/admin/email-logs?type=${t}`} className={`px-3 py-1.5 text-xs font-medium border transition ${type === t ? 'bg-stone-900 text-white border-stone-900' : 'border-stone-300 text-stone-600 hover:bg-stone-50'}`}>
             {t.replace(/_/g, ' ')}
           </Link>
         ))}
       </div>
 
-      <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
-        <div className="px-6 py-3 border-b border-stone-100 text-xs text-stone-500">
-          {total} emails
-        </div>
+      <div className="border bg-cream-paper shadow-sm overflow-hidden" style={{ borderColor: 'var(--rule)' }}>
+        <div className="px-6 py-3 border-b border-stone-100 text-xs text-stone-500">{total} emails</div>
         <div className="divide-y divide-stone-100">
           {logs.map((log) => (
             <div key={log.id} className="flex items-center justify-between px-6 py-3">
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
                   <p className="text-sm font-medium text-stone-800 truncate">{log.subject}</p>
-                  <span className="shrink-0 rounded-full bg-stone-100 px-2 py-0.5 text-xs text-stone-500">
-                    {log.type}
-                  </span>
+                  <span className="shrink-0 bg-stone-100 px-2 py-0.5 text-xs text-stone-500">{log.type}</span>
                 </div>
                 <div className="flex items-center gap-2 mt-0.5">
                   <p className="text-xs text-stone-400 truncate">{log.toEmail}</p>
                   {log.member && (
-                    <Link
-                      href={`/admin/members/${log.member.id}`}
-                      className="text-xs text-brand-600 hover:text-brand-700 shrink-0"
-                    >
+                    <Link href={`/admin/members/${log.member.id}`} className="text-xs text-terracotta hover:text-terracotta-deep shrink-0">
                       {log.member.firstName} {log.member.lastName}
                     </Link>
                   )}

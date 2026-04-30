@@ -39,48 +39,51 @@ export default async function AdminOrdersPage({
     'PICKED_UP', 'BILLED', 'PAYMENT_FAILED', 'CANCELLED',
   ]
 
+  const activePill = 'bg-terracotta text-white border-terracotta'
+  const inactivePill = 'border-stone-300 text-stone-600 hover:bg-stone-50'
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-stone-900">Orders</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
+          Orders
+        </h1>
         <span className="text-sm text-stone-500">{total} orders</span>
       </div>
 
       {/* Filters */}
       <div className="space-y-2">
         <div className="flex flex-wrap gap-1.5">
-          <Link href={`/admin/orders${quarterId ? `?quarter=${quarterId}` : ''}`} className={`rounded-full px-3 py-1 text-xs font-medium border transition ${!status ? 'bg-stone-900 text-white border-stone-900' : 'border-stone-300 text-stone-600 hover:bg-stone-50'}`}>
+          <Link href={`/admin/orders${quarterId ? `?quarter=${quarterId}` : ''}`} className={`px-3 py-1 text-xs font-medium border transition ${!status ? 'bg-stone-900 text-white border-stone-900' : inactivePill}`}>
             All
           </Link>
           {statuses.map((s) => (
-            <Link key={s} href={`/admin/orders?status=${s}${quarterId ? `&quarter=${quarterId}` : ''}`} className={`rounded-full px-3 py-1 text-xs font-medium border transition ${status === s ? 'bg-stone-900 text-white border-stone-900' : 'border-stone-300 text-stone-600 hover:bg-stone-50'}`}>
+            <Link key={s} href={`/admin/orders?status=${s}${quarterId ? `&quarter=${quarterId}` : ''}`} className={`px-3 py-1 text-xs font-medium border transition ${status === s ? 'bg-stone-900 text-white border-stone-900' : inactivePill}`}>
               {s.replace(/_/g, ' ')}
             </Link>
           ))}
         </div>
         <div className="flex flex-wrap gap-1.5">
-          <Link href={`/admin/orders${status ? `?status=${status}` : ''}`} className={`rounded-full px-3 py-1 text-xs font-medium border transition ${!quarterId ? 'bg-brand-600 text-white border-brand-600' : 'border-stone-300 text-stone-600 hover:bg-stone-50'}`}>
+          <Link href={`/admin/orders${status ? `?status=${status}` : ''}`} className={`px-3 py-1 text-xs font-medium border transition ${!quarterId ? activePill : inactivePill}`}>
             All Quarters
           </Link>
           {quarters.map((q) => (
-            <Link key={q.id} href={`/admin/orders?quarter=${q.id}${status ? `&status=${status}` : ''}`} className={`rounded-full px-3 py-1 text-xs font-medium border transition ${quarterId === q.id ? 'bg-brand-600 text-white border-brand-600' : 'border-stone-300 text-stone-600 hover:bg-stone-50'}`}>
+            <Link key={q.id} href={`/admin/orders?quarter=${q.id}${status ? `&status=${status}` : ''}`} className={`px-3 py-1 text-xs font-medium border transition ${quarterId === q.id ? activePill : inactivePill}`}>
               {q.label}
             </Link>
           ))}
         </div>
       </div>
 
-      <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+      <div className="border bg-cream-paper shadow-sm overflow-hidden" style={{ borderColor: 'var(--rule)' }}>
         <div className="divide-y divide-stone-100">
           {orders.length === 0 ? (
             <p className="py-8 text-center text-stone-400">No orders found.</p>
           ) : (
             orders.map((order) => (
-              <Link key={order.id} href={`/admin/orders/${order.id}`} className="flex items-center justify-between px-6 py-3 hover:bg-stone-50 transition">
+              <Link key={order.id} href={`/admin/orders/${order.id}`} className="flex items-center justify-between px-6 py-3 hover:bg-cream-deep transition">
                 <div>
-                  <span className="font-medium text-stone-800">
-                    {order.member.firstName} {order.member.lastName}
-                  </span>
+                  <span className="font-medium text-stone-800">{order.member.firstName} {order.member.lastName}</span>
                   <span className="ml-2 text-sm text-stone-500">{order.quarter.label}</span>
                 </div>
                 <div className="flex items-center gap-3">

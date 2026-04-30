@@ -41,7 +41,7 @@ export default async function AdminPickupDetailPage({
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div>
-          <h1 className="text-xl font-bold text-stone-900">{event.title}</h1>
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(20px,3vw,28px)', color: 'var(--ink)' }}>{event.title}</h1>
           <div className="flex flex-wrap gap-3 mt-1 text-sm text-stone-500">
             <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{formatDateTime(event.startsAt)} – {formatDateTime(event.endsAt)}</span>
             {event.location && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{event.location}</span>}
@@ -55,7 +55,7 @@ export default async function AdminPickupDetailPage({
           { label: 'RSVPs', value: event.attendances.length },
           { label: 'Checked In', value: checkedIn },
         ].map((s) => (
-          <div key={s.label} className="rounded-xl border border-stone-200 bg-white p-4 shadow-sm text-center">
+          <div key={s.label} className="border bg-cream-paper p-4 shadow-sm text-center" style={{ borderColor: 'var(--rule)' }}>
             <p className="text-2xl font-bold text-stone-900">{s.value}</p>
             <p className="text-xs text-stone-500 mt-0.5">{s.label}</p>
           </div>
@@ -72,7 +72,7 @@ export default async function AdminPickupDetailPage({
             {event.orders.map((order) => {
               const attendance = event.attendances.find((a) => a.memberId === order.memberId)
               return (
-                <div key={order.id} className="flex items-center justify-between rounded-lg border border-stone-200 px-4 py-3">
+                <div key={order.id} className="flex items-center justify-between rounded-lg border px-4 py-3" style={{ borderColor: 'var(--rule)' }}>
                   <div>
                     <p className="font-medium text-stone-800">
                       {order.member.firstName} {order.member.lastName}

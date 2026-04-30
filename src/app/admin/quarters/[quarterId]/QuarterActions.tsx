@@ -84,21 +84,21 @@ export function QuarterActions({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-20 w-60 rounded-xl border border-stone-200 bg-white shadow-lg py-1">
+        <div className="absolute right-0 top-full mt-1 z-20 w-60 border bg-cream-paper shadow-lg py-1" style={{ borderColor: 'var(--rule)' }}>
           {(status === 'UPCOMING' || status === 'OPEN') && (
             <button
               onClick={generateOrders}
               disabled={loading}
-              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
             >
-              <Zap className="h-4 w-4 text-brand-500" /> Generate Orders
+              <Zap className="h-4 w-4 text-terracotta" /> Generate Orders
             </button>
           )}
           {status === 'OPEN' && (
             <button
               onClick={lockOrders}
               disabled={loading}
-              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
             >
               <Lock className="h-4 w-4 text-purple-500" /> Lock Quarter
             </button>
@@ -106,7 +106,7 @@ export function QuarterActions({
           {(status === 'LOCKED' || status === 'OPEN') && (
             <button
               onClick={() => { setBillModal(true); setOpen(false) }}
-              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-stone-50"
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
             >
               <DollarSign className="h-4 w-4 text-green-500" /> Bill Quarter
             </button>
@@ -124,19 +124,19 @@ export function QuarterActions({
       {/* Billing method modal */}
       {billModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-sm bg-cream-paper p-6 shadow-xl">
             <h3 className="font-bold text-stone-900 mb-4">Bill Quarter</h3>
             <div className="space-y-2 mb-4">
               {(['CARD_ON_FILE', 'PAYMENT_LINK'] as const).map((m) => (
                 <label key={m} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 ${
-                  billingMethod === m ? 'border-brand-500 bg-brand-50' : 'border-stone-200'
-                }`}>
+                  billingMethod === m ? 'border-terracotta' : 'border-stone-200'
+                }`} style={billingMethod === m ? { backgroundColor: 'var(--cream-deep)' } : {}}>
                   <input
                     type="radio"
                     value={m}
                     checked={billingMethod === m}
                     onChange={() => setBillingMethod(m)}
-                    className="accent-brand-600"
+                    className="accent-terracotta"
                   />
                   <div>
                     <p className="font-medium text-sm text-stone-800">

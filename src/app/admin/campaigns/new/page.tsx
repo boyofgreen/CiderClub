@@ -43,12 +43,12 @@ export default function NewCampaignPage() {
         <Link href="/admin/campaigns" className="text-stone-500 hover:text-stone-700">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-2xl font-bold text-stone-900">New Campaign</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(20px,3vw,28px)', color: 'var(--ink)' }}>New Campaign</h1>
       </div>
 
       {error && <Alert type="error" message={error} />}
 
-      <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm space-y-4">
+      <div className="border bg-cream-paper p-6 shadow-sm space-y-4" style={{ borderColor: 'var(--rule)' }}>
         <Input
           label="Subject line"
           value={subject}
@@ -62,15 +62,15 @@ export default function NewCampaignPage() {
           <div className="flex gap-2">
             {['ACTIVE', 'PAUSED', 'ALL'].map((s) => (
               <label key={s} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
-                filter.status === s ? 'border-brand-500 bg-brand-50 text-brand-700' : 'border-stone-200 text-stone-600'
-              }`}>
+                filter.status === s ? 'border-terracotta text-terracotta' : 'border-stone-200 text-stone-600'
+              }`} style={filter.status === s ? { backgroundColor: 'var(--cream-deep)' } : {}}>
                 <input
                   type="radio"
                   name="recipientStatus"
                   value={s}
                   checked={filter.status === s}
                   onChange={() => setFilter({ ...filter, status: s })}
-                  className="accent-brand-600"
+                  className="accent-terracotta"
                 />
                 {s === 'ALL' ? 'All members' : `${s} members`}
               </label>
@@ -84,7 +84,7 @@ export default function NewCampaignPage() {
             <button
               type="button"
               onClick={() => setPreview(!preview)}
-              className="text-xs text-brand-600 hover:text-brand-700"
+              className="text-xs text-terracotta hover:text-terracotta-deep"
             >
               {preview ? 'Edit' : 'Preview'}
             </button>

@@ -15,7 +15,7 @@ export default async function AdminCampaignsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-stone-900">Email Campaigns</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(20px,3vw,28px)', color: 'var(--ink)' }}>Email Campaigns</h1>
         <Link href="/admin/campaigns/new" className="btn-primary text-sm">
           <Plus className="h-4 w-4" /> New Campaign
         </Link>
@@ -25,18 +25,18 @@ export default async function AdminCampaignsPage() {
         <div className="rounded-xl border border-dashed border-stone-300 p-12 text-center">
           <Megaphone className="mx-auto h-10 w-10 text-stone-300 mb-3" />
           <p className="font-medium text-stone-500">No campaigns yet</p>
-          <Link href="/admin/campaigns/new" className="mt-3 inline-block text-sm text-brand-600 hover:text-brand-700">
+          <Link href="/admin/campaigns/new" className="mt-3 inline-block text-sm text-terracotta hover:text-terracotta-deep">
             Create your first campaign →
           </Link>
         </div>
       ) : (
-        <div className="rounded-xl border border-stone-200 bg-white shadow-sm overflow-hidden">
+        <div className="border bg-cream-paper shadow-sm overflow-hidden" style={{ borderColor: 'var(--rule)' }}>
           <div className="divide-y divide-stone-100">
             {campaigns.map((c) => (
               <Link
                 key={c.id}
                 href={`/admin/campaigns/${c.id}`}
-                className="flex items-center justify-between px-6 py-4 hover:bg-stone-50 transition"
+                className="flex items-center justify-between px-6 py-4 hover:bg-cream-deep transition"
               >
                 <div>
                   <p className="font-medium text-stone-900">{c.subject}</p>

@@ -137,7 +137,7 @@ export function ProductsTab({
               key={qp.id}
               className="flex items-center gap-3 rounded-lg border border-stone-200 px-3 py-2.5"
             >
-              <Beer className="h-4 w-4 text-brand-500 shrink-0" />
+              <Beer className="h-4 w-4 text-terracotta shrink-0" />
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-stone-800 truncate">{qp.product.name}</p>
                 {qp.product.style && (
@@ -191,7 +191,7 @@ export function ProductsTab({
                     </div>
                     <button
                       onClick={() => openPlanEditor(plan)}
-                      className="flex items-center gap-1 rounded-lg border border-stone-200 px-2.5 py-1 text-xs font-medium text-stone-600 hover:bg-stone-50 transition"
+                      className="flex items-center gap-1 rounded-lg border px-2.5 py-1 text-xs font-medium text-stone-600 hover:bg-cream-deep transition" style={{ borderColor: 'var(--rule)' }}
                     >
                       <Pencil className="h-3 w-3" />
                       {planDefaultsList.length === 0 ? 'Set picks' : 'Edit'}
@@ -206,7 +206,7 @@ export function ProductsTab({
                       {planDefaultsList.map((d) => (
                         <span
                           key={d.id}
-                          className="inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 text-xs text-brand-700"
+                          className="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs text-gold-deep" style={{ backgroundColor: 'var(--cream-deep)' }}
                         >
                           <Beer className="h-3 w-3" />
                           {d.product.name} ×{d.quantity}
@@ -227,7 +227,7 @@ export function ProductsTab({
       {/* Add-product modal */}
       {addModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-sm bg-cream-paper p-6 shadow-xl">
             <h3 className="font-bold text-stone-900 mb-4">Add Product</h3>
             <select
               className="input w-full"
@@ -254,7 +254,7 @@ export function ProductsTab({
       {/* Plan-defaults editor modal */}
       {editingPlan && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-md bg-cream-paper p-6 shadow-xl max-h-[90vh] overflow-y-auto">
             <div className="flex items-center justify-between mb-3">
               <div>
                 <h3 className="font-bold text-stone-900">{editingPlan.name} — Defaults</h3>
@@ -268,7 +268,7 @@ export function ProductsTab({
             </div>
 
             <div className="mb-3 flex items-center justify-between">
-              <span className={`text-sm font-bold ${selectionTotal === editingPlan.packsPerOrder ? 'text-green-600' : 'text-brand-600'}`}>
+              <span className={`text-sm font-bold ${selectionTotal === editingPlan.packsPerOrder ? 'text-green-600' : 'text-terracotta'}`}>
                 {selectionTotal}/{editingPlan.packsPerOrder} selected
               </span>
               <button
@@ -280,7 +280,7 @@ export function ProductsTab({
             </div>
             <div className="h-2 rounded-full bg-stone-100 mb-4">
               <div
-                className={`h-2 rounded-full transition-all ${selectionTotal === editingPlan.packsPerOrder ? 'bg-green-500' : 'bg-brand-500'}`}
+                className={`h-2 rounded-full transition-all ${selectionTotal === editingPlan.packsPerOrder ? 'bg-green-500' : 'bg-terracotta'}`}
                 style={{ width: `${Math.min(100, (selectionTotal / editingPlan.packsPerOrder) * 100)}%` }}
               />
             </div>
@@ -295,7 +295,7 @@ export function ProductsTab({
                   const qty = planSelections[qp.productId] ?? 0
                   return (
                     <div key={qp.id} className="flex items-center gap-3 rounded-lg border border-stone-200 px-3 py-2">
-                      <Beer className="h-4 w-4 text-brand-500 shrink-0" />
+                      <Beer className="h-4 w-4 text-terracotta shrink-0" />
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-stone-800 truncate">{qp.product.name}</p>
                         {qp.product.style && (
@@ -305,7 +305,7 @@ export function ProductsTab({
                       <button
                         onClick={() => adjustSelection(qp.productId, -1, editingPlan)}
                         disabled={qty === 0}
-                        className="flex h-7 w-7 items-center justify-center rounded-full border border-stone-300 text-stone-600 hover:bg-stone-50 disabled:opacity-30"
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-stone-300 text-stone-600 hover:bg-cream-deep disabled:opacity-30"
                       >
                         <Minus className="h-3 w-3" />
                       </button>
@@ -313,7 +313,7 @@ export function ProductsTab({
                       <button
                         onClick={() => adjustSelection(qp.productId, 1, editingPlan)}
                         disabled={selectionTotal >= editingPlan.packsPerOrder}
-                        className="flex h-7 w-7 items-center justify-center rounded-full border border-stone-300 text-stone-600 hover:bg-stone-50 disabled:opacity-30"
+                        className="flex h-7 w-7 items-center justify-center rounded-full border border-stone-300 text-stone-600 hover:bg-cream-deep disabled:opacity-30"
                       >
                         <Plus className="h-3 w-3" />
                       </button>

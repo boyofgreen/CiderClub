@@ -69,21 +69,10 @@ export default function AdminPlansPage() {
     }
     const isNew = modal === 'new'
     const url = isNew ? '/api/plans' : `/api/plans/${(modal as Plan).id}`
-    const method = isNew ? 'POST' : 'PATCH'
-
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-
+    const res = await fetch(url, { method: isNew ? 'POST' : 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
     const data = await res.json().catch(() => ({}))
-    if (res.ok) {
-      await refresh()
-      setModal(null)
-    } else {
-      setError(data.error ?? 'Failed to save plan.')
-    }
+    if (res.ok) { await refresh(); setModal(null) }
+    else setError(data.error ?? 'Failed to save plan.')
     setSaving(false)
   }
 
@@ -99,17 +88,16 @@ export default function AdminPlansPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-stone-900">Club Plans</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
+          Club Plans
+        </h1>
         <div className="flex items-center gap-3">
           {archivedCount > 0 && (
-            <button
-              onClick={() => setShowArchived(!showArchived)}
-              className="text-sm text-stone-500 hover:text-stone-700"
-            >
+            <button onClick={() => setShowArchived(!showArchived)} className="text-sm text-stone-500 hover:text-stone-700">
               {showArchived ? 'Hide archived' : `Show archived (${archivedCount})`}
             </button>
           )}
-          <Button onClick={openNew} size="sm">
+          <Button variant="saloon" onClick={openNew} size="sm">
             <Plus className="h-4 w-4" /> New Plan
           </Button>
         </div>
@@ -124,21 +112,15 @@ export default function AdminPlansPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <h3 className="font-semibold text-stone-900">{plan.name}</h3>
-                  {plan.description && (
-                    <p className="text-sm text-stone-500 mt-0.5">{plan.description}</p>
-                  )}
+                  {plan.description && <p className="text-sm text-stone-500 mt-0.5">{plan.description}</p>}
                 </div>
                 <div className="flex items-center gap-1">
                   {plan.isActive && (
-                    <button onClick={() => openEdit(plan)} className="p-1 text-stone-400 hover:text-brand-600 transition">
+                    <button onClick={() => openEdit(plan)} className="p-1 text-stone-400 hover:text-terracotta transition">
                       <Pencil className="h-4 w-4" />
                     </button>
                   )}
-                  <button
-                    onClick={() => toggleArchive(plan)}
-                    className="p-1 text-stone-400 hover:text-stone-600 transition"
-                    title={plan.isActive ? 'Archive plan' : 'Restore plan'}
-                  >
+                  <button onClick={() => toggleArchive(plan)} className="p-1 text-stone-400 hover:text-stone-600 transition" title={plan.isActive ? 'Archive plan' : 'Restore plan'}>
                     {plan.isActive ? <Archive className="h-4 w-4" /> : <RotateCcw className="h-4 w-4" />}
                   </button>
                 </div>
@@ -167,7 +149,7 @@ export default function AdminPlansPage() {
                   </div>
                 )}
               </div>
-              <div className={`mt-3 inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+              <div className={`mt-3 inline-flex px-2 py-0.5 text-xs font-semibold ${
                 plan.isActive ? 'bg-green-100 text-green-700' : 'bg-stone-100 text-stone-500'
               }`}>
                 {plan.isActive ? 'Active' : 'Archived'}
@@ -180,29 +162,17 @@ export default function AdminPlansPage() {
       {/* Modal */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-md bg-cream-paper p-6 shadow-xl" style={{ border: '1px solid var(--rule)' }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-stone-900">
-                {modal === 'new' ? 'New Plan' : 'Edit Plan'}
-              </h3>
-              <button onClick={() => setModal(null)}>
-                <X className="h-5 w-5 text-stone-400" />
-              </button>
+              <h3 className="font-bold text-stone-900">{modal === 'new' ? 'New Plan' : 'Edit Plan'}</h3>
+              <button onClick={() => setModal(null)}><X className="h-5 w-5 text-stone-400" /></button>
             </div>
-
             {error && <Alert type="error" message={error} className="mb-4" />}
-
             <div className="space-y-3">
               <Input label="Plan name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
               <Textarea label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
               <div className="grid gap-3 sm:grid-cols-2">
-                <Input
-                  label="Est. price (cents)"
-                  type="number"
-                  value={form.priceInCents}
-                  onChange={(e) => setForm({ ...form, priceInCents: e.target.value })}
-                  hint="Display only — actual total comes from product prices"
-                />
+                <Input label="Est. price (cents)" type="number" value={form.priceInCents} onChange={(e) => setForm({ ...form, priceInCents: e.target.value })} hint="Display only — actual total comes from product prices" />
                 <Input label="Items per order" type="number" value={form.packsPerOrder} onChange={(e) => setForm({ ...form, packsPerOrder: e.target.value })} />
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
@@ -210,10 +180,9 @@ export default function AdminPlansPage() {
                 <Input label="Max capacity (optional)" type="number" value={form.maxCapacity} onChange={(e) => setForm({ ...form, maxCapacity: e.target.value })} hint="Blank = unlimited" />
               </div>
             </div>
-
             <div className="mt-5 flex gap-2">
               <Button variant="secondary" onClick={() => setModal(null)} className="flex-1">Cancel</Button>
-              <Button onClick={handleSave} loading={saving} className="flex-1">Save</Button>
+              <Button variant="saloon" onClick={handleSave} loading={saving} className="flex-1">Save</Button>
             </div>
           </div>
         </div>

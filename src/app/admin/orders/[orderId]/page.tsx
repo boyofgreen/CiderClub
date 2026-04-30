@@ -34,7 +34,7 @@ export default async function AdminOrderDetailPage({
           <ArrowLeft className="h-5 w-5" />
         </Link>
         <div className="flex-1">
-          <h1 className="text-xl font-bold text-stone-900">
+          <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(20px,3vw,28px)', color: 'var(--ink)' }}>
             Order — {order.member.firstName} {order.member.lastName}
           </h1>
           <div className="flex items-center gap-2 mt-1">
@@ -55,7 +55,7 @@ export default async function AdminOrderDetailPage({
         <Card>
           <h2 className="font-semibold text-stone-900 mb-3">Member</h2>
           <div className="space-y-1 text-sm">
-            <Link href={`/admin/members/${order.member.id}`} className="font-medium text-brand-600 hover:text-brand-700">
+            <Link href={`/admin/members/${order.member.id}`} className="font-medium text-terracotta hover:text-terracotta-deep">
               {order.member.firstName} {order.member.lastName}
             </Link>
             <p className="text-stone-500">{order.member.email}</p>
@@ -87,7 +87,7 @@ export default async function AdminOrderDetailPage({
                 href={order.squarePaymentLinkUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-brand-600 hover:text-brand-700 underline text-xs mt-1"
+                className="block text-terracotta hover:text-terracotta-deep underline text-xs mt-1"
               >
                 Payment link →
               </a>
@@ -97,7 +97,7 @@ export default async function AdminOrderDetailPage({
                 href={order.squareReceiptUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block text-brand-600 hover:text-brand-700 underline text-xs"
+                className="block text-terracotta hover:text-terracotta-deep underline text-xs"
               >
                 Square receipt →
               </a>
@@ -113,9 +113,9 @@ export default async function AdminOrderDetailPage({
         </h2>
         <div className="space-y-2">
           {order.items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between rounded-lg bg-stone-50 px-4 py-3">
+            <div key={item.id} className="flex items-center justify-between rounded-lg px-4 py-3" style={{ backgroundColor: 'var(--cream-deep)' }}>
               <div className="flex items-center gap-3">
-                <Beer className="h-4 w-4 text-brand-500" />
+                <Beer className="h-4 w-4 text-terracotta" />
                 <div>
                   <p className="font-medium text-stone-800">{item.product.name}</p>
                   {item.product.style && (

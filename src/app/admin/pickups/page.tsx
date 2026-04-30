@@ -6,7 +6,6 @@ import { formatDateTime } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
-import { Card } from '@/components/ui/Card'
 import { Calendar, Plus, X, ChevronRight } from 'lucide-react'
 
 type PickupEvent = {
@@ -62,8 +61,10 @@ export default function AdminPickupsPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-stone-900">Pickup Events</h1>
-        <Button onClick={() => setModal(true)} size="sm">
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
+          Pickup Events
+        </h1>
+        <Button variant="saloon" onClick={() => setModal(true)} size="sm">
           <Plus className="h-4 w-4" /> New Pickup
         </Button>
       </div>
@@ -74,23 +75,22 @@ export default function AdminPickupsPage() {
         <>
           {upcoming.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 mb-3">Upcoming</h2>
+              <p className="smallcaps mb-3" style={{ color: 'var(--ink-soft)' }}>Upcoming</p>
               <div className="space-y-3">
                 {upcoming.map((event) => (
                   <Link
                     key={event.id}
                     href={`/admin/pickups/${event.id}`}
-                    className="flex items-center justify-between rounded-xl border border-stone-200 bg-white p-5 hover:border-brand-300 hover:shadow-sm transition"
+                    className="flex items-center justify-between border bg-cream-paper p-5 hover:shadow-sm transition"
+                    style={{ borderColor: 'var(--rule)' }}
                   >
                     <div className="flex items-center gap-4">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-50">
-                        <Calendar className="h-5 w-5 text-brand-600" />
+                      <div className="flex h-10 w-10 items-center justify-center" style={{ backgroundColor: 'var(--cream-deep)' }}>
+                        <Calendar className="h-5 w-5 text-terracotta" />
                       </div>
                       <div>
                         <p className="font-semibold text-stone-900">{event.title}</p>
-                        <p className="text-sm text-stone-500">
-                          {event.quarter.label} · {formatDateTime(event.startsAt)}
-                        </p>
+                        <p className="text-sm text-stone-500">{event.quarter.label} · {formatDateTime(event.startsAt)}</p>
                         {event.location && <p className="text-xs text-stone-400">{event.location}</p>}
                       </div>
                     </div>
@@ -109,13 +109,14 @@ export default function AdminPickupsPage() {
 
           {past.length > 0 && (
             <div>
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-stone-500 mb-3">Past</h2>
+              <p className="smallcaps mb-3" style={{ color: 'var(--ink-soft)' }}>Past</p>
               <div className="space-y-2">
                 {past.slice(0, 6).map((event) => (
                   <Link
                     key={event.id}
                     href={`/admin/pickups/${event.id}`}
-                    className="flex items-center justify-between rounded-xl border border-stone-200 bg-white px-5 py-3 opacity-70 hover:opacity-100 transition"
+                    className="flex items-center justify-between border bg-cream-paper px-5 py-3 opacity-70 hover:opacity-100 transition"
+                    style={{ borderColor: 'var(--rule)' }}
                   >
                     <div>
                       <span className="font-medium text-stone-700">{event.title}</span>
@@ -132,7 +133,7 @@ export default function AdminPickupsPage() {
           )}
 
           {events.length === 0 && (
-            <div className="rounded-xl border border-dashed border-stone-300 p-12 text-center">
+            <div className="border border-dashed p-12 text-center" style={{ borderColor: 'var(--rule-strong)' }}>
               <Calendar className="mx-auto h-10 w-10 text-stone-300 mb-3" />
               <p className="text-stone-500">No pickup events yet.</p>
             </div>
@@ -143,14 +144,12 @@ export default function AdminPickupsPage() {
       {/* Create modal */}
       {modal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white p-6 shadow-xl max-h-[90vh] overflow-y-auto">
+          <div className="w-full max-w-lg bg-cream-paper p-6 shadow-xl max-h-[90vh] overflow-y-auto" style={{ border: '1px solid var(--rule)' }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-bold text-stone-900">New Pickup Event</h3>
               <button onClick={() => setModal(false)}><X className="h-5 w-5 text-stone-400" /></button>
             </div>
-
             {error && <Alert type="error" message={error} className="mb-3" />}
-
             <form onSubmit={handleCreate} className="space-y-3">
               <div className="space-y-1">
                 <label className="label">Quarter</label>
@@ -167,12 +166,12 @@ export default function AdminPickupsPage() {
               </div>
               <Input label="Notes (optional)" value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} />
               <label className="flex items-center gap-2 text-sm text-stone-700 cursor-pointer">
-                <input type="checkbox" checked={form.isPublic} onChange={(e) => setForm({ ...form, isPublic: e.target.checked })} className="accent-brand-600" />
+                <input type="checkbox" checked={form.isPublic} onChange={(e) => setForm({ ...form, isPublic: e.target.checked })} className="accent-terracotta" />
                 Show to members
               </label>
               <div className="flex gap-2 pt-2">
                 <Button variant="secondary" onClick={() => setModal(false)} className="flex-1" type="button">Cancel</Button>
-                <Button type="submit" loading={saving} className="flex-1">Create Event</Button>
+                <Button variant="saloon" type="submit" loading={saving} className="flex-1">Create Event</Button>
               </div>
             </form>
           </div>

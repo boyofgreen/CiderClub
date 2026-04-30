@@ -61,7 +61,7 @@ export default function CampaignDetailPage() {
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
-            <h1 className="text-xl font-bold text-stone-900">{campaign.subject}</h1>
+            <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(20px,3vw,28px)', color: 'var(--ink)' }}>{campaign.subject}</h1>
             <div className="flex items-center gap-2 mt-0.5">
               <StatusBadge status={campaign.status} />
               {campaign.sentAt && (
@@ -82,12 +82,12 @@ export default function CampaignDetailPage() {
       {result && <Alert type="success" message={result} />}
       {error && <Alert type="error" message={error} />}
 
-      <div className="rounded-xl border border-stone-200 bg-white p-6 shadow-sm">
+      <div className="border bg-cream-paper p-6 shadow-sm" style={{ borderColor: 'var(--rule)' }}>
         <div className="flex items-center justify-between mb-3">
           <h2 className="font-semibold text-stone-900">Email Preview</h2>
           <button
             onClick={() => setPreview(!preview)}
-            className="text-xs text-brand-600 hover:text-brand-700"
+            className="text-xs text-terracotta hover:text-terracotta-deep"
           >
             {preview ? 'Show HTML' : 'Preview'}
           </button>
@@ -102,17 +102,17 @@ export default function CampaignDetailPage() {
       {/* Confirm send modal */}
       {confirmSend && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-xl">
+          <div className="w-full max-w-sm bg-cream-paper p-6 shadow-xl">
             <div className="flex items-center gap-3 mb-3">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand-100">
-                <Users className="h-5 w-5 text-brand-600" />
+              <div className="flex h-10 w-10 items-center justify-center rounded-full text-terracotta" style={{ backgroundColor: 'var(--cream-deep)' }}>
+                <Users className="h-5 w-5" />
               </div>
               <div>
                 <h3 className="font-bold text-stone-900">Send Campaign?</h3>
                 <p className="text-sm text-stone-500">This will email all matching members.</p>
               </div>
             </div>
-            <p className="text-sm text-stone-600 mb-4 bg-stone-50 rounded-lg p-3">
+            <p className="text-sm text-stone-600 mb-4 rounded-lg p-3" style={{ backgroundColor: 'var(--cream-deep)' }}>
               <strong>Subject:</strong> {campaign.subject}
             </p>
             <div className="flex gap-2">

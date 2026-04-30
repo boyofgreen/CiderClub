@@ -24,12 +24,14 @@ export default async function AdminWaitlistPage() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold text-stone-900">Waitlist</h1>
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
+          Waitlist
+        </h1>
         <span className="text-sm text-stone-500">{entries.length} total</span>
       </div>
 
       {entries.length === 0 ? (
-        <div className="rounded-xl border border-dashed border-stone-300 p-12 text-center">
+        <div className="border border-dashed p-12 text-center" style={{ borderColor: 'var(--rule-strong)' }}>
           <List className="mx-auto h-10 w-10 text-stone-300 mb-3" />
           <p className="text-stone-500">No one on the waitlist right now.</p>
         </div>
@@ -41,9 +43,12 @@ export default async function AdminWaitlistPage() {
             </h2>
             <div className="space-y-2">
               {planEntries.map((entry, idx) => (
-                <div key={entry.id} className="flex items-center justify-between rounded-lg bg-stone-50 px-4 py-3">
+                <div key={entry.id} className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'var(--cream-deep)' }}>
                   <div className="flex items-center gap-3">
-                    <span className="flex h-7 w-7 items-center justify-center rounded-full bg-brand-100 text-xs font-bold text-brand-700">
+                    <span
+                      className="flex h-7 w-7 items-center justify-center text-xs font-bold"
+                      style={{ backgroundColor: 'var(--paper)', color: 'var(--terracotta)', border: '1px solid var(--rule)' }}
+                    >
                       {idx + 1}
                     </span>
                     <div>
@@ -54,16 +59,11 @@ export default async function AdminWaitlistPage() {
                   <div className="flex items-center gap-3">
                     <span className="text-xs text-stone-400">{formatDate(entry.createdAt)}</span>
                     {entry.member && (
-                      <Link
-                        href={`/admin/members/${entry.member.id}`}
-                        className="text-xs text-brand-600 hover:text-brand-700"
-                      >
+                      <Link href={`/admin/members/${entry.member.id}`} className="text-xs text-terracotta hover:text-terracotta-deep">
                         View member
                       </Link>
                     )}
-                    {entry.notifiedAt && (
-                      <span className="text-xs text-green-600">Notified</span>
-                    )}
+                    {entry.notifiedAt && <span className="text-xs text-green-600">Notified</span>}
                   </div>
                 </div>
               ))}
