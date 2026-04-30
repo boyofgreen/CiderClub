@@ -65,34 +65,43 @@ function baseTemplate(content: string): string {
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <style>
-  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #fef9f0; margin: 0; padding: 0; color: #1c1917; }
-  .container { max-width: 600px; margin: 40px auto; }
-  .header { background: #d97706; border-radius: 12px 12px 0 0; padding: 32px; text-align: center; }
-  .header h1 { color: white; margin: 0; font-size: 24px; }
-  .header p { color: #fde68a; margin: 8px 0 0; font-size: 14px; }
-  .body { background: white; padding: 32px; border-left: 1px solid #e7e5e4; border-right: 1px solid #e7e5e4; }
-  .body h2 { font-size: 20px; color: #1c1917; margin-top: 0; }
-  .body p { line-height: 1.6; color: #44403c; }
-  .btn { display: inline-block; background: #d97706; color: white !important; text-decoration: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; font-size: 15px; margin: 16px 0; }
-  .footer { background: #f5f5f4; border-radius: 0 0 12px 12px; padding: 20px 32px; text-align: center; border: 1px solid #e7e5e4; border-top: none; }
-  .footer p { font-size: 12px; color: #78716c; margin: 4px 0; }
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;1,400&display=swap');
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #efe6cf; margin: 0; padding: 0; color: #1d1a14; }
+  .wrapper { padding: 40px 16px; background: #efe6cf; }
+  .container { max-width: 600px; margin: 0 auto; }
+  .header { background: #1a2540; padding: 32px; text-align: center; border-bottom: 2px solid #c9a14a; }
+  .header-wordmark { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 400; font-size: 26px; color: #c9a14a; margin: 0; letter-spacing: 0.02em; }
+  .header-sub { font-size: 11px; color: rgba(247,241,227,0.5); margin: 8px 0 0; letter-spacing: 0.14em; text-transform: uppercase; }
+  .body { background: #fbf6e9; padding: 40px 36px; border-left: 1px solid rgba(201,161,74,0.35); border-right: 1px solid rgba(201,161,74,0.35); }
+  .body h2 { font-family: 'Playfair Display', Georgia, 'Times New Roman', serif; font-style: italic; font-weight: 400; font-size: 22px; color: #1d1a14; margin: 0 0 16px; }
+  .body p { line-height: 1.7; color: #4a4334; font-size: 15px; margin: 0 0 14px; }
+  .body ul, .body ol { color: #4a4334; font-size: 15px; line-height: 1.7; padding-left: 20px; margin: 0 0 14px; }
+  .body li { margin-bottom: 6px; }
+  .body strong { color: #1d1a14; font-weight: 600; }
+  .body a { color: #b65a3c; text-decoration: underline; }
+  .btn { display: inline-block; background: #b65a3c; color: #f7f1e3 !important; text-decoration: none !important; padding: 13px 32px; font-weight: 600; font-size: 12px; margin: 8px 0 16px; letter-spacing: 0.12em; text-transform: uppercase; }
+  .rule { border: none; border-top: 1px solid rgba(201,161,74,0.4); margin: 24px 0; }
   table.order { width: 100%; border-collapse: collapse; margin: 16px 0; }
-  table.order th { text-align: left; padding: 8px 12px; background: #fef9f0; font-size: 12px; text-transform: uppercase; color: #78716c; }
-  table.order td { padding: 10px 12px; border-top: 1px solid #f5f5f4; font-size: 14px; }
-  .total-row td { font-weight: 700; background: #fef9f0; }
+  table.order th { text-align: left; padding: 8px 12px; background: #efe6cf; font-size: 11px; text-transform: uppercase; letter-spacing: 0.08em; color: #4a4334; }
+  table.order td { padding: 10px 12px; border-top: 1px solid rgba(201,161,74,0.25); font-size: 14px; color: #4a4334; }
+  .total-row td { font-weight: 700; color: #1d1a14; background: #efe6cf; }
+  .footer { background: #1a2540; padding: 24px 36px; text-align: center; border-top: 1px solid rgba(201,161,74,0.35); }
+  .footer p { font-size: 11px; color: rgba(247,241,227,0.45); margin: 4px 0; letter-spacing: 0.04em; }
 </style>
 </head>
 <body>
+<div class="wrapper">
 <div class="container">
   <div class="header">
-    <h1>🍺 ${clubName}</h1>
-    <p>Your quarterly craft cider club</p>
+    <p class="header-wordmark">${clubName}</p>
+    <p class="header-sub">Your quarterly craft cider club</p>
   </div>
   <div class="body">${content}</div>
   <div class="footer">
     <p>You're receiving this because you're a ${clubName} member.</p>
     <p>&copy; ${new Date().getFullYear()} ${clubName}. All rights reserved.</p>
   </div>
+</div>
 </div>
 </body>
 </html>`
@@ -104,7 +113,7 @@ export function buildWelcomeEmail(params: {
   portalUrl: string
 }): string {
   return baseTemplate(`
-    <h2>Welcome to ${clubName}, ${params.firstName}! 🎉</h2>
+    <h2>Welcome to ${clubName}, ${params.firstName}!</h2>
     <p>You're officially a member of the <strong>${params.planName}</strong> plan. We're so excited to share our craft ciders with you each quarter.</p>
     <p>Here's what happens next:</p>
     <ol>
@@ -117,7 +126,7 @@ export function buildWelcomeEmail(params: {
       <a class="btn" href="${params.portalUrl}">Access Your Member Portal</a>
     </p>
     <p>Bookmark that link — it's your personal access to customize orders, view pickup schedules, and update your account anytime.</p>
-    <p>Cheers! 🍻</p>
+    <p>Cheers!</p>
   `)
 }
 
@@ -220,7 +229,7 @@ export function buildReceiptEmail(params: {
       <tr class="total-row"><td>Total Charged</td><td>${total}</td></tr>
     </table>
     ${params.receiptUrl ? `<p><a href="${params.receiptUrl}">View Square Receipt</a></p>` : ''}
-    <p>Enjoy your ciders! 🍻</p>
+    <p>Enjoy your ciders — cheers!</p>
   `)
 }
 
