@@ -165,14 +165,6 @@ function RegisterContent() {
     setMemberStatus(data.status); setDone(true); setLoading(false)
   }
 
-  async function skipCard(e: React.MouseEvent) {
-    e.preventDefault(); setLoading(true); setError(null)
-    const res = await fetch('/api/members', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(form) })
-    const data = await res.json().catch(() => ({}))
-    if (!res.ok) { setError(data.error ?? 'Something went wrong. Please try again.'); setLoading(false); return }
-    setMemberStatus(data.status); setDone(true); setLoading(false)
-  }
-
   const selectedPlan = plans.find((p) => p.id === form.planId)
   const selectedPlanIdx = plans.findIndex((p) => p.id === form.planId)
   const totalSteps = SQUARE_APP_ID ? 3 : 2
@@ -422,12 +414,6 @@ function RegisterContent() {
                 </button>
               </div>
 
-              <div style={{ textAlign: 'center', marginTop: 16 }}>
-                <button type="button" onClick={skipCard} disabled={loading}
-                  style={{ fontSize: 11, color: 'var(--ink-soft)', background: 'none', border: 'none', cursor: 'pointer', textDecoration: 'underline', opacity: 0.7 }}>
-                  Skip for now — add a card later
-                </button>
-              </div>
             </form>
           )}
         </div>

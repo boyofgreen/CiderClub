@@ -119,7 +119,7 @@ export function buildWelcomeEmail(params: {
     <ol>
       <li>Each quarter we'll notify you when your order is ready to customize</li>
       <li>Choose which ciders you'd like in your order</li>
-      <li>Pick up your order at our quarterly pickup event</li>
+      <li>Pick up your order during the month, at the pickup party, or we'll be happy to set it aside for you for your next visit</li>
       <li>We'll charge your card on file when you pick up (or at the end of the pickup period)</li>
     </ol>
     <p style="text-align:center">

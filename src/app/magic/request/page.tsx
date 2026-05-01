@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { Beer, Mail, ArrowLeft, CheckCircle } from 'lucide-react'
+import { Mail, ArrowLeft, CheckCircle } from 'lucide-react'
 import { Input } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
@@ -21,7 +21,6 @@ export default function MagicRequestPage() {
   const [sent, setSent] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Read error from URL (set by the magic link handler on invalid token)
   const searchParams = typeof window !== 'undefined'
     ? new URLSearchParams(window.location.search)
     : new URLSearchParams()
@@ -49,34 +48,36 @@ export default function MagicRequestPage() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-50 flex items-center justify-center p-4">
+    <div className="paper-bg min-h-screen flex items-center justify-center p-4">
       <div className="w-full max-w-md">
-        {/* Logo */}
+
+        {/* Wordmark */}
         <div className="text-center mb-8">
-          <Link href="/" className="inline-flex items-center gap-2 text-stone-700 hover:text-stone-900">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-brand-600">
-              <Beer className="h-5 w-5 text-white" />
-            </div>
-            <span className="text-xl font-bold">{clubName}</span>
+          <Link href="/" style={{ display: 'inline-block', textDecoration: 'none' }}>
+            <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 22, color: 'var(--ink)', margin: 0 }}>
+              {clubName}
+            </p>
           </Link>
         </div>
 
-        <div className="rounded-2xl border border-stone-200 bg-white p-8 shadow-sm">
+        <div className="paper-card" style={{ padding: '40px 36px' }}>
           {sent ? (
             <div className="text-center">
-              <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
-                <CheckCircle className="h-7 w-7 text-green-600" />
+              <div className="mx-auto mb-5 flex h-12 w-12 items-center justify-center" style={{ backgroundColor: 'var(--cream-deep)' }}>
+                <CheckCircle className="h-6 w-6 text-terracotta" />
               </div>
-              <h2 className="text-xl font-bold text-stone-900">Check your inbox!</h2>
-              <p className="mt-3 text-stone-600">
+              <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 20, color: 'var(--ink)', margin: '0 0 12px' }}>
+                Check your inbox
+              </h2>
+              <p className="text-sm text-stone-600">
                 If <strong>{email}</strong> is registered as a member, we've sent you a link to access
                 your portal. The link expires in 30 days.
               </p>
-              <p className="mt-4 text-sm text-stone-500">
+              <p className="mt-4 text-xs text-stone-400">
                 Didn't get it? Check your spam folder or{' '}
                 <button
                   onClick={() => { setSent(false); setEmail('') }}
-                  className="text-brand-600 underline hover:text-brand-700"
+                  className="text-terracotta underline hover:text-terracotta-deep"
                 >
                   try again
                 </button>.
@@ -85,19 +86,18 @@ export default function MagicRequestPage() {
           ) : (
             <>
               <div className="text-center mb-6">
-                <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-brand-100">
-                  <Mail className="h-6 w-6 text-brand-600" />
+                <div className="mx-auto mb-4 flex h-10 w-10 items-center justify-center" style={{ backgroundColor: 'var(--cream-deep)' }}>
+                  <Mail className="h-5 w-5 text-terracotta" />
                 </div>
-                <h1 className="text-xl font-bold text-stone-900">Access Your Member Portal</h1>
-                <p className="mt-2 text-sm text-stone-600">
+                <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 22, color: 'var(--ink)', margin: '0 0 8px' }}>
+                  Access Your Member Portal
+                </h1>
+                <p className="text-sm text-stone-500">
                   Enter your email and we'll send you a link — no password needed.
                 </p>
               </div>
 
-              {errorMsg && (
-                <Alert type="warning" message={errorMsg} className="mb-4" />
-              )}
-
+              {errorMsg && <Alert type="warning" message={errorMsg} className="mb-4" />}
               {error && <Alert type="error" message={error} className="mb-4" />}
 
               <form onSubmit={handleSubmit} className="space-y-4">
@@ -110,14 +110,14 @@ export default function MagicRequestPage() {
                   required
                   autoFocus
                 />
-                <Button type="submit" loading={loading} className="w-full">
+                <Button variant="saloon" type="submit" loading={loading} className="w-full">
                   Send My Access Link
                 </Button>
               </form>
 
-              <p className="mt-4 text-center text-sm text-stone-500">
+              <p className="mt-5 text-center text-xs text-stone-400">
                 Not a member yet?{' '}
-                <Link href="/register" className="text-brand-600 font-medium hover:text-brand-700">
+                <Link href="/register" className="text-terracotta hover:text-terracotta-deep font-medium">
                   Join the club
                 </Link>
               </p>
@@ -126,8 +126,8 @@ export default function MagicRequestPage() {
         </div>
 
         <p className="mt-6 text-center">
-          <Link href="/" className="inline-flex items-center gap-1 text-sm text-stone-500 hover:text-stone-700">
-            <ArrowLeft className="h-3.5 w-3.5" />
+          <Link href="/" className="inline-flex items-center gap-1 text-xs text-stone-400 hover:text-stone-600">
+            <ArrowLeft className="h-3 w-3" />
             Back to home
           </Link>
         </p>
