@@ -74,18 +74,25 @@ export function QuarterActions({
     setBillModal(false)
   }
 
+  const canGenerate = ['UPCOMING', 'OPEN'].includes(status)
+  const canLock = status === 'OPEN'
+  const canBill = ['OPEN', 'LOCKED', 'BILLING'].includes(status)
+  const hasActions = canGenerate || canLock || canBill
+
   return (
     <div className="relative flex flex-col items-end gap-2">
-      <button
-        onClick={() => setOpen(!open)}
-        className="btn-primary flex items-center gap-1.5"
-      >
-        Actions <ChevronDown className="h-4 w-4" />
-      </button>
+      {hasActions && (
+        <button
+          onClick={() => setOpen(!open)}
+          className="btn-primary flex items-center gap-1.5"
+        >
+          Actions <ChevronDown className="h-4 w-4" />
+        </button>
+      )}
 
       {open && (
         <div className="absolute right-0 top-full mt-1 z-20 w-60 border bg-cream-paper shadow-lg py-1" style={{ borderColor: 'var(--rule)' }}>
-          {(status === 'UPCOMING' || status === 'OPEN') && (
+          {canGenerate && (
             <button
               onClick={generateOrders}
               disabled={loading}
@@ -94,7 +101,7 @@ export function QuarterActions({
               <Zap className="h-4 w-4 text-terracotta" /> Generate Orders
             </button>
           )}
-          {status === 'OPEN' && (
+          {canLock && (
             <button
               onClick={lockOrders}
               disabled={loading}
@@ -103,7 +110,7 @@ export function QuarterActions({
               <Lock className="h-4 w-4 text-purple-500" /> Lock Quarter
             </button>
           )}
-          {(status === 'LOCKED' || status === 'OPEN') && (
+          {canBill && (
             <button
               onClick={() => { setBillModal(true); setOpen(false) }}
               className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
