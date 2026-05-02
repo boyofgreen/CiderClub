@@ -47,20 +47,43 @@ const TIER_COPY = [
 ]
 
 
+const LINEUP_FALLBACK = [
+  { name: 'Cherry Bloom',       style: 'Dry · Sparkling',   abv: 7.6, img: '/brand/cherry.jpg' },
+  { name: 'Pineapple Paradise', style: 'Sweet · Tropical',  abv: 5.8, img: '/brand/pineapple.jpg' },
+  { name: 'Lemongrass Lush',    style: 'Botanical · Bright', abv: 6.4, img: '/brand/lemongrass.jpg' },
+  { name: 'Black Bart',         style: "Gentleman's Cider", abv: 6.8, img: '/brand/bottles-shelf.jpg' },
+]
+const IMG_KEYWORDS: [string, string][] = [
+  ['cherry', '/brand/cherry.jpg'],
+  ['pineapple', '/brand/pineapple.jpg'],
+  ['lemon', '/brand/lemongrass.jpg'],
+  ['lush', '/brand/lemongrass.jpg'],
+]
+const FALLBACK_IMGS = ['/brand/cherry.jpg', '/brand/pineapple.jpg', '/brand/lemongrass.jpg', '/brand/bottles-shelf.jpg']
+
 async function getPageData() {
   try {
-    const [plans, memberCount] = await Promise.all([
+    const [plans, products, memberCount] = await Promise.all([
       prisma.plan.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' } }),
+      prisma.product.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' }, take: 4 }),
       prisma.member.count({ where: { status: 'ACTIVE' } }),
     ])
-    return { plans, memberCount }
+    return { plans, products, memberCount }
   } catch {
-    return { plans: [], memberCount: 142 }
+    return { plans: [], products: [], memberCount: 142 }
   }
 }
 
 export default async function LandingPage() {
-  const { plans, memberCount } = await getPageData()
+  const { plans, products, memberCount } = await getPageData()
+
+  const lineup = products.length > 0
+    ? products.map((p, i) => {
+        const lower = p.name.toLowerCase()
+        const img = IMG_KEYWORDS.find(([k]) => lower.includes(k))?.[1] ?? FALLBACK_IMGS[i % 4]
+        return { name: p.name, style: [p.style].filter(Boolean).join(' · '), abv: p.abv, img }
+      })
+    : LINEUP_FALLBACK
 
   return (
     <div style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
@@ -152,31 +175,15 @@ export default async function LandingPage() {
             </div>
           </div>
 
-          {/* Right — bottle collage */}
+          {/* Right — party photo with stamp */}
           <div className="relative hidden lg:block" style={{ height: 520 }}>
-            {/* Cherry Bloom */}
-            <div style={{ position: 'absolute', bottom: 0, left: 20, transform: 'rotate(3deg)', width: 260 }}>
-              <div className="bottle-frame" style={{ width: 260, height: 340, position: 'relative' }}>
-                <Image src="/brand/cherry.jpg" alt="Cherry Bloom" fill sizes="260px" style={{ objectFit: 'cover' }} />
-              </div>
-              <div style={{ backgroundColor: 'var(--cream)', padding: '6px 12px', marginTop: 8, display: 'inline-block' }}>
-                <span style={{ fontSize: 11, fontFamily: 'var(--font-serif)', fontStyle: 'italic', color: 'var(--ink)' }}>Cherry Bloom · 7.6%</span>
-              </div>
-            </div>
-
-            {/* Pineapple Paradise */}
-            <div style={{ position: 'absolute', top: 30, right: 0, transform: 'rotate(-4deg)', width: 240 }}>
-              <div className="bottle-frame" style={{ width: 240, height: 220, position: 'relative' }}>
-                <Image src="/brand/pineapple.jpg" alt="Pineapple Paradise" fill sizes="240px" style={{ objectFit: 'cover' }} />
-              </div>
-              <div style={{ backgroundColor: 'var(--terracotta)', padding: '6px 12px', marginTop: 8, display: 'inline-block' }}>
-                <span style={{ fontSize: 11, fontFamily: 'var(--font-serif)', fontStyle: 'italic', color: 'var(--cream)' }}>Pineapple Paradise</span>
-              </div>
+            <div className="bottle-frame" style={{ position: 'absolute', inset: 0 }}>
+              <Image src="/brand/party.png" alt="Hill Country Cider House tasting room" fill sizes="(max-width:1280px) 50vw, 640px" style={{ objectFit: 'cover', objectPosition: 'center top' }} />
             </div>
 
             {/* Members-only stamp */}
             <div style={{
-              position: 'absolute', bottom: 80, right: 10,
+              position: 'absolute', bottom: 32, right: 24,
               width: 130, height: 130, borderRadius: '50%',
               border: '2px solid var(--gold)',
               transform: 'rotate(-8deg)',
@@ -335,6 +342,43 @@ export default async function LandingPage() {
             Already a member?{' '}
             <Link href="/magic/request" className="link-saloon">Get your access link →</Link>
           </p>
+        </div>
+      </section>
+
+      {/* ── LINEUP ───────────────────────────────────────────────────── */}
+      <section id="lineup" className="hero-bg" style={{ padding: '120px 56px' }}>
+        <div className="mx-auto" style={{ maxWidth: 1280 }}>
+          <div className="flex items-end justify-between flex-wrap gap-8" style={{ borderBottom: '1px solid var(--rule)', paddingBottom: 32, marginBottom: 48 }}>
+            <div>
+              <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 12 }}>
+                THIS QUARTER'S POUR
+              </div>
+              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(40px,4vw,64px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--cream)', margin: 0 }}>
+                Spring '26 <em>Lineup</em>
+              </h2>
+            </div>
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(247,241,227,0.6)', maxWidth: 300, margin: 0, textAlign: 'right' }}>
+              Members can mix any combination from the lineup — defaults are set, but the choice is always yours.
+            </p>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
+            {lineup.map((bottle) => (
+              <div key={bottle.name}>
+                <div className="bottle-frame" style={{ position: 'relative', paddingBottom: '133%' }}>
+                  <Image src={bottle.img} alt={bottle.name} fill sizes="(max-width:768px) 50vw, 25vw" style={{ objectFit: 'cover' }} />
+                </div>
+                <div style={{ marginTop: 20 }}>
+                  <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 24, color: 'var(--cream)' }}>
+                    {bottle.name}
+                  </div>
+                  <div style={{ fontSize: 9, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', marginTop: 4 }}>
+                    {bottle.style}{bottle.abv ? ` · ${bottle.abv}%` : ''}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </section>
 
