@@ -31,6 +31,29 @@ const SQUARE_SCRIPT_URL = isSandbox
 
 const TIER_NAMES = ['The Pickers', 'The Pressers', 'Cellar Crew']
 const TIER_LEVELS = ['LEVEL I', 'LEVEL II', 'LEVEL III']
+const TIER_PERKS = [
+  [
+    '10% off club purchase bottles',
+    '5% off every day',
+    'One free pour each visit',
+    'Open-bar pickup party',
+  ],
+  [
+    '15% off club purchase bottles',
+    '5% off every day',
+    'Free pour for you + a guest',
+    'Open-bar pickup party',
+    'Early access to new releases',
+  ],
+  [
+    '20% off club purchase bottles',
+    '10% off every day',
+    'Free pour for you + a guest',
+    'Open-bar pickup party',
+    'First access to limited releases',
+    'Free barrel-room reservation',
+  ],
+]
 
 // ─── Progress Rail ───────────────────────────────────────────────────────────
 function ProgressRail({ step, totalSteps }: { step: number; totalSteps: number }) {
@@ -310,24 +333,26 @@ function RegisterContent() {
                   return (
                     <div key={plan.id} onClick={() => update('planId', plan.id)}
                       style={{
-                        display: 'flex', alignItems: 'center', gap: 16, padding: '16px 20px', cursor: 'pointer',
+                        display: 'flex', gap: 16, padding: '20px', cursor: 'pointer',
                         border: `1px solid ${selected ? 'var(--terracotta)' : 'var(--rule)'}`,
                         backgroundColor: selected ? 'rgba(182,90,60,0.04)' : 'transparent',
                         transition: 'border-color 0.15s',
                       }}>
                       {/* Diamond checkbox */}
-                      <div style={{
-                        width: 18, height: 18, transform: 'rotate(45deg)', flexShrink: 0,
-                        border: `2px solid ${selected ? 'var(--terracotta)' : 'var(--rule-strong)'}`,
-                        backgroundColor: selected ? 'var(--terracotta)' : 'transparent',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      }}>
-                        {selected && <span style={{ transform: 'rotate(-45deg)', fontSize: 8, color: 'var(--cream)', fontWeight: 700 }}>✓</span>}
+                      <div style={{ paddingTop: 4, flexShrink: 0 }}>
+                        <div style={{
+                          width: 18, height: 18, transform: 'rotate(45deg)',
+                          border: `2px solid ${selected ? 'var(--terracotta)' : 'var(--rule-strong)'}`,
+                          backgroundColor: selected ? 'var(--terracotta)' : 'transparent',
+                          display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        }}>
+                          {selected && <span style={{ transform: 'rotate(-45deg)', fontSize: 8, color: 'var(--cream)', fontWeight: 700 }}>✓</span>}
+                        </div>
                       </div>
 
                       {/* Info */}
                       <div style={{ flex: 1 }}>
-                        <div className="flex items-center flex-wrap gap-2">
+                        <div className="flex items-center flex-wrap gap-2" style={{ marginBottom: 4 }}>
                           <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 22, color: 'var(--ink)' }}>
                             {TIER_NAMES[i] ?? plan.name}
                           </span>
@@ -340,18 +365,25 @@ function RegisterContent() {
                             </span>
                           )}
                         </div>
-                        <div style={{ fontSize: 13, color: 'var(--ink-soft)', marginTop: 3 }}>
-                          {plan.packsPerOrder} bottles per quarter{plan.description ? ` · ${plan.description}` : ''}
-                        </div>
+                        {selected && (
+                          <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', display: 'flex', flexDirection: 'column', gap: 5 }}>
+                            {(TIER_PERKS[i] ?? []).map((perk) => (
+                              <li key={perk} style={{ display: 'flex', alignItems: 'baseline', gap: 7, fontSize: 12, color: 'var(--ink-soft)' }}>
+                                <span style={{ color: 'var(--terracotta)', fontSize: 9, flexShrink: 0 }}>✦</span>
+                                {perk}
+                              </li>
+                            ))}
+                          </ul>
+                        )}
                       </div>
 
-                      {/* Price */}
+                      {/* Bottle count */}
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
-                        <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 28, color: 'var(--ink)', lineHeight: 1 }}>
-                          ${Math.round(plan.priceInCents / 100)}
+                        <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 36, color: selected ? 'var(--terracotta)' : 'var(--ink)', lineHeight: 1 }}>
+                          {plan.packsPerOrder}
                         </div>
-                        <div style={{ fontSize: 9, letterSpacing: '0.16em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-soft)', marginTop: 3 }}>
-                          PER QUARTER
+                        <div style={{ fontSize: 9, letterSpacing: '0.14em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-soft)', marginTop: 3 }}>
+                          bottles
                         </div>
                       </div>
                     </div>
@@ -399,7 +431,7 @@ function RegisterContent() {
                     {TIER_NAMES[selectedPlanIdx] ?? selectedPlan.name}
                   </span>
                   <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 18, color: 'var(--gold-bright)' }}>
-                    ${Math.round(selectedPlan.priceInCents / 100)} / quarter
+                    {selectedPlan.packsPerOrder} bottles / quarter
                   </span>
                 </div>
               )}
