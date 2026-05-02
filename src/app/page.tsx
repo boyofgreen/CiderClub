@@ -82,10 +82,11 @@ export default async function LandingPage() {
 
           <nav className="hidden lg:flex items-center" style={{ gap: 32 }}>
             {[
-              { label: 'TASTING ROOM', href: 'https://www.hillcountryciderhouse.com/tasting-room' },
-              { label: 'APPLE TREES',  href: 'https://www.hillcountryciderhouse.com/apple-trees' },
-              { label: 'ABOUT',        href: 'https://www.hillcountryciderhouse.com/about' },
-              { label: 'CONTACT',      href: 'https://www.hillcountryciderhouse.com/contact' },
+              { label: 'TASTING ROOM',       href: 'https://www.hillcountryciderhouse.com/tasting-room' },
+              { label: "SATURDAY'S IN COMFORT", href: 'https://www.hillcountryciderhouse.com/private-tastings-comfort-tx' },
+              { label: 'APPLE TREES',        href: 'https://www.hillcountryciderhouse.com/apple-trees' },
+              { label: 'ABOUT',              href: 'https://www.hillcountryciderhouse.com/about' },
+              { label: 'CONTACT',            href: 'https://www.hillcountryciderhouse.com/contact' },
             ].map(({ label, href }) => (
               <a key={label} href={href} target="_blank" rel="noopener noreferrer"
                 style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-soft)', textDecoration: 'none' }}>
