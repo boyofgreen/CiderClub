@@ -46,44 +46,21 @@ const TIER_COPY = [
   },
 ]
 
-const LINEUP_FALLBACK = [
-  { name: 'Cherry Bloom',      style: 'Dry · Sparkling',      abv: 7.6, img: '/brand/cherry.jpg' },
-  { name: 'Pineapple Paradise', style: 'Sweet · Tropical',    abv: 5.8, img: '/brand/pineapple.jpg' },
-  { name: 'Lemongrass Lush',   style: 'Botanical · Bright',   abv: 6.4, img: '/brand/lemongrass.jpg' },
-  { name: 'Black Bart',        style: "Gentleman's Cider",    abv: 6.8, img: '/brand/bottles-shelf.jpg' },
-]
-
-const IMG_KEYWORDS: [string, string][] = [
-  ['cherry', '/brand/cherry.jpg'],
-  ['pineapple', '/brand/pineapple.jpg'],
-  ['lemon', '/brand/lemongrass.jpg'],
-  ['lush', '/brand/lemongrass.jpg'],
-]
-const FALLBACK_IMGS = ['/brand/cherry.jpg', '/brand/pineapple.jpg', '/brand/lemongrass.jpg', '/brand/bottles-shelf.jpg']
 
 async function getPageData() {
   try {
-    const [plans, products, memberCount] = await Promise.all([
+    const [plans, memberCount] = await Promise.all([
       prisma.plan.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' } }),
-      prisma.product.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' }, take: 4 }),
       prisma.member.count({ where: { status: 'ACTIVE' } }),
     ])
-    return { plans, products, memberCount }
+    return { plans, memberCount }
   } catch {
-    return { plans: [], products: [], memberCount: 142 }
+    return { plans: [], memberCount: 142 }
   }
 }
 
 export default async function LandingPage() {
-  const { plans, products, memberCount } = await getPageData()
-
-  const lineup = products.length > 0
-    ? products.map((p, i) => {
-        const lower = p.name.toLowerCase()
-        const img = IMG_KEYWORDS.find(([k]) => lower.includes(k))?.[1] ?? FALLBACK_IMGS[i % 4]
-        return { name: p.name, style: [p.style].filter(Boolean).join(' · '), abv: p.abv, img }
-      })
-    : LINEUP_FALLBACK
+  const { plans, memberCount } = await getPageData()
 
   return (
     <div style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
@@ -104,8 +81,13 @@ export default async function LandingPage() {
           </Link>
 
           <nav className="hidden lg:flex items-center" style={{ gap: 32 }}>
-            {['TASTING ROOM', 'APPLE TREES', 'ABOUT', 'CONTACT'].map((label) => (
-              <a key={label} href="https://www.hillcountryciderhouse.com" target="_blank" rel="noopener noreferrer"
+            {[
+              { label: 'TASTING ROOM', href: 'https://www.hillcountryciderhouse.com/tasting-room' },
+              { label: 'APPLE TREES',  href: 'https://www.hillcountryciderhouse.com/apple-trees' },
+              { label: 'ABOUT',        href: 'https://www.hillcountryciderhouse.com/about' },
+              { label: 'CONTACT',      href: 'https://www.hillcountryciderhouse.com/contact' },
+            ].map(({ label, href }) => (
+              <a key={label} href={href} target="_blank" rel="noopener noreferrer"
                 style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-soft)', textDecoration: 'none' }}>
                 {label}
               </a>
@@ -131,7 +113,7 @@ export default async function LandingPage() {
             <div className="flex items-center gap-4" style={{ marginBottom: 32 }}>
               <div style={{ height: 1, width: 40, backgroundColor: 'var(--gold)', flexShrink: 0 }} />
               <span style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)' }}>
-                A QUARTERLY CIDER CLUB ✦ COMFORT, TEXAS
+                A QUARTERLY CIDER CLUB ✦ HILL COUNTRY STRONG
               </span>
             </div>
 
@@ -147,7 +129,6 @@ export default async function LandingPage() {
 
             <div className="flex flex-wrap items-center gap-4" style={{ marginBottom: 48 }}>
               <Link href="/register" className="btn-gold">Join the Club →</Link>
-              <a href="#lineup" className="btn-ghost-navy">View the Lineup</a>
             </div>
 
             <div style={{ borderTop: '1px solid var(--rule)', paddingTop: 32 }}>
@@ -279,7 +260,6 @@ export default async function LandingPage() {
             {TIER_COPY.map((tier, i) => {
               const plan = plans[i] ?? null
               const featured = !!tier.featured
-              const fallbackPrices = ['$65', '$120', '$170']
               return (
                 <div key={tier.level} style={{ position: 'relative', paddingTop: featured ? 16 : 0 }}>
                   {featured && (
@@ -357,43 +337,6 @@ export default async function LandingPage() {
         </div>
       </section>
 
-      {/* ── LINEUP ───────────────────────────────────────────────────── */}
-      <section id="lineup" className="hero-bg" style={{ padding: '120px 56px' }}>
-        <div className="mx-auto" style={{ maxWidth: 1280 }}>
-          <div className="flex items-end justify-between flex-wrap gap-8" style={{ borderBottom: '1px solid var(--rule)', paddingBottom: 32, marginBottom: 48 }}>
-            <div>
-              <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 12 }}>
-                THIS QUARTER'S POUR
-              </div>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(40px,4vw,64px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--cream)', margin: 0 }}>
-                Spring '26 <em>Lineup</em>
-              </h2>
-            </div>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(247,241,227,0.6)', maxWidth: 300, margin: 0, textAlign: 'right' }}>
-              Eight ciders are on tap this quarter. Members can mix any combination — defaults are set, but the choice is always yours.
-            </p>
-          </div>
-
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
-            {lineup.map((bottle) => (
-              <div key={bottle.name}>
-                <div className="bottle-frame" style={{ position: 'relative', paddingBottom: '133%' }}>
-                  <Image src={bottle.img} alt={bottle.name} fill sizes="(max-width:768px) 50vw, 25vw" style={{ objectFit: 'cover' }} />
-                </div>
-                <div style={{ marginTop: 20 }}>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 24, color: 'var(--cream)' }}>
-                    {bottle.name}
-                  </div>
-                  <div style={{ fontSize: 9, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', marginTop: 4 }}>
-                    {bottle.style}{bottle.abv ? ` · ${bottle.abv}%` : ''}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* ── FOUNDER LETTER ───────────────────────────────────────────── */}
       <section style={{ backgroundColor: 'var(--cream)', padding: '120px 56px' }}>
         <div className="mx-auto text-center" style={{ maxWidth: 720 }}>
@@ -401,11 +344,11 @@ export default async function LandingPage() {
             "
           </div>
           <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 32, lineHeight: 1.4, color: 'var(--ink)', margin: 0 }}>
-            We started pressing apples in our backyard with a hand crank and a stubborn streak. Eight years on, this club is how we say thank you to the folks who showed up early — and stayed.
+            We started with a folding table and one cider. Five years on, this club is how we say thank you to the folks who make our cider a part of their lives.
           </p>
           <div style={{ height: 1, width: 80, backgroundColor: 'var(--gold)', margin: '48px auto 24px' }} />
           <div style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--terracotta)' }}>
-            — THE FOUNDERS, COMFORT TX
+            — JB · Founder, Hill Country Cider House
           </div>
         </div>
       </section>
@@ -429,10 +372,10 @@ export default async function LandingPage() {
               {
                 heading: 'VISIT',
                 items: [
-                  { label: 'Tasting Room', href: 'https://www.hillcountryciderhouse.com' },
-                  { label: 'Saturdays in Comfort', href: null },
-                  { label: 'Apple Trees', href: 'https://www.hillcountryciderhouse.com' },
-                  { label: 'Supper Club', href: null },
+                  { label: 'Tasting Room', href: 'https://www.hillcountryciderhouse.com/tasting-room' },
+                  { label: 'Saturdays in Comfort', href: 'https://www.hillcountryciderhouse.com/private-tastings-comfort-tx' },
+                  { label: 'Apple Trees', href: 'https://www.hillcountryciderhouse.com/apple-trees' },
+                  { label: 'Supper Club', href: 'https://ticketscandy.com/e/the-italian-table-a-summer-supper-in-the-hill-country-by-hill-country-cider-house-16385' },
                 ],
               },
               {
@@ -440,7 +383,7 @@ export default async function LandingPage() {
                 items: [
                   { label: 'Join the Club', href: '/register' },
                   { label: 'Member Sign-in', href: '/magic/request' },
-                  { label: 'FAQs', href: null },
+                  { label: 'FAQs', href: 'https://www.hillcountryciderhouse.com/faqs' },
                   { label: 'Pickup Schedule', href: null },
                 ],
               },
@@ -450,7 +393,7 @@ export default async function LandingPage() {
                   { label: 'hello@hillcountryciderhouse.com', href: 'mailto:hello@hillcountryciderhouse.com' },
                   { label: '(830) 344-0441', href: 'tel:+18303440441' },
                   { label: 'Comfort, Texas', href: null },
-                  { label: '@hillcountrycider', href: null },
+                  { label: '@hillcountrycider', href: 'https://instagram.com/hillcountrycider' },
                 ],
               },
             ] as const).map(({ heading, items }) => (
