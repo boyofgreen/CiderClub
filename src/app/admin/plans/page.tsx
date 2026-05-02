@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { formatCents } from '@/lib/utils'
 import { Button } from '@/components/ui/Button'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
@@ -127,12 +126,8 @@ export default function AdminPlansPage() {
               </div>
               <div className="mt-4 space-y-1.5 text-sm">
                 <div className="flex justify-between">
-                  <span className="text-stone-500">Est. price/qtr</span>
-                  <span className="font-semibold text-stone-800">{formatCents(plan.priceInCents)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-stone-500">Items per order</span>
-                  <span className="font-medium text-stone-700">{plan.packsPerOrder}</span>
+                  <span className="text-stone-500">Bottles per order</span>
+                  <span className="font-semibold text-stone-800">{plan.packsPerOrder}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-stone-500">Discount</span>
@@ -172,8 +167,7 @@ export default function AdminPlansPage() {
               <Input label="Plan name" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
               <Textarea label="Description" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} rows={2} />
               <div className="grid gap-3 sm:grid-cols-2">
-                <Input label="Est. price (cents)" type="number" value={form.priceInCents} onChange={(e) => setForm({ ...form, priceInCents: e.target.value })} hint="Display only — actual total comes from product prices" />
-                <Input label="Items per order" type="number" value={form.packsPerOrder} onChange={(e) => setForm({ ...form, packsPerOrder: e.target.value })} />
+                <Input label="Bottles per order" type="number" value={form.packsPerOrder} onChange={(e) => setForm({ ...form, packsPerOrder: e.target.value })} />
               </div>
               <div className="grid gap-3 sm:grid-cols-2">
                 <Input label="Discount %" type="number" min="0" max="100" value={form.discountPercent} onChange={(e) => setForm({ ...form, discountPercent: e.target.value })} hint="Applied to order subtotal" />

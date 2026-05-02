@@ -11,7 +11,7 @@ import { CreditCard, User } from 'lucide-react'
 type MemberProfile = {
   id: string; firstName: string; lastName: string; email: string; phone: string | null
   address1: string | null; city: string | null; state: string | null; zip: string | null
-  squareCardId: string | null; plan: { name: string; priceInCents: number }
+  squareCardId: string | null; plan: { name: string }
   status: string
 }
 
@@ -81,12 +81,6 @@ export default function MemberProfilePage() {
           <div className="flex justify-between">
             <span className="text-stone-500">Plan</span>
             <span className="font-medium text-stone-800">{member.plan.name}</span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-stone-500">Quarterly price</span>
-            <span className="font-medium text-stone-800">
-              ${(member.plan.priceInCents / 100).toFixed(2)}
-            </span>
           </div>
           <div className="flex justify-between">
             <span className="text-stone-500">Status</span>
