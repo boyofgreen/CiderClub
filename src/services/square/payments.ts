@@ -1,5 +1,6 @@
 import { squareClient } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
+import { clubName } from '@/lib/resend'
 import type { Square } from 'square'
 
 export interface LineItemParam {
@@ -83,7 +84,7 @@ function buildOrderBody(params: {
         state: 'PROPOSED' as const,
         pickupDetails: {
           scheduleType: 'ASAP' as const,
-          note: `${params.quarterLabel} Cider Club quarterly pickup`,
+          note: `${params.quarterLabel} — ${clubName} quarterly pickup`,
           recipient: {
             displayName: params.memberName,
             emailAddress: params.memberEmail,
@@ -129,6 +130,7 @@ export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResu
       amount: BigInt(squareOrderTotal),
       currency: 'USD',
     },
+    statementDescriptionIdentifier: 'CIDER CLUB',
   })
 
   const payment = paymentResponse.payment
@@ -155,8 +157,6 @@ export async function createPaymentLink(
 ): Promise<{ url: string; linkId: string }> {
   const locationId = process.env.SQUARE_LOCATION_ID
   if (!locationId) throw new Error('SQUARE_LOCATION_ID is not configured')
-
-  const clubName = process.env.NEXT_PUBLIC_CLUB_NAME ?? 'Cider Club'
 
   const response = await squareClient.checkout.paymentLinks.create({
     idempotencyKey: `order-link-${params.orderId}`,
