@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Cider Club — Hill Country</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;1,400;1,500;1,600&family=Inter+Tight:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="styles.css" />
+<style>
+  body { margin: 0; background: #efe6cf; font-family: "Inter Tight", system-ui, sans-serif; color: #1d1a14; }
+  * { box-sizing: border-box; }
+</style>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel" src="design-canvas.jsx"></script>
+<script type="text/babel" src="tweaks-panel.jsx"></script>
+<script type="text/babel" src="screens/landing.jsx"></script>
+<script type="text/babel" src="screens/register.jsx"></script>
+<script type="text/babel">
+const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+  "showImagery": true,
+  "darkNav": false,
+  "featuredTier": "pressers"
+}/*EDITMODE-END*/;
+
+function App() {
+  const [tweaks, setTweak] = useTweaks(TWEAK_DEFAULTS);
+
+  return (
+    <>
+      <DesignCanvas title="Hill Country Cider Club — Member Experience" subtitle="Public landing + 3-step registration · Comfort, TX">
+        <DCSection id="landing" title="Public Landing — hillcountryciderhouse.com/club">
+          <DCArtboard id="landing-full" label="Full landing page" width={1280} height={3400}>
+            <Landing tweaks={tweaks} />
+          </DCArtboard>
+        </DCSection>
+        <DCSection id="register" title="Registration Flow — /register">
+          <DCArtboard id="reg-1" label="Step 1 · Your details" width={720} height={1100}>
+            <Register initialStep={1} />
+          </DCArtboard>
+          <DCArtboard id="reg-2" label="Step 2 · Pick your tier" width={720} height={1100}>
+            <Register initialStep={2} />
+          </DCArtboard>
+          <DCArtboard id="reg-3" label="Step 3 · Card on file" width={720} height={1100}>
+            <Register initialStep={3} />
+          </DCArtboard>
+          <DCArtboard id="reg-4" label="Confirmation" width={720} height={900}>
+            <Register initialStep={4} />
+          </DCArtboard>
+        </DCSection>
+      </DesignCanvas>
+
+      <TweaksPanel title="Tweaks">
+        <TweakSection title="Brand & Layout">
+          <TweakToggle label="Show bottle photography" value={tweaks.showImagery} onChange={(v) => setTweak("showImagery", v)} />
+          <TweakToggle label="Dark navy navbar" value={tweaks.darkNav} onChange={(v) => setTweak("darkNav", v)} />
+          <TweakRadio
+            label="Featured tier"
+            value={tweaks.featuredTier}
+            options={[
+              { value: "pickers", label: "Pickers" },
+              { value: "pressers", label: "Pressers" },
+              { value: "cellar", label: "Cellar" },
+            ]}
+            onChange={(v) => setTweak("featuredTier", v)}
+          />
+        </TweakSection>
+      </TweaksPanel>
+    </>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>

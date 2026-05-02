@@ -1,0 +1,190 @@
+/* ─── Hill Country Cider Club — design tokens ─────────────────────────── */
+:root {
+  --navy: #1a2540;
+  --navy-deep: #131c33;
+  --navy-soft: #2a3654;
+  --gold: #c9a14a;
+  --gold-bright: #e7c87a;
+  --gold-deep: #9c7a2e;
+  --cream: #f7f1e3;
+  --cream-deep: #efe6cf;
+  --paper: #fbf6e9;
+  --terracotta: #b65a3c;
+  --terracotta-deep: #8a4128;
+  --ink: #1d1a14;
+  --ink-soft: #4a4334;
+  --rule: rgba(201, 161, 74, 0.35);
+  --rule-strong: rgba(201, 161, 74, 0.7);
+}
+
+/* Type */
+.serif { font-family: "Playfair Display", "Cormorant Garamond", Georgia, serif; }
+.sans  { font-family: "Inter Tight", "Inter", system-ui, sans-serif; }
+.mono  { font-family: "JetBrains Mono", ui-monospace, monospace; }
+
+.smallcaps {
+  text-transform: uppercase;
+  letter-spacing: 0.22em;
+  font-weight: 600;
+}
+
+/* Ornaments */
+.hr-gold {
+  border: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--rule-strong) 20%, var(--rule-strong) 80%, transparent);
+}
+.flourish {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  color: var(--gold);
+}
+.flourish::before, .flourish::after {
+  content: "";
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--rule-strong), transparent);
+}
+.flourish-dark::before, .flourish-dark::after {
+  background: linear-gradient(90deg, transparent, rgba(231, 200, 122, 0.5), transparent);
+}
+
+/* Cards */
+.paper-card {
+  background: var(--paper);
+  border: 1px solid var(--rule);
+  box-shadow: 0 1px 0 rgba(255,255,255,0.6) inset, 0 4px 14px rgba(26, 37, 64, 0.06);
+}
+
+/* Buttons */
+.btn-saloon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: var(--terracotta);
+  color: var(--cream);
+  font-family: "Inter Tight", sans-serif;
+  font-weight: 600;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: transform 0.15s, background 0.2s;
+  box-shadow: 0 2px 0 var(--terracotta-deep), 0 6px 18px rgba(138, 65, 40, 0.25);
+}
+.btn-saloon:hover { background: var(--terracotta-deep); transform: translateY(-1px); }
+
+.btn-gold {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 28px;
+  background: var(--gold);
+  color: var(--navy);
+  font-family: "Inter Tight", sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  box-shadow: 0 2px 0 var(--gold-deep);
+}
+.btn-gold:hover { background: var(--gold-bright); }
+
+.btn-ghost-navy {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 13px 26px;
+  background: transparent;
+  color: var(--cream);
+  font-family: "Inter Tight", sans-serif;
+  font-weight: 600;
+  font-size: 12px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  border: 1px solid var(--rule-strong);
+  cursor: pointer;
+}
+
+/* Inputs */
+.field-saloon {
+  display: block;
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--cream);
+  border: 1px solid var(--rule);
+  border-bottom: 1.5px solid var(--gold-deep);
+  font-family: "Inter Tight", sans-serif;
+  font-size: 15px;
+  color: var(--ink);
+}
+.field-saloon::placeholder { color: rgba(74, 67, 52, 0.45); }
+.field-saloon:focus { outline: none; border-color: var(--terracotta); }
+
+/* Star divider */
+.star-divider {
+  display: inline-block;
+  color: var(--gold);
+  font-size: 10px;
+  letter-spacing: 8px;
+  padding: 0 8px;
+}
+
+/* Bottle photo frame */
+.bottle-frame {
+  position: relative;
+  background: var(--cream-deep);
+  border: 1px solid var(--rule);
+  overflow: hidden;
+}
+.bottle-frame::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid var(--rule);
+  pointer-events: none;
+}
+
+/* Stamp */
+.stamp {
+  display: inline-block;
+  padding: 6px 14px;
+  background: var(--navy);
+  color: var(--gold);
+  font-family: "Inter Tight", sans-serif;
+  font-size: 10px;
+  letter-spacing: 0.28em;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+/* Underline link */
+.link-saloon {
+  color: var(--terracotta);
+  text-decoration: none;
+  border-bottom: 1px solid currentColor;
+  padding-bottom: 1px;
+}
+.link-saloon:hover { color: var(--terracotta-deep); }
+
+/* Subtle paper texture (cream pages) */
+.paper-bg {
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(rgba(156, 122, 46, 0.04) 1px, transparent 1px),
+    radial-gradient(rgba(156, 122, 46, 0.03) 1px, transparent 1px);
+  background-size: 22px 22px, 13px 13px;
+  background-position: 0 0, 11px 11px;
+}
+
+/* Star/diamond marks */
+.diamond { display: inline-block; transform: rotate(45deg); width: 6px; height: 6px; background: currentColor; }
