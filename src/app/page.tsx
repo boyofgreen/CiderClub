@@ -178,7 +178,7 @@ export default async function LandingPage() {
           {/* Right — party photo with stamp */}
           <div className="relative hidden lg:block" style={{ height: 520 }}>
             <div className="bottle-frame" style={{ position: 'absolute', inset: 0 }}>
-              <Image src="/brand/party.png" alt="Hill Country Cider House tasting room" fill sizes="(max-width:1280px) 50vw, 640px" style={{ objectFit: 'cover', objectPosition: 'center top' }} />
+              <Image src="/brand/party.jpg" alt="Hill Country Cider House tasting room" fill sizes="(max-width:1280px) 50vw, 640px" style={{ objectFit: 'cover', objectPosition: 'center top' }} />
             </div>
 
             {/* Members-only stamp */}
