@@ -10,10 +10,10 @@ const TIER_COPY = [
     bottles: 3,
     blurb: '"A fine place to start — three of our best, hand-picked."',
     perks: [
-      'Member discount: 10% off bottles',
-      '5% off everything else',
+      '10% off club purchase bottles',
+      '5% off every day',
       'One free pour each visit',
-      'Pickup party invite',
+      'Open-bar pickup party',
     ],
   },
   {
@@ -23,12 +23,11 @@ const TIER_COPY = [
     blurb: '"Our most-loved tier — six bottles, open bar, and a front-row seat."',
     featured: true,
     perks: [
-      'Member discount: 15% off bottles',
-      '5% off everything else',
+      '15% off club purchase bottles',
+      '5% off every day',
       'Free pour for you + a guest',
-      'Open-bar pickup parties',
+      'Open-bar pickup party',
       'Early access to new releases',
-      'Pickup party invite',
     ],
   },
   {
@@ -37,10 +36,10 @@ const TIER_COPY = [
     bottles: 9,
     blurb: '"For the devoted — nine bottles and first pick of every batch."',
     perks: [
-      'Member discount: 20% off bottles',
-      '10% off everything else',
+      '20% off club purchase bottles',
+      '10% off every day',
       'Free pour for you + a guest',
-      'Open-bar pickup parties',
+      'Open-bar pickup party',
       'First access to limited releases',
       'Free barrel-room reservation',
     ],
@@ -155,7 +154,7 @@ export default async function LandingPage() {
               <div className="flex items-start gap-12 flex-wrap">
                 {[
                   { value: String(memberCount || 142), label: 'Members' },
-                  { value: '23', label: 'Ciders Released' },
+                  { value: '26', label: 'Ciders & Counting' },
                   { value: '4×', label: 'Pickup Parties / yr' },
                 ].map(({ value, label }) => (
                   <div key={label}>
@@ -206,6 +205,9 @@ export default async function LandingPage() {
               <div style={{ fontSize: 8, letterSpacing: '0.2em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', lineHeight: 1.5 }}>
                 MEMBERS<br />ONLY
               </div>
+              <div style={{ fontSize: 7, letterSpacing: '0.16em', fontWeight: 700, textTransform: 'uppercase', color: 'rgba(201,161,74,0.7)', marginTop: 2 }}>
+                UP TO
+              </div>
               <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 28, color: 'var(--gold-bright)', lineHeight: 1 }}>
                 20%
               </div>
@@ -239,8 +241,8 @@ export default async function LandingPage() {
             {[
               { roman: 'I.', title: 'Saddle Up', body: 'Pick your tier, tell us a bit about yourself, and drop a card on file. Takes about two minutes.' },
               { roman: 'II.', title: 'We Holler', body: "When the new quarter opens, you'll get an email with a personal link to your order." },
-              { roman: 'III.', title: 'Pick Your Bottles', body: 'Swap in your favorites from the seasonal lineup. Or keep our picks — your call, always.' },
-              { roman: 'IV.', title: 'Come On Down', body: 'Pick up at our quarterly party. We charge your card on file and hand you your haul.' },
+              { roman: 'III.', title: 'Pick Your Bottles', body: 'Swap in your favorites from the lineup. Or keep our picks — your call, always.' },
+              { roman: 'IV.', title: 'Come On Down', body: 'Pick up at our quarterly party or when you are ready. We charge your card on file and hand you your haul.' },
             ].map(({ roman, title, body }) => (
               <div key={roman} style={{ backgroundColor: 'var(--cream)', padding: '48px 36px' }}>
                 <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 56, fontWeight: 400, color: 'var(--gold-deep)', lineHeight: 1, marginBottom: 20 }}>
@@ -311,13 +313,13 @@ export default async function LandingPage() {
                       </div>
                     </div>
 
-                    {/* Price */}
+                    {/* Bottle count */}
                     <div style={{ padding: '28px 32px', textAlign: 'center', borderBottom: `1px solid ${featured ? 'var(--rule-strong)' : 'var(--rule)'}` }}>
-                      <div className="flex items-baseline justify-center" style={{ gap: 4 }}>
+                      <div className="flex items-baseline justify-center" style={{ gap: 8 }}>
                         <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 64, fontWeight: 400, color: featured ? 'var(--gold-bright)' : 'var(--ink)', lineHeight: 1 }}>
-                          {plan ? `$${Math.round(plan.priceInCents / 100)}` : fallbackPrices[i]}
+                          {tier.bottles}
                         </span>
-                        <span style={{ fontSize: 14, color: featured ? 'rgba(247,241,227,0.5)' : 'var(--ink-soft)' }}>/ quarter</span>
+                        <span style={{ fontSize: 14, color: featured ? 'rgba(247,241,227,0.5)' : 'var(--ink-soft)' }}>bottles / quarter</span>
                       </div>
                       <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 14, color: featured ? 'rgba(247,241,227,0.7)' : 'var(--ink-soft)', margin: '12px 0 0' }}>
                         {tier.blurb}
