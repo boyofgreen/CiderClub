@@ -48,18 +48,22 @@ const TIER_COPY = [
 
 
 const LINEUP_FALLBACK = [
-  { name: 'Cherry Bloom',       style: 'Dry · Sparkling',   abv: 7.6, img: '/brand/cherry.jpg' },
-  { name: 'Pineapple Paradise', style: 'Sweet · Tropical',  abv: 5.8, img: '/brand/pineapple.jpg' },
-  { name: 'Lemongrass Lush',    style: 'Botanical · Bright', abv: 6.4, img: '/brand/lemongrass.jpg' },
-  { name: 'Black Bart',         style: "Gentleman's Cider", abv: 6.8, img: '/brand/bottles-shelf.jpg' },
+  { name: 'Pinkerton',          style: 'Dry · Sparkling',    abv: 7.6, img: '/brand/pinkerton.jpg' },
+  { name: 'Blueberry',          style: 'Sweet · Fruit',      abv: 5.8, img: '/brand/blueberry.jpg' },
+  { name: 'Marvelous Manzana',  style: 'Semi-Sweet · Apple', abv: 6.4, img: '/brand/manzana.jpg' },
+  { name: 'Cherry Bloom',       style: 'Dry · Sparkling',    abv: 7.2, img: '/brand/cherry.jpg' },
 ]
 const IMG_KEYWORDS: [string, string][] = [
-  ['cherry', '/brand/cherry.jpg'],
-  ['pineapple', '/brand/pineapple.jpg'],
-  ['lemon', '/brand/lemongrass.jpg'],
-  ['lush', '/brand/lemongrass.jpg'],
+  ['pinkerton',  '/brand/pinkerton.jpg'],
+  ['blueberry',  '/brand/blueberry.jpg'],
+  ['manzana',    '/brand/manzana.jpg'],
+  ['marvelous',  '/brand/manzana.jpg'],
+  ['cherry',     '/brand/cherry.jpg'],
+  ['pineapple',  '/brand/pineapple.jpg'],
+  ['lemon',      '/brand/lemongrass.jpg'],
+  ['lush',       '/brand/lemongrass.jpg'],
 ]
-const FALLBACK_IMGS = ['/brand/cherry.jpg', '/brand/pineapple.jpg', '/brand/lemongrass.jpg', '/brand/bottles-shelf.jpg']
+const FALLBACK_IMGS = ['/brand/pinkerton.jpg', '/brand/blueberry.jpg', '/brand/manzana.jpg', '/brand/cherry.jpg']
 
 async function getPageData() {
   try {
