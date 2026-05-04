@@ -4,8 +4,9 @@ import { prisma } from '@/lib/prisma'
 import { formatCents, formatDate } from '@/lib/utils'
 import { StatusBadge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
-import { ArrowLeft, Beer } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
 import { OrderAdminActions } from './OrderAdminActions'
+import { AdminOrderItemsEditor } from './AdminOrderItemsEditor'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Order Detail' }
@@ -15,15 +16,22 @@ export default async function AdminOrderDetailPage({
 }: {
   params: { orderId: string }
 }) {
-  const order = await prisma.order.findUnique({
-    where: { id: params.orderId },
-    include: {
-      member: { include: { plan: true } },
-      quarter: { include: { products: { include: { product: true } } } },
-      items: { include: { product: true } },
-      pickupEvent: true,
-    },
-  })
+  const [order, allProducts] = await Promise.all([
+    prisma.order.findUnique({
+      where: { id: params.orderId },
+      include: {
+        member: { include: { plan: true } },
+        quarter: { include: { products: { include: { product: true } } } },
+        items: { include: { product: true } },
+        pickupEvent: true,
+      },
+    }),
+    prisma.product.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true, name: true, style: true },
+    }),
+  ])
 
   if (!order) notFound()
 
@@ -108,30 +116,13 @@ export default async function AdminOrderDetailPage({
 
       {/* Items */}
       <Card>
-        <h2 className="font-semibold text-stone-900 mb-4">
-          Order Items ({order.items.reduce((s, i) => s + i.quantity, 0)} / {order.member.plan.packsPerOrder})
-        </h2>
-        <div className="space-y-2">
-          {order.items.map((item) => (
-            <div key={item.id} className="flex items-center justify-between rounded-lg px-4 py-3" style={{ backgroundColor: 'var(--cream-deep)' }}>
-              <div className="flex items-center gap-3">
-                <Beer className="h-4 w-4 text-terracotta" />
-                <div>
-                  <p className="font-medium text-stone-800">{item.product.name}</p>
-                  {item.product.style && (
-                    <p className="text-xs text-stone-400">{item.product.style}</p>
-                  )}
-                </div>
-              </div>
-              <span className="font-semibold text-stone-700">×{item.quantity}</span>
-            </div>
-          ))}
-        </div>
-        {order.lastCustomizedAt && (
-          <p className="mt-3 text-xs text-stone-400">
-            Last customized: {formatDate(order.lastCustomizedAt)}
-          </p>
-        )}
+        <AdminOrderItemsEditor
+          orderId={order.id}
+          packsPerOrder={order.member.plan.packsPerOrder}
+          currentItems={order.items.map((i) => ({ productId: i.productId, quantity: i.quantity, product: i.product }))}
+          availableProducts={allProducts}
+          lastCustomizedAt={order.lastCustomizedAt}
+        />
       </Card>
 
       {/* Pickup */}

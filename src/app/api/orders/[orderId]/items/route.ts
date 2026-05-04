@@ -17,12 +17,15 @@ export async function PUT(
   })
   if (!order) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  const isAdmin = appSession.role === 'ADMIN'
+
   // Members can only edit their own order
-  if (appSession.role === 'MEMBER' && order.memberId !== appSession.memberId) {
+  if (!isAdmin && order.memberId !== appSession.memberId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  if (!['PENDING_CUSTOMIZATION', 'CUSTOMIZED'].includes(order.status)) {
+  // Members are restricted by order status; admins can edit any order
+  if (!isAdmin && !['PENDING_CUSTOMIZATION', 'CUSTOMIZED'].includes(order.status)) {
     return NextResponse.json({ error: 'Order cannot be modified in its current state' }, { status: 409 })
   }
 
@@ -33,28 +36,29 @@ export async function PUT(
   const packsPerOrder = order.member.plan?.packsPerOrder ?? 0
   if (total !== packsPerOrder) {
     return NextResponse.json(
-      { error: `Total must equal ${packsPerOrder} packs` },
+      { error: `Total must equal ${packsPerOrder} bottles` },
       { status: 400 }
     )
   }
 
-  // Validate all products are available for this quarter
-  const quarterProducts = await prisma.quarterProduct.findMany({
-    where: { quarterId: order.quarterId },
-    select: { productId: true },
-  })
-  const allowedProductIds = new Set(quarterProducts.map((qp) => qp.productId))
-
-  for (const item of items) {
-    if (!allowedProductIds.has(item.productId)) {
-      return NextResponse.json(
-        { error: `Product ${item.productId} is not available this quarter` },
-        { status: 400 }
-      )
+  // Members can only pick from quarter products; admins can use any active product
+  if (!isAdmin) {
+    const quarterProducts = await prisma.quarterProduct.findMany({
+      where: { quarterId: order.quarterId },
+      select: { productId: true },
+    })
+    const allowedProductIds = new Set(quarterProducts.map((qp) => qp.productId))
+    for (const item of items) {
+      if (!allowedProductIds.has(item.productId)) {
+        return NextResponse.json(
+          { error: `Product ${item.productId} is not available this quarter` },
+          { status: 400 }
+        )
+      }
     }
   }
 
-  // Replace items in a transaction
+  // Replace items. Admins preserve the current status; member edits move to CUSTOMIZED.
   await prisma.$transaction([
     prisma.orderItem.deleteMany({ where: { orderId: params.orderId } }),
     prisma.orderItem.createMany({
@@ -68,7 +72,10 @@ export async function PUT(
     }),
     prisma.order.update({
       where: { id: params.orderId },
-      data: { status: 'CUSTOMIZED', lastCustomizedAt: new Date() },
+      data: {
+        lastCustomizedAt: new Date(),
+        ...(isAdmin ? {} : { status: 'CUSTOMIZED' }),
+      },
     }),
   ])
 
