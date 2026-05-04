@@ -268,12 +268,12 @@ export default async function LandingPage() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 28, alignItems: 'start' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 28, alignItems: 'stretch' }}>
             {TIER_COPY.map((tier, i) => {
               const plan = plans[i] ?? null
               const featured = !!tier.featured
               return (
-                <div key={tier.level} style={{ position: 'relative', paddingTop: featured ? 16 : 0 }}>
+                <div key={tier.level} style={{ position: 'relative', paddingTop: 16, display: 'flex', flexDirection: 'column' }}>
                   {featured && (
                     <div style={{
                       position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
@@ -286,6 +286,7 @@ export default async function LandingPage() {
                   )}
 
                   <div style={{
+                    flex: 1, display: 'flex', flexDirection: 'column',
                     backgroundColor: featured ? 'var(--navy)' : 'var(--paper)',
                     border: `1px solid ${featured ? 'var(--gold)' : 'var(--rule)'}`,
                     boxShadow: featured
@@ -319,8 +320,8 @@ export default async function LandingPage() {
                     </div>
 
                     {/* Perks + CTA */}
-                    <div style={{ padding: '24px 32px 32px' }}>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+                    <div style={{ padding: '24px 32px 32px', flex: 1, display: 'flex', flexDirection: 'column' }}>
+                      <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
                         {tier.perks.map((perk) => (
                           <li key={perk} className="flex items-start gap-2.5" style={{ fontSize: 14, color: featured ? 'rgba(247,241,227,0.82)' : 'var(--ink-soft)' }}>
                             <span style={{ color: featured ? 'var(--gold-bright)' : 'var(--terracotta)', marginTop: 2, flexShrink: 0, fontSize: 10 }}>✦</span>
