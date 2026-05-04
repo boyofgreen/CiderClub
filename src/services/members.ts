@@ -78,7 +78,7 @@ export async function createMember(params: CreateMemberParams) {
 
   // Create Square customer (async, don't block member creation if it fails)
   try {
-    const squareCustomerId = await createSquareCustomer(member)
+    const squareCustomerId = await createSquareCustomer(member, plan.name, member.createdAt)
 
     // Save card on file if nonce provided
     if (params.cardNonce && squareCustomerId) {

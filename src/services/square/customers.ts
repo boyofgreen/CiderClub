@@ -14,16 +14,55 @@ interface MemberInfo {
   zip?: string | null
 }
 
+/** Find or create a Square customer group by name; returns the group ID */
+async function findOrCreateGroup(name: string): Promise<string> {
+  const groups: { id?: string; name?: string }[] = []
+  for await (const group of await squareClient.customers.groups.list()) {
+    groups.push(group)
+  }
+  const existing = groups.find((g) => g.name === name)
+  if (existing?.id) return existing.id
+
+  const createResponse = await squareClient.customers.groups.create({
+    idempotencyKey: randomUUID(),
+    group: { name },
+  })
+  const groupId = createResponse.group?.id
+  if (!groupId) throw new Error(`Failed to create Square group: ${name}`)
+  return groupId
+}
+
 /** Create a Square customer and store the ID on the member record */
-export async function createSquareCustomer(member: MemberInfo): Promise<string> {
+export async function createSquareCustomer(
+  member: MemberInfo,
+  planName?: string,
+  joinedAt?: Date,
+): Promise<string> {
   const existing = await searchSquareCustomerByEmail(member.email)
   if (existing) {
     await prisma.member.update({
       where: { id: member.id },
       data: { squareCustomerId: existing },
     })
+    // Still try to add to group if we have a plan name
+    if (planName) {
+      try {
+        const groupId = await findOrCreateGroup(planName)
+        await squareClient.customers.groups.add({ customerId: existing, groupId })
+      } catch (err) {
+        console.error('[Square] Failed to add existing customer to group:', err)
+      }
+    }
     return existing
   }
+
+  const joinDate = joinedAt ?? new Date()
+  const joinDateStr = joinDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  const note = [
+    'Hill Country Cider Club member.',
+    planName ? `Plan: ${planName}.` : null,
+    `Joined: ${joinDateStr}.`,
+  ].filter(Boolean).join(' ')
 
   const response = await squareClient.customers.create({
     idempotencyKey: randomUUID(),
@@ -31,6 +70,7 @@ export async function createSquareCustomer(member: MemberInfo): Promise<string> 
     familyName: member.lastName,
     emailAddress: member.email,
     phoneNumber: member.phone ?? undefined,
+    note,
     address: member.address1
       ? {
           addressLine1: member.address1,
@@ -50,6 +90,16 @@ export async function createSquareCustomer(member: MemberInfo): Promise<string> 
     data: { squareCustomerId: customerId },
   })
 
+  // Add to the plan group
+  if (planName) {
+    try {
+      const groupId = await findOrCreateGroup(planName)
+      await squareClient.customers.groups.add({ customerId, groupId })
+    } catch (err) {
+      console.error('[Square] Failed to add customer to group:', err)
+    }
+  }
+
   return customerId
 }
 
@@ -61,7 +111,8 @@ export async function syncSquareCustomer(member: MemberInfo): Promise<void> {
     return
   }
 
-  await squareClient.customers.update(dbMember.squareCustomerId, {
+  await squareClient.customers.update({
+    customerId: dbMember.squareCustomerId,
     givenName: member.firstName,
     familyName: member.lastName,
     emailAddress: member.email,
