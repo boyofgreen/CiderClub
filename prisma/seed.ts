@@ -19,39 +19,39 @@ async function main() {
   const plans = await Promise.all([
     prisma.plan.upsert({
       where: { slug: '6-pack-quarterly' },
-      update: {},
+      update: { name: 'The Pickers', packsPerOrder: 3, sortOrder: 0 },
       create: {
-        name: '6-Pack Quarterly',
+        name: 'The Pickers',
         slug: '6-pack-quarterly',
-        description: 'Six cans of our seasonal selection, delivered to you every quarter. Perfect for the casual cider lover.',
-        packsPerOrder: 6,
-        priceInCents: 4800, // $48.00
+        description: 'Three bottles of our seasonal selection every quarter. Perfect for the casual cider lover.',
+        packsPerOrder: 3,
+        priceInCents: 4800,
         maxCapacity: 50,
         sortOrder: 0,
       },
     }),
     prisma.plan.upsert({
       where: { slug: '12-pack-quarterly' },
-      update: {},
+      update: { name: 'The Pressers', packsPerOrder: 6, sortOrder: 1 },
       create: {
-        name: '12-Pack Quarterly',
+        name: 'The Pressers',
         slug: '12-pack-quarterly',
-        description: 'A full dozen of our finest ciders every quarter. Our most popular plan for the dedicated cider enthusiast.',
-        packsPerOrder: 12,
-        priceInCents: 8400, // $84.00
+        description: 'Six bottles every quarter — our most-loved tier with open bar at every pickup party.',
+        packsPerOrder: 6,
+        priceInCents: 8400,
         maxCapacity: 30,
         sortOrder: 1,
       },
     }),
     prisma.plan.upsert({
       where: { slug: '24-pack-quarterly' },
-      update: {},
+      update: { name: 'Cellar Crew', packsPerOrder: 9, sortOrder: 2 },
       create: {
-        name: '24-Pack Quarterly',
+        name: 'Cellar Crew',
         slug: '24-pack-quarterly',
-        description: 'Two dozen cans per quarter — ideal for households, parties, and true aficionados.',
-        packsPerOrder: 24,
-        priceInCents: 15600, // $156.00
+        description: 'Nine bottles per quarter — for the devoted, with first pick of every batch.',
+        packsPerOrder: 9,
+        priceInCents: 15600,
         maxCapacity: 10,
         sortOrder: 2,
       },
