@@ -15,22 +15,29 @@ export default async function MemberDetailPage({
 }: {
   params: { memberId: string }
 }) {
-  const member = await prisma.member.findUnique({
-    where: { id: params.memberId },
-    include: {
-      plan: true,
-      orders: {
-        include: { quarter: true },
-        orderBy: { createdAt: 'desc' },
+  const [member, plans] = await Promise.all([
+    prisma.member.findUnique({
+      where: { id: params.memberId },
+      include: {
+        plan: true,
+        orders: {
+          include: { quarter: true },
+          orderBy: { createdAt: 'desc' },
+        },
+        emailLogs: {
+          orderBy: { createdAt: 'desc' },
+          take: 10,
+        },
+        referredBy: { select: { id: true, firstName: true, lastName: true } },
+        referrals: { select: { id: true, firstName: true, lastName: true, status: true } },
       },
-      emailLogs: {
-        orderBy: { createdAt: 'desc' },
-        take: 10,
-      },
-      referredBy: { select: { id: true, firstName: true, lastName: true } },
-      referrals: { select: { id: true, firstName: true, lastName: true, status: true } },
-    },
-  })
+    }),
+    prisma.plan.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: 'asc' },
+      select: { id: true, name: true, packsPerOrder: true },
+    }),
+  ])
 
   if (!member) notFound()
 
@@ -61,7 +68,7 @@ export default async function MemberDetailPage({
             </div>
           </div>
         </div>
-        <MemberActions memberId={member.id} status={member.status} squareCustomerId={member.squareCustomerId} />
+        <MemberActions memberId={member.id} status={member.status} squareCustomerId={member.squareCustomerId} currentPlanId={member.planId} plans={plans} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

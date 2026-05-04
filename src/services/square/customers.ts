@@ -129,6 +129,39 @@ export async function syncSquareCustomer(member: MemberInfo): Promise<void> {
   })
 }
 
+/** Move a Square customer from one plan group to another and append a note */
+export async function changeMemberPlanInSquare(
+  squareCustomerId: string,
+  oldPlanName: string,
+  newPlanName: string,
+): Promise<void> {
+  const changeDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+
+  try {
+    const oldGroupId = await findOrCreateGroup(oldPlanName)
+    await squareClient.customers.groups.remove({ customerId: squareCustomerId, groupId: oldGroupId })
+  } catch (err) {
+    console.error('[Square] Failed to remove old group:', err)
+  }
+
+  try {
+    const newGroupId = await findOrCreateGroup(newPlanName)
+    await squareClient.customers.groups.add({ customerId: squareCustomerId, groupId: newGroupId })
+  } catch (err) {
+    console.error('[Square] Failed to add new group:', err)
+  }
+
+  try {
+    const current = await squareClient.customers.get({ customerId: squareCustomerId })
+    const existingNote = current.customer?.note ?? ''
+    const appendLine = `Tier changed: ${oldPlanName} → ${newPlanName} on ${changeDate}.`
+    const updatedNote = existingNote ? `${existingNote}\n${appendLine}` : appendLine
+    await squareClient.customers.update({ customerId: squareCustomerId, note: updatedNote })
+  } catch (err) {
+    console.error('[Square] Failed to update customer note:', err)
+  }
+}
+
 /** Search Square for a customer by email; returns customerId or null */
 export async function searchSquareCustomerByEmail(email: string): Promise<string | null> {
   try {

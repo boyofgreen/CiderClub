@@ -5,24 +5,31 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { Input, Select } from '@/components/ui/Input'
-import { Pause, UserX, UserCheck, RefreshCw, ChevronDown } from 'lucide-react'
+import { Pause, UserX, UserCheck, RefreshCw, ChevronDown, ArrowLeftRight } from 'lucide-react'
+
+interface Plan { id: string; name: string; packsPerOrder: number }
 
 export function MemberActions({
   memberId,
   status,
   squareCustomerId,
+  currentPlanId,
+  plans,
 }: {
   memberId: string
   status: string
   squareCustomerId: string | null
+  currentPlanId: string
+  plans: Plan[]
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [action, setAction] = useState<'PAUSE' | 'CANCEL' | 'REACTIVATE' | null>(null)
+  const [action, setAction] = useState<'PAUSE' | 'CANCEL' | 'REACTIVATE' | 'CHANGE_TIER' | null>(null)
   const [pauseUntil, setPauseUntil] = useState('')
   const [cancelReason, setCancelReason] = useState('')
+  const [newPlanId, setNewPlanId] = useState(currentPlanId)
 
   async function handleAction() {
     if (!action) return
@@ -31,6 +38,23 @@ export function MemberActions({
     const body: Record<string, string> = { action }
     if (action === 'PAUSE' && pauseUntil) body.pausedUntilQuarter = pauseUntil
     if (action === 'CANCEL' && cancelReason) body.cancellationReason = cancelReason
+
+    if (action === 'CHANGE_TIER') {
+      const res = await fetch(`/api/members/${memberId}/plan`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ planId: newPlanId }),
+      })
+      if (res.ok) {
+        setOpen(false)
+        router.refresh()
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Failed to change tier')
+      }
+      setLoading(false)
+      return
+    }
 
     const res = await fetch(`/api/members/${memberId}/status`, {
       method: 'POST',
@@ -90,6 +114,12 @@ export function MemberActions({
             </button>
           )}
           <button
+            onClick={() => { setAction('CHANGE_TIER'); setOpen(false) }}
+            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
+          >
+            <ArrowLeftRight className="h-4 w-4 text-purple-500" /> Change Tier
+          </button>
+          <button
             onClick={() => { handleSquareSync(); setOpen(false) }}
             className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
           >
@@ -105,6 +135,7 @@ export function MemberActions({
             <h3 className="font-bold text-stone-900 mb-3">
               {action === 'PAUSE' ? 'Pause Membership' :
                action === 'CANCEL' ? 'Cancel Membership' :
+               action === 'CHANGE_TIER' ? 'Change Tier' :
                'Reactivate Membership'}
             </h3>
 
@@ -131,6 +162,19 @@ export function MemberActions({
                 This will reactivate the membership and clear the pause/cancellation.
               </p>
             )}
+            {action === 'CHANGE_TIER' && (
+              <div className="space-y-3 mb-2">
+                <p className="text-sm text-stone-600">
+                  Select the new tier. Square will be updated automatically — the old group tag removed, the new one added, and a note logged.
+                </p>
+                <Select
+                  label="New tier"
+                  value={newPlanId}
+                  onChange={(e) => setNewPlanId(e.target.value)}
+                  options={plans.map((p) => ({ value: p.id, label: `${p.name} — ${p.packsPerOrder} bottles` }))}
+                />
+              </div>
+            )}
 
             <div className="mt-4 flex gap-2 justify-end">
               <Button variant="secondary" onClick={() => setAction(null)}>Cancel</Button>
@@ -138,6 +182,7 @@ export function MemberActions({
                 variant={action === 'CANCEL' ? 'danger' : 'primary'}
                 onClick={handleAction}
                 loading={loading}
+                disabled={action === 'CHANGE_TIER' && newPlanId === currentPlanId}
               >
                 Confirm
               </Button>
