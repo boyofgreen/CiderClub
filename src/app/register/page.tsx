@@ -31,6 +31,7 @@ const SQUARE_SCRIPT_URL = isSandbox
 
 const TIER_NAMES = ['The Pickers', 'The Pressers', 'Cellar Crew']
 const TIER_LEVELS = ['LEVEL I', 'LEVEL II', 'LEVEL III']
+const TIER_BOTTLES = [3, 6, 9]
 const TIER_PERKS = [
   [
     '10% off club purchase bottles',
@@ -380,7 +381,7 @@ function RegisterContent() {
                       {/* Bottle count */}
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
                         <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 36, color: selected ? 'var(--terracotta)' : 'var(--ink)', lineHeight: 1 }}>
-                          {plan.packsPerOrder}
+                          {TIER_BOTTLES[i] ?? plan.packsPerOrder}
                         </div>
                         <div style={{ fontSize: 9, letterSpacing: '0.14em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-soft)', marginTop: 3 }}>
                           bottles
@@ -431,7 +432,7 @@ function RegisterContent() {
                     {TIER_NAMES[selectedPlanIdx] ?? selectedPlan.name}
                   </span>
                   <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 18, color: 'var(--gold-bright)' }}>
-                    {selectedPlan.packsPerOrder} bottles / quarter
+                    {TIER_BOTTLES[selectedPlanIdx] ?? selectedPlan.packsPerOrder} bottles / quarter
                   </span>
                 </div>
               )}
