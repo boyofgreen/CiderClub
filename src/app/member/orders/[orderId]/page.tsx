@@ -67,8 +67,6 @@ export default function OrderDetailPage() {
     setSelections((prev) => {
       const current = prev[productId] ?? 0
       const next = Math.max(0, current + delta)
-      const newTotal = totalSelected - current + next
-      if (newTotal > packsPerOrder) return prev
       return { ...prev, [productId]: next }
     })
   }
@@ -134,19 +132,22 @@ export default function OrderDetailPage() {
                 Customize Your Order
               </h2>
               <p className="text-sm text-stone-500 mt-0.5">
-                Select {packsPerOrder} bottles total
+                {packsPerOrder} bottles included — add as many extras as you like
               </p>
             </div>
-            <div className={`text-sm font-bold ${totalSelected === packsPerOrder ? 'text-green-600' : 'text-terracotta'}`}>
-              {totalSelected}/{packsPerOrder} selected
+            <div className={`text-sm font-bold ${totalSelected >= packsPerOrder ? 'text-green-600' : 'text-terracotta'}`}>
+              {totalSelected} bottle{totalSelected !== 1 ? 's' : ''}
+              {totalSelected > packsPerOrder && (
+                <span className="font-normal text-stone-500 ml-1">(+{totalSelected - packsPerOrder} extra)</span>
+              )}
             </div>
           </div>
 
-          {/* Progress bar */}
+          {/* Progress bar — fills at packsPerOrder, overflows show accent */}
           <div className="mb-6 h-2 bg-stone-100">
             <div
-              className={`h-2 transition-all ${totalSelected === packsPerOrder ? 'bg-green-500' : 'bg-terracotta'}`}
-              style={{ width: `${(totalSelected / packsPerOrder) * 100}%` }}
+              className={`h-2 transition-all ${totalSelected >= packsPerOrder ? 'bg-green-500' : 'bg-terracotta'}`}
+              style={{ width: `${Math.min(100, (totalSelected / packsPerOrder) * 100)}%` }}
             />
           </div>
 
@@ -182,8 +183,7 @@ export default function OrderDetailPage() {
                   </span>
                   <button
                     onClick={() => adjust(product.id, 1)}
-                    disabled={totalSelected >= packsPerOrder}
-                    className="flex h-8 w-8 items-center justify-center border border-stone-300 text-stone-600 hover:bg-stone-50 disabled:opacity-30"
+                    className="flex h-8 w-8 items-center justify-center border border-stone-300 text-stone-600 hover:bg-stone-50"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
@@ -196,7 +196,7 @@ export default function OrderDetailPage() {
             variant="saloon"
             onClick={handleSave}
             loading={saving}
-            disabled={totalSelected !== packsPerOrder}
+            disabled={totalSelected < packsPerOrder}
             className="mt-6 w-full"
           >
             {saved ? (

@@ -42,7 +42,7 @@ export function AdminOrderItemsEditor({
   function adjust(productId: string, delta: number) {
     setQtys((prev) => {
       const next = (prev[productId] ?? 0) + delta
-      if (next < 0 || next > packsPerOrder) return prev
+      if (next < 0) return prev
       return { ...prev, [productId]: next }
     })
   }
@@ -122,11 +122,12 @@ export function AdminOrderItemsEditor({
       ) : (
         <div className="space-y-3">
           {/* Counter badge */}
-          <div className="flex items-center justify-between px-4 py-2 rounded" style={{ backgroundColor: remaining === 0 ? 'var(--cream-deep)' : 'rgba(182,90,60,0.08)', border: `1px solid ${remaining === 0 ? 'var(--rule)' : 'var(--terracotta)'}` }}>
+          <div className="flex items-center justify-between px-4 py-2 rounded" style={{ backgroundColor: total >= packsPerOrder ? 'var(--cream-deep)' : 'rgba(182,90,60,0.08)', border: `1px solid ${total >= packsPerOrder ? 'var(--rule)' : 'var(--terracotta)'}` }}>
             <span className="text-sm font-medium text-stone-700">Bottles selected</span>
-            <span className={`font-bold text-sm ${remaining === 0 ? 'text-green-700' : 'text-terracotta'}`}>
-              {total} / {packsPerOrder}
-              {remaining > 0 && <span className="font-normal text-stone-500 ml-1">({remaining} left)</span>}
+            <span className={`font-bold text-sm ${total >= packsPerOrder ? 'text-green-700' : 'text-terracotta'}`}>
+              {total} bottle{total !== 1 ? 's' : ''}
+              {total < packsPerOrder && <span className="font-normal text-stone-500 ml-1">({packsPerOrder - total} more needed)</span>}
+              {total > packsPerOrder && <span className="font-normal text-stone-500 ml-1">(+{total - packsPerOrder} extra)</span>}
             </span>
           </div>
 
@@ -154,8 +155,7 @@ export function AdminOrderItemsEditor({
                   <span className="w-6 text-center font-semibold text-stone-800 text-sm">{qty}</span>
                   <button
                     onClick={() => adjust(product.id, 1)}
-                    disabled={remaining === 0}
-                    className="flex h-7 w-7 items-center justify-center rounded-full border text-stone-600 hover:bg-stone-100 disabled:opacity-30"
+                    className="flex h-7 w-7 items-center justify-center rounded-full border text-stone-600 hover:bg-stone-100"
                     style={{ borderColor: 'var(--rule)' }}
                   >
                     <Plus className="h-3 w-3" />
@@ -173,7 +173,7 @@ export function AdminOrderItemsEditor({
               variant="primary"
               onClick={save}
               loading={loading}
-              disabled={remaining !== 0}
+              disabled={total < packsPerOrder}
             >
               <Check className="h-3.5 w-3.5 mr-1" /> Save Changes
             </Button>

@@ -19,24 +19,23 @@ export async function PUT(
 
   const isAdmin = appSession.role === 'ADMIN'
 
-  // Members can only edit their own order
   if (!isAdmin && order.memberId !== appSession.memberId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  // Members are restricted by order status; admins can edit any order
   if (!isAdmin && !['PENDING_CUSTOMIZATION', 'CUSTOMIZED'].includes(order.status)) {
     return NextResponse.json({ error: 'Order cannot be modified in its current state' }, { status: 409 })
   }
 
   const { items } = await req.json() as { items: { productId: string; quantity: number }[] }
 
-  // Validate total quantity matches plan
   const total = items.reduce((sum, i) => sum + i.quantity, 0)
   const packsPerOrder = order.member.plan?.packsPerOrder ?? 0
-  if (total !== packsPerOrder) {
+
+  // Must include at least the plan's base bottle count
+  if (total < packsPerOrder) {
     return NextResponse.json(
-      { error: `Total must equal ${packsPerOrder} bottles` },
+      { error: `Order must include at least ${packsPerOrder} bottles` },
       { status: 400 }
     )
   }
@@ -58,21 +57,34 @@ export async function PUT(
     }
   }
 
-  // Replace items. Admins preserve the current status; member edits move to CUSTOMIZED.
+  // Fetch product prices so we can persist unitPriceInCents and recalculate order total
+  const productIds = items.map((i) => i.productId)
+  const products = await prisma.product.findMany({
+    where: { id: { in: productIds } },
+    select: { id: true, priceInCents: true },
+  })
+  const priceMap = new Map(products.map((p) => [p.id, p.priceInCents]))
+
+  const itemsWithPrice = items
+    .filter((i) => i.quantity > 0)
+    .map((i) => ({
+      orderId: params.orderId,
+      productId: i.productId,
+      quantity: i.quantity,
+      unitPriceInCents: priceMap.get(i.productId) ?? 2100,
+    }))
+
+  const discount = Math.max(0, Math.min(100, order.member.plan?.discountPercent ?? 0))
+  const subtotal = itemsWithPrice.reduce((sum, i) => sum + i.quantity * i.unitPriceInCents, 0)
+  const totalInCents = Math.round(subtotal * (1 - discount / 100))
+
   await prisma.$transaction([
     prisma.orderItem.deleteMany({ where: { orderId: params.orderId } }),
-    prisma.orderItem.createMany({
-      data: items
-        .filter((i) => i.quantity > 0)
-        .map((i) => ({
-          orderId: params.orderId,
-          productId: i.productId,
-          quantity: i.quantity,
-        })),
-    }),
+    prisma.orderItem.createMany({ data: itemsWithPrice }),
     prisma.order.update({
       where: { id: params.orderId },
       data: {
+        totalInCents,
         lastCustomizedAt: new Date(),
         ...(isAdmin ? {} : { status: 'CUSTOMIZED' }),
       },
