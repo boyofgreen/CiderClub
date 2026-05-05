@@ -35,7 +35,8 @@ export function AdminOrderItemsEditor({
   }
   const [qtys, setQtys] = useState<Record<string, number>>(initialQtys)
 
-  const total = Object.values(qtys).reduce((s, q) => s + q, 0)
+  const displayedIds = new Set(availableProducts.map((p) => p.id))
+  const total = Object.entries(qtys).reduce((s, [id, q]) => (displayedIds.has(id) ? s + q : s), 0)
   const remaining = packsPerOrder - total
 
   function adjust(productId: string, delta: number) {

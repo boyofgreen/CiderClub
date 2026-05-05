@@ -120,7 +120,12 @@ export default async function AdminOrderDetailPage({
           orderId={order.id}
           packsPerOrder={order.member.plan.packsPerOrder}
           currentItems={order.items.map((i) => ({ productId: i.productId, quantity: i.quantity, product: i.product }))}
-          availableProducts={allProducts}
+          availableProducts={[
+            ...allProducts,
+            ...order.items
+              .filter((i) => !allProducts.find((p) => p.id === i.productId))
+              .map((i) => i.product),
+          ]}
           lastCustomizedAt={order.lastCustomizedAt}
         />
       </Card>
