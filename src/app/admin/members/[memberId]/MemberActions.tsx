@@ -46,7 +46,7 @@ export function MemberActions({
         body: JSON.stringify({ planId: newPlanId }),
       })
       if (res.ok) {
-        setOpen(false)
+        setAction(null)
         router.refresh()
       } else {
         const data = await res.json().catch(() => ({}))
