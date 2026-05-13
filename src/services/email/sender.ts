@@ -1,4 +1,4 @@
-import { resend, fromEmail, appUrl, clubName } from '@/lib/resend'
+import { getResend, fromEmail, appUrl, clubName } from '@/lib/resend'
 import { prisma } from '@/lib/prisma'
 
 interface SendEmailParams {
@@ -20,7 +20,7 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
     status = 'FAILED'
   } else {
     try {
-      const result = await resend.emails.send({
+      const result = await getResend().emails.send({
         from: fromEmail,
         to: params.to,
         subject: params.subject,
