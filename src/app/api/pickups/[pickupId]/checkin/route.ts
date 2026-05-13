@@ -19,7 +19,7 @@ export async function POST(
 
   // Upsert attendance record
   const attendance = await prisma.pickupAttendance.upsert({
-    where: { pickupEventId_memberId: { pickupEventId: params.pickupId, memberId } },
+    where: { memberId_pickupEventId: { memberId, pickupEventId: params.pickupId } },
     create: { pickupEventId: params.pickupId, memberId, checkedInAt: new Date() },
     update: { checkedInAt: new Date() },
   })

@@ -23,7 +23,7 @@ export async function GET() {
     prisma.member.count({ where: { status: 'ACTIVE' } }),
     prisma.member.count({ where: { status: 'PAUSED' } }),
     prisma.member.count({ where: { status: 'CANCELLED' } }),
-    prisma.waitlistEntry.count({ where: { status: 'WAITING' } }),
+    prisma.waitlistEntry.count(),
     prisma.order.findMany({
       take: 10,
       orderBy: { createdAt: 'desc' },

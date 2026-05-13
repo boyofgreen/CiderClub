@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import type { Session } from 'next-auth'
 
-function adminOnly(session: Awaited<ReturnType<typeof getServerSession>>) {
+function adminOnly(session: Session | null) {
   return session?.user.role === 'ADMIN'
 }
 

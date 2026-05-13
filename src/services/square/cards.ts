@@ -35,7 +35,7 @@ export async function saveCardOnFile(params: {
 /** Retrieve card details for display (last4, brand, expiry) */
 export async function getCardDetails(cardId: string) {
   try {
-    const response = await squareClient.cards.get(cardId)
+    const response = await squareClient.cards.get({ cardId })
     const card = response.card
     if (!card) return null
     return {
@@ -52,7 +52,7 @@ export async function getCardDetails(cardId: string) {
 
 /** Remove a card from Square and clear from member record */
 export async function removeCardOnFile(memberId: string, cardId: string): Promise<void> {
-  await squareClient.cards.disable(cardId).catch(() => {})
+  await squareClient.cards.disable({ cardId }).catch(() => {})
   await prisma.member.update({
     where: { id: memberId },
     data: { squareCardId: null },
