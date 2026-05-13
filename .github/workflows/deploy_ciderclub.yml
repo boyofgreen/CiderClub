@@ -37,11 +37,13 @@ jobs:
 
       - name: Assemble standalone deployment package
         run: |
-          # Next.js standalone output lives in .next/standalone
-          # Static assets and public dir must be copied in manually
+          # Static assets must be copied manually into standalone
           cp -r .next/static .next/standalone/.next/static
           cp -r public .next/standalone/public
-          # Include Prisma schema + migrations so migrate deploy works at startup
+          # Copy BUILD_ID and all root-level manifests (required by the server)
+          cp .next/BUILD_ID .next/standalone/.next/
+          for f in .next/*.json; do cp "$f" .next/standalone/.next/ 2>/dev/null || true; done
+          # Include Prisma schema + migrations
           mkdir -p .next/standalone/prisma
           cp prisma/schema.prisma .next/standalone/prisma/
           cp -r prisma/migrations .next/standalone/prisma/migrations
