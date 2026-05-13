@@ -45,6 +45,11 @@ jobs:
           # Copy BUILD_ID and all root-level manifests (required by the server)
           cp .next/BUILD_ID .next/standalone/.next/
           for f in .next/*.json; do cp "$f" .next/standalone/.next/ 2>/dev/null || true; done
+          # Copy generated Prisma client (not detected by Next.js tracing)
+          mkdir -p .next/standalone/node_modules/.prisma
+          cp -r node_modules/.prisma/client .next/standalone/node_modules/.prisma/client
+          mkdir -p .next/standalone/node_modules/@prisma
+          cp -r node_modules/@prisma/client .next/standalone/node_modules/@prisma/client
           # Include Prisma schema + migrations
           mkdir -p .next/standalone/prisma
           cp prisma/schema.prisma .next/standalone/prisma/
