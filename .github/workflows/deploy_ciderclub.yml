@@ -30,10 +30,12 @@ jobs:
       - name: Build Next.js app
         run: npm run build
         env:
-          # Provide dummy values so Next.js static analysis doesn't fail at build time
           NEXTAUTH_SECRET: build-placeholder
           NEXTAUTH_URL: http://localhost:3000
           DATABASE_URL: postgresql://user:pass@localhost:5432/db
+          NEXT_PUBLIC_SQUARE_APP_ID: ${{ secrets.NEXT_PUBLIC_SQUARE_APP_ID }}
+          NEXT_PUBLIC_SQUARE_LOCATION_ID: ${{ secrets.NEXT_PUBLIC_SQUARE_LOCATION_ID }}
+          NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
 
       - name: Assemble standalone deployment package
         run: |
