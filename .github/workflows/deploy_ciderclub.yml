@@ -54,6 +54,8 @@ jobs:
           mkdir -p .next/standalone/prisma
           cp prisma/schema.prisma .next/standalone/prisma/
           cp -r prisma/migrations .next/standalone/prisma/migrations
+          # Remove any Oryx manifest so Azure doesn't try to tar/untar node_modules
+          rm -f .next/standalone/oryx-manifest.toml
 
       - name: Upload artifact for deployment job
         uses: actions/upload-artifact@v4
