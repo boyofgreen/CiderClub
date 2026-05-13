@@ -6,13 +6,14 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { createMemberSessionJWT } from '@/lib/tokens'
+import { appUrl } from '@/lib/resend'
 
 export async function GET(req: NextRequest) {
   const token = req.nextUrl.searchParams.get('t')
   const next = req.nextUrl.searchParams.get('next') ?? '/member/dashboard'
 
   if (!token) {
-    return NextResponse.redirect(new URL('/magic/request?error=missing_token', req.url))
+    return NextResponse.redirect(new URL('/magic/request?error=missing_token', appUrl))
   }
 
   const memberToken = await prisma.memberToken.findUnique({
@@ -21,11 +22,11 @@ export async function GET(req: NextRequest) {
   })
 
   if (!memberToken || memberToken.expiresAt < new Date()) {
-    return NextResponse.redirect(new URL('/magic/request?error=expired', req.url))
+    return NextResponse.redirect(new URL('/magic/request?error=expired', appUrl))
   }
 
   if (memberToken.member.status === 'CANCELLED') {
-    return NextResponse.redirect(new URL('/magic/request?error=cancelled', req.url))
+    return NextResponse.redirect(new URL('/magic/request?error=cancelled', appUrl))
   }
 
   // Update last used timestamp
@@ -38,7 +39,7 @@ export async function GET(req: NextRequest) {
   const sessionJwt = await createMemberSessionJWT(memberToken.memberId)
 
   // Redirect to intended destination with session cookie set
-  const redirectUrl = new URL(next.startsWith('/') ? next : '/member/dashboard', req.url)
+  const redirectUrl = new URL(next.startsWith('/') ? next : '/member/dashboard', appUrl)
   const response = NextResponse.redirect(redirectUrl)
 
   response.cookies.set('member_session', sessionJwt, {
