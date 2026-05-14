@@ -28,7 +28,7 @@ export default function AdminPickupsPage() {
   })
 
   const refresh = () =>
-    fetch('/api/pickups').then((r) => r.json()).then((d) => setEvents(d.events ?? [])).finally(() => setLoading(false))
+    fetch('/api/pickups').then((r) => r.json()).then((d) => setEvents(d.pickups ?? [])).finally(() => setLoading(false))
 
   useEffect(() => {
     refresh()
