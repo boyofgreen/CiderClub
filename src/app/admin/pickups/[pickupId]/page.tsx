@@ -6,6 +6,7 @@ import { StatusBadge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { ArrowLeft, MapPin, Clock, CheckCircle } from 'lucide-react'
 import { CheckInButton } from './CheckInButton'
+import { PickupActions } from './PickupActions'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Pickup Event' }
@@ -40,13 +41,25 @@ export default async function AdminPickupDetailPage({
         <Link href="/admin/pickups" className="mt-1 text-stone-500 hover:text-stone-700">
           <ArrowLeft className="h-5 w-5" />
         </Link>
-        <div>
+        <div className="flex-1">
           <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(20px,3vw,28px)', color: 'var(--ink)' }}>{event.title}</h1>
           <div className="flex flex-wrap gap-3 mt-1 text-sm text-stone-500">
             <span className="flex items-center gap-1"><Clock className="h-4 w-4" />{formatDateTime(event.startsAt)} – {formatDateTime(event.endsAt)}</span>
             {event.location && <span className="flex items-center gap-1"><MapPin className="h-4 w-4" />{event.location}</span>}
           </div>
         </div>
+        <PickupActions
+          event={{
+            id: event.id,
+            title: event.title,
+            location: event.location,
+            startsAt: event.startsAt.toISOString(),
+            endsAt: event.endsAt.toISOString(),
+            notes: event.notes,
+            isPublic: event.isPublic,
+            orderCount: event.orders.length,
+          }}
+        />
       </div>
 
       <div className="grid gap-4 sm:grid-cols-3">
