@@ -55,10 +55,18 @@ jobs:
           cp -r node_modules/@prisma/client .next/standalone/node_modules/@prisma/client
           mkdir -p .next/standalone/node_modules/@prisma/client/node_modules/.prisma
           cp -r node_modules/.prisma/client .next/standalone/node_modules/@prisma/client/node_modules/.prisma/client
+          # Non-hidden backup of the Prisma client. Oryx (Azure's build system)
+          # may exclude hidden directories (starting with ".") when it tars
+          # node_modules into node_modules.tar.gz. startup.sh restores from here.
+          mkdir -p .next/standalone/node_modules/prisma-client-files
+          cp -r node_modules/.prisma/client/. .next/standalone/node_modules/prisma-client-files/
           # Include Prisma schema + migrations
           mkdir -p .next/standalone/prisma
           cp prisma/schema.prisma .next/standalone/prisma/
           cp -r prisma/migrations .next/standalone/prisma/migrations
+          # Include startup script (Azure startup command: bash /home/site/wwwroot/startup.sh)
+          cp startup.sh .next/standalone/startup.sh
+          chmod +x .next/standalone/startup.sh
           # Remove any Oryx manifest so Azure doesn't try to tar/untar node_modules
           rm -f .next/standalone/oryx-manifest.toml
 
