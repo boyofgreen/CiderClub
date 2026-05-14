@@ -68,7 +68,23 @@ export default async function QuarterDetailPage({
             Customization: {formatDate(quarter.startsAt)} – {formatDate(quarter.endsAt)}
           </p>
         </div>
-        <QuarterActions quarterId={quarter.id} status={quarter.status} />
+        <QuarterActions
+          quarterId={quarter.id}
+          status={quarter.status}
+          initialData={{
+            label: quarter.label,
+            name: quarter.name,
+            startsAt: quarter.startsAt.toISOString(),
+            endsAt: quarter.endsAt.toISOString(),
+            pickupStartsAt: quarter.pickupStartsAt?.toISOString() ?? null,
+            pickupEndsAt: quarter.pickupEndsAt?.toISOString() ?? null,
+          }}
+          orderStats={{
+            total: orderStats.total,
+            billed: orderStats.billed,
+            failed: orderStats.failed,
+          }}
+        />
       </div>
 
       {/* Stats */}

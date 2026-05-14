@@ -65,7 +65,7 @@ export async function PATCH(
   }
 
   // Generic field update
-  const allowed = ['label', 'startsAt', 'endsAt', 'pickupStartsAt', 'pickupEndsAt', 'status']
+  const allowed = ['label', 'name', 'startsAt', 'endsAt', 'pickupStartsAt', 'pickupEndsAt', 'status']
   const raw = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
   const data: Record<string, unknown> = {}
   for (const [k, v] of Object.entries(raw)) {
@@ -78,4 +78,38 @@ export async function PATCH(
 
   const quarter = await prisma.quarter.update({ where: { id: params.quarterId }, data })
   return NextResponse.json({ quarter })
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { quarterId: string } }
+) {
+  const session = await getServerSession(authOptions)
+  if (session?.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const billedCount = await prisma.order.count({
+    where: { quarterId: params.quarterId, status: { in: ['BILLED', 'PAYMENT_FAILED'] } },
+  })
+  if (billedCount > 0) {
+    return NextResponse.json(
+      { error: `Cannot cancel: ${billedCount} order(s) have already been billed or had payment attempted.` },
+      { status: 409 }
+    )
+  }
+
+  // Soft-cancel: mark quarter and all open orders as CANCELLED to preserve records
+  await prisma.$transaction([
+    prisma.order.updateMany({
+      where: { quarterId: params.quarterId },
+      data: { status: 'CANCELLED' },
+    }),
+    prisma.quarter.update({
+      where: { id: params.quarterId },
+      data: { status: 'CANCELLED' },
+    }),
+  ])
+
+  return NextResponse.json({ ok: true })
 }

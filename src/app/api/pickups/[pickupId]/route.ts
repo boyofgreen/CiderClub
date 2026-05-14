@@ -60,3 +60,26 @@ export async function PATCH(
   const pickup = await prisma.pickupEvent.update({ where: { id: params.pickupId }, data })
   return NextResponse.json({ pickup })
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { pickupId: string } }
+) {
+  const session = await getServerSession(authOptions)
+  if (session?.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  await prisma.$transaction(async (tx) => {
+    // Delete attendances (required relation, no cascade)
+    await tx.pickupAttendance.deleteMany({ where: { pickupEventId: params.pickupId } })
+    // Disconnect orders from this pickup (nullable FK)
+    await tx.order.updateMany({
+      where: { pickupEventId: params.pickupId },
+      data: { pickupEventId: null },
+    })
+    await tx.pickupEvent.delete({ where: { id: params.pickupId } })
+  })
+
+  return NextResponse.json({ ok: true })
+}
