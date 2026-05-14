@@ -2,12 +2,17 @@ import { SquareClient, SquareEnvironment } from 'square'
 
 const token = process.env.SQUARE_ACCESS_TOKEN ?? 'sandbox-placeholder'
 
+// SQUARE_ENVIRONMENT explicitly controls which Square API the app talks to.
+// Set to 'production' for live tokens, 'sandbox' for test tokens.
+// Defaults to sandbox unless explicitly set to production.
+const squareEnvironment =
+  process.env.SQUARE_ENVIRONMENT?.toLowerCase() === 'production'
+    ? SquareEnvironment.Production
+    : SquareEnvironment.Sandbox
+
 export const squareClient = new SquareClient({
   token,
-  environment:
-    process.env.NODE_ENV === 'production'
-      ? SquareEnvironment.Production
-      : SquareEnvironment.Sandbox,
+  environment: squareEnvironment,
 })
 
 export const squareConfigured = Boolean(process.env.SQUARE_ACCESS_TOKEN)
