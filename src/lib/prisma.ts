@@ -1,4 +1,7 @@
-import { PrismaClient } from '@prisma/client'
+// Import directly from the generated client (non-hidden node_modules dir).
+// This bypasses @prisma/client's default.js which requires .prisma/client/default —
+// a hidden directory that Azure's Oryx strips from node_modules.tar.gz.
+import { PrismaClient } from 'prisma-generated'
 
 const globalForPrisma = globalThis as unknown as { prisma: PrismaClient }
 
