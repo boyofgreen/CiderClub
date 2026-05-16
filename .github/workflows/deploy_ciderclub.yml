@@ -45,22 +45,12 @@ jobs:
           # Copy BUILD_ID and all root-level manifests (required by the server)
           cp .next/BUILD_ID .next/standalone/.next/
           for f in .next/*.json; do cp "$f" .next/standalone/.next/ 2>/dev/null || true; done
-          # Copy generated Prisma client (not detected by Next.js tracing).
-          # Place it both at top-level node_modules AND inside @prisma/client's
-          # own node_modules so it resolves regardless of how Azure rearranges
-          # the outer node_modules directory.
-          mkdir -p .next/standalone/node_modules/.prisma
-          cp -r node_modules/.prisma/client .next/standalone/node_modules/.prisma/client
-          mkdir -p .next/standalone/node_modules/@prisma
-          cp -r node_modules/@prisma/client .next/standalone/node_modules/@prisma/client
-          mkdir -p .next/standalone/node_modules/@prisma/client/node_modules/.prisma
-          cp -r node_modules/.prisma/client .next/standalone/node_modules/@prisma/client/node_modules/.prisma/client
-          # Non-hidden backup of the Prisma client. Oryx (Azure's build system)
-          # may exclude hidden directories (starting with ".") when it tars
-          # node_modules into node_modules.tar.gz. startup.sh restores from here.
-          mkdir -p .next/standalone/node_modules/prisma-client-files
-          cp -r node_modules/.prisma/client/. .next/standalone/node_modules/prisma-client-files/
-          # Include Prisma schema + migrations
+          # Copy the generated Prisma client.
+          # src/lib/prisma.ts imports from 'prisma-generated' (not '@prisma/client')
+          # so the client lives in a non-hidden directory — Oryx will always include
+          # it in node_modules.tar.gz, unlike the default hidden .prisma/client/.
+          cp -r node_modules/prisma-generated .next/standalone/node_modules/prisma-generated
+          # Include Prisma schema + migrations (needed for prisma migrate deploy)
           mkdir -p .next/standalone/prisma
           cp prisma/schema.prisma .next/standalone/prisma/
           cp -r prisma/migrations .next/standalone/prisma/migrations
