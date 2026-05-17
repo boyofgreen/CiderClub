@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAppSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
+import { getSalesTaxPercent } from '@/lib/settings'
 
 // PUT /api/orders/[orderId]/items
 // Replaces all order items. Body: { items: { productId: string; quantity: number }[] }
@@ -76,7 +77,9 @@ export async function PUT(
 
   const discount = Math.max(0, Math.min(100, order.member.plan?.discountPercent ?? 0))
   const subtotal = itemsWithPrice.reduce((sum, i) => sum + i.quantity * i.unitPriceInCents, 0)
-  const totalInCents = Math.round(subtotal * (1 - discount / 100))
+  const afterDiscount = Math.round(subtotal * (1 - discount / 100))
+  const taxRatePercent = await getSalesTaxPercent()
+  const totalInCents = Math.round(afterDiscount * (1 + taxRatePercent / 100))
 
   await prisma.$transaction([
     prisma.orderItem.deleteMany({ where: { orderId: params.orderId } }),
