@@ -371,6 +371,16 @@ model EmailLog {
   createdAt DateTime @default(now())
 }
 
+// ─── App Settings ─────────────────────────────────────────────────────────────
+// Simple key/value store for admin-configurable app settings (e.g. tax rate).
+
+model Setting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+}
+
 // ─── Analytics Snapshots ──────────────────────────────────────────────────────
 
 model AnalyticsSnapshot {
