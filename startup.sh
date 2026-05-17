@@ -14,5 +14,8 @@ echo "[startup] Extracting node_modules..."
 mkdir -p /node_modules
 tar -xzf /home/site/wwwroot/node_modules.tar.gz -C /node_modules 2>/dev/null || true
 
+echo "[startup] Running database migrations..."
+node /node_modules/.bin/prisma migrate deploy --schema /home/site/wwwroot/prisma/schema.prisma
+
 echo "[startup] Starting Next.js server..."
 exec node /home/site/wwwroot/server.js
