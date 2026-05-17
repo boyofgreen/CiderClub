@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { Input, Select } from '@/components/ui/Input'
-import { Pause, UserX, UserCheck, RefreshCw, ChevronDown, ArrowLeftRight } from 'lucide-react'
+import { Pause, UserX, UserCheck, RefreshCw, ChevronDown, ArrowLeftRight, CreditCard } from 'lucide-react'
 
 interface Plan { id: string; name: string; packsPerOrder: number }
 
@@ -13,12 +13,14 @@ export function MemberActions({
   memberId,
   status,
   squareCustomerId,
+  hasCard,
   currentPlanId,
   plans,
 }: {
   memberId: string
   status: string
   squareCustomerId: string | null
+  hasCard: boolean
   currentPlanId: string
   plans: Plan[]
 }) {
@@ -30,6 +32,8 @@ export function MemberActions({
   const [pauseUntil, setPauseUntil] = useState('')
   const [cancelReason, setCancelReason] = useState('')
   const [newPlanId, setNewPlanId] = useState(currentPlanId)
+  const [sendingCardLink, setSendingCardLink] = useState(false)
+  const [cardLinkResult, setCardLinkResult] = useState<string | null>(null)
 
   async function handleAction() {
     if (!action) return
@@ -78,6 +82,21 @@ export function MemberActions({
     router.refresh()
   }
 
+  async function handleSendCardLink() {
+    setSendingCardLink(true)
+    setCardLinkResult(null)
+    const res = await fetch(`/api/members/${memberId}/send-card-link`, { method: 'POST' })
+    const data = await res.json().catch(() => ({}))
+    setSendingCardLink(false)
+    setOpen(false)
+    if (res.ok) {
+      setCardLinkResult('Card setup link emailed to member.')
+      setTimeout(() => setCardLinkResult(null), 4000)
+    } else {
+      setCardLinkResult(data.error ?? 'Failed to send link.')
+    }
+  }
+
   return (
     <div className="relative">
       <button
@@ -120,11 +139,28 @@ export function MemberActions({
             <ArrowLeftRight className="h-4 w-4 text-purple-500" /> Change Tier
           </button>
           <button
+            onClick={handleSendCardLink}
+            disabled={sendingCardLink}
+            className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
+          >
+            <CreditCard className="h-4 w-4 text-green-500" />
+            {hasCard ? 'Send Card Update Link' : 'Send Card Setup Link'}
+          </button>
+          <button
             onClick={() => { handleSquareSync(); setOpen(false) }}
             className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
           >
             <RefreshCw className="h-4 w-4 text-blue-500" /> Sync to Square
           </button>
+        </div>
+      )}
+
+      {cardLinkResult && (
+        <div className="absolute right-0 top-full mt-1 z-10 max-w-xs">
+          <Alert
+            type={cardLinkResult.startsWith('Card setup') ? 'success' : 'error'}
+            message={cardLinkResult}
+          />
         </div>
       )}
 

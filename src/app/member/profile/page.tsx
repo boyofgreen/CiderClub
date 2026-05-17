@@ -6,7 +6,8 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
-import { CreditCard, User } from 'lucide-react'
+import { User } from 'lucide-react'
+import { PaymentMethodCard } from './PaymentMethodCard'
 
 type MemberProfile = {
   id: string; firstName: string; lastName: string; email: string; phone: string | null
@@ -167,34 +168,7 @@ export default function MemberProfilePage() {
       </Card>
 
       {/* Payment method */}
-      <Card>
-        <CardHeader>
-          <div className="flex items-center gap-2">
-            <CreditCard className="h-4 w-4" style={{ color: 'var(--ink-soft)' }} />
-            <CardTitle>Payment Method</CardTitle>
-          </div>
-        </CardHeader>
-        {member.squareCardId ? (
-          <div className="flex items-center justify-between px-4 py-3" style={{ backgroundColor: 'var(--cream-deep)' }}>
-            <div className="flex items-center gap-3">
-              <CreditCard className="h-5 w-5 text-stone-400" />
-              <span className="text-sm font-medium text-stone-700">Card on file</span>
-            </div>
-            <span className="text-xs text-stone-400">Managed via Square</span>
-          </div>
-        ) : (
-          <div className="border border-dashed p-4 text-center" style={{ borderColor: 'var(--rule-strong)' }}>
-            <CreditCard className="mx-auto h-8 w-8 text-stone-300 mb-2" />
-            <p className="text-sm text-stone-500">No payment method on file</p>
-            <p className="text-xs text-stone-400 mt-1">
-              We'll collect your payment at pickup or send a payment link.
-            </p>
-          </div>
-        )}
-        <p className="mt-3 text-xs text-stone-400">
-          To update your payment method, contact us directly.
-        </p>
-      </Card>
+      <PaymentMethodCard hasCard={!!member.squareCardId} />
     </div>
   )
 }
