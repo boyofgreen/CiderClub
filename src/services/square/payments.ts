@@ -18,6 +18,7 @@ interface ChargeParams {
   memberEmail: string
   quarterLabel: string
   discountPercent: number
+  taxRatePercent: number
   items: LineItemParam[]
 }
 
@@ -33,6 +34,7 @@ interface PaymentLinkParams {
   memberName: string
   quarterLabel: string
   discountPercent: number
+  taxRatePercent: number
   items: LineItemParam[]
   redirectUrl?: string
 }
@@ -46,6 +48,7 @@ function buildOrderBody(params: {
   memberEmail: string
   quarterLabel: string
   discountPercent: number
+  taxRatePercent: number
   items: LineItemParam[]
 }): Square.Order {
   const lineItems = params.items.map((item) => ({
@@ -72,12 +75,27 @@ function buildOrderBody(params: {
         ]
       : []
 
+  // Order-level sales tax. Using Square's `taxes` field (not a line item) so it
+  // shows up correctly in Square's tax reports for year-end reconciliation.
+  const taxes =
+    params.taxRatePercent > 0
+      ? [
+          {
+            name: 'Sales Tax',
+            type: 'ADDITIVE' as const,
+            percentage: String(params.taxRatePercent),
+            scope: 'ORDER' as const,
+          },
+        ]
+      : []
+
   return {
     locationId: params.locationId,
     ...(params.squareCustomerId ? { customerId: params.squareCustomerId } : {}),
     referenceId: params.internalOrderId,
     lineItems,
     discounts,
+    taxes,
     fulfillments: [
       {
         type: 'PICKUP' as const,
@@ -111,6 +129,7 @@ export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResu
       memberEmail: params.memberEmail,
       quarterLabel: params.quarterLabel,
       discountPercent: params.discountPercent,
+      taxRatePercent: params.taxRatePercent,
       items: params.items,
     }),
   })
@@ -168,6 +187,7 @@ export async function createPaymentLink(
       memberEmail: params.memberEmail,
       quarterLabel: params.quarterLabel,
       discountPercent: params.discountPercent,
+      taxRatePercent: params.taxRatePercent,
       items: params.items,
     }),
     checkoutOptions: {

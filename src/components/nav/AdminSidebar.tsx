@@ -17,6 +17,7 @@ import {
   LogOut,
   Beer,
   Megaphone,
+  Settings,
 } from 'lucide-react'
 
 const nav = [
@@ -31,6 +32,7 @@ const nav = [
   { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
   { href: '/admin/email-logs', label: 'Email Logs', icon: Mail },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
 
 const LINK_BASE: React.CSSProperties = {

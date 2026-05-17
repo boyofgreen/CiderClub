@@ -4,6 +4,7 @@ import { adjustInventoryForOrder } from '@/services/square/inventory'
 import { sendEmail, buildReceiptEmail, buildPaymentFailedEmail } from '@/services/email/sender'
 import { appUrl } from '@/lib/resend'
 import { getMemberPortalToken } from '@/services/orders'
+import { getSalesTaxPercent } from '@/lib/settings'
 
 type BillingMethod = 'CARD_ON_FILE' | 'PAYMENT_LINK' | 'IN_PERSON'
 
@@ -54,6 +55,7 @@ export async function billOrder(
       return { orderId, success: false, method, error: 'No card on file' }
     }
     try {
+      const taxRatePercent = await getSalesTaxPercent()
       const result = await chargeCardOnFile({
         orderId,
         squareCustomerId: member.squareCustomerId,
@@ -62,6 +64,7 @@ export async function billOrder(
         memberEmail: member.email,
         quarterLabel: order.quarter.label,
         discountPercent: member.plan.discountPercent ?? 0,
+        taxRatePercent,
         items: order.items.map((i) => ({
           productName: i.product.name,
           squareVariationId: i.product.squareVariationId,
@@ -120,12 +123,14 @@ export async function billOrder(
 
   if (method === 'PAYMENT_LINK') {
     try {
+      const taxRatePercent = await getSalesTaxPercent()
       const result = await createPaymentLink({
         orderId,
         memberEmail: member.email,
         memberName: `${member.firstName} ${member.lastName}`,
         quarterLabel: order.quarter.label,
         discountPercent: member.plan.discountPercent ?? 0,
+        taxRatePercent,
         items: order.items.map((i) => ({
           productName: i.product.name,
           squareVariationId: i.product.squareVariationId,

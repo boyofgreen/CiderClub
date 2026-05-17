@@ -12,7 +12,10 @@ function getAdminEmails(): string[] {
 }
 
 export const authOptions: NextAuthOptions = {
-  adapter: PrismaAdapter(prisma),
+  // Cast: @next-auth/prisma-adapter expects PrismaClient from `@prisma/client`,
+  // but we generate to a custom path (`prisma-generated`) — same client at runtime.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  adapter: PrismaAdapter(prisma as any),
   // JWT strategy so sessions work without a DB lookup on every request
   session: { strategy: 'jwt' },
 
