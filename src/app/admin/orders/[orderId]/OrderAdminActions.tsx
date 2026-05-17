@@ -84,10 +84,10 @@ export function OrderAdminActions({
         </button>
 
         {open && (
-          <div className="absolute right-0 top-full mt-1 z-20 w-56 border bg-cream-paper shadow-lg py-1" style={{ borderColor: 'var(--rule)' }}>
+          <div className="absolute right-0 top-full mt-1 z-20 w-64 border bg-cream-paper shadow-lg py-1" style={{ borderColor: 'var(--rule)' }}>
             {canBill && (
               <>
-                {memberHasCard && (
+                {memberHasCard ? (
                   <button
                     onClick={() => bill('CARD_ON_FILE')}
                     disabled={loading}
@@ -95,6 +95,14 @@ export function OrderAdminActions({
                   >
                     <DollarSign className="h-4 w-4 text-green-500" /> Charge Card on File
                   </button>
+                ) : (
+                  <div
+                    className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-400 cursor-default select-none"
+                    title="Member has no card on file"
+                  >
+                    <DollarSign className="h-4 w-4 text-stone-300" /> Charge Card on File
+                    <span className="ml-auto text-xs italic">no card</span>
+                  </div>
                 )}
                 <button
                   onClick={() => bill('PAYMENT_LINK')}
