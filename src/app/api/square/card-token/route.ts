@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAppSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
-import { squareClient } from '@/lib/square'
+import { squareClient, formatSquareError } from '@/lib/square'
 import { createSquareCustomer } from '@/services/square/customers'
 
 // POST — save a card token (from Square Web Payments SDK) to a member's Square customer
@@ -49,7 +49,8 @@ export async function POST(req: Request) {
 
     return NextResponse.json({ ok: true, cardBrand: response.card.cardBrand, last4: response.card.last4 })
   } catch (err) {
-    return NextResponse.json({ error: String(err) }, { status: 500 })
+    console.error('[card-token] Square error:', err)
+    return NextResponse.json({ error: formatSquareError(err) }, { status: 400 })
   }
 }
 
