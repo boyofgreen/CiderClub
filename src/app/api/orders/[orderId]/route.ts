@@ -29,3 +29,28 @@ export async function GET(
 
   return NextResponse.json({ order })
 }
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { orderId: string } }
+) {
+  const session = await getServerSession(authOptions)
+  if (session?.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const order = await prisma.order.findUnique({
+    where: { id: params.orderId },
+    select: { status: true },
+  })
+  if (!order) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (order.status === 'CANCELLED') {
+    return NextResponse.json({ error: 'Order is already cancelled' }, { status: 409 })
+  }
+
+  const updated = await prisma.order.update({
+    where: { id: params.orderId },
+    data: { status: 'CANCELLED' },
+  })
+  return NextResponse.json({ order: updated })
+}
