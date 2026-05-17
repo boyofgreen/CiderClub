@@ -50,6 +50,16 @@ jobs:
           # so the client lives in a non-hidden directory — Oryx will always include
           # it in node_modules.tar.gz, unlike the default hidden .prisma/client/.
           cp -r node_modules/prisma-generated .next/standalone/node_modules/prisma-generated
+          # Copy the Prisma CLI + engines so startup.sh can run `prisma migrate deploy`.
+          # Next.js standalone tracing doesn't pull these in (they're devDependencies
+          # not imported by app code), so we ship them explicitly.
+          cp -r node_modules/prisma .next/standalone/node_modules/prisma
+          mkdir -p .next/standalone/node_modules/@prisma
+          for pkg in engines engines-version fetch-engine get-platform debug; do
+            if [ -d "node_modules/@prisma/$pkg" ]; then
+              cp -r "node_modules/@prisma/$pkg" ".next/standalone/node_modules/@prisma/$pkg"
+            fi
+          done
           # Include Prisma schema + migrations (needed for prisma migrate deploy)
           mkdir -p .next/standalone/prisma
           cp prisma/schema.prisma .next/standalone/prisma/
