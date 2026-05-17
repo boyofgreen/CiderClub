@@ -68,7 +68,7 @@ export default async function MemberDetailPage({
             </div>
           </div>
         </div>
-        <MemberActions memberId={member.id} status={member.status} squareCustomerId={member.squareCustomerId} currentPlanId={member.planId} plans={plans} />
+        <MemberActions memberId={member.id} status={member.status} squareCustomerId={member.squareCustomerId} hasCard={!!member.squareCardId} currentPlanId={member.planId} plans={plans} />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

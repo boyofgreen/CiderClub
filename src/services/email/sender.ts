@@ -248,3 +248,18 @@ export function buildPaymentFailedEmail(params: {
     <p>If you need help, just reply to this email and we'll sort it out.</p>
   `)
 }
+
+export function buildSaveCardEmail(params: {
+  firstName: string
+  portalUrl: string
+}): string {
+  return baseTemplate(`
+    <h2>Add a Card to Your ${clubName} Account</h2>
+    <p>Hi ${params.firstName},</p>
+    <p>To make quarterly billing seamless, we'd love to have a card on file for your membership. Click below to securely save your payment method — it only takes a moment.</p>
+    <p style="text-align:center">
+      <a class="btn" href="${params.portalUrl}">Save My Card</a>
+    </p>
+    <p>Your card info is handled by Square and never touches our servers. You can remove it any time from your member profile.</p>
+  `)
+}
