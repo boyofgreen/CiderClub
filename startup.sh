@@ -5,8 +5,12 @@
 # symlinks node_modules → /node_modules. Our custom startup command bypasses
 # Oryx's auto-extract wrapper, so we do it manually here.
 #
-# The Prisma client is in node_modules/prisma-generated/ (non-hidden), so
-# Oryx will always include it in the tar — no extra restore step needed.
+# Runtime packages needed beyond Next.js standalone tracing must be explicitly
+# copied in the workflow's "Assemble standalone deployment package" step so
+# Oryx includes them in node_modules.tar.gz. Key packages:
+#   - node_modules/prisma-generated  (Prisma client, custom output dir)
+#   - node_modules/prisma            (Prisma CLI, for migrate deploy)
+#   - node_modules/@prisma/engines   (native migration + query engine binaries)
 
 set -e
 
@@ -14,8 +18,23 @@ echo "[startup] Extracting node_modules..."
 mkdir -p /node_modules
 tar -xzf /home/site/wwwroot/node_modules.tar.gz -C /node_modules 2>/dev/null || true
 
+echo "[startup] node_modules contents after extract:"
+ls /node_modules | tr '\n' ' '
+echo ""
+
 echo "[startup] Running database migrations..."
-node /node_modules/prisma/build/index.js migrate deploy --schema /home/site/wwwroot/prisma/schema.prisma
+PRISMA_CLI=/node_modules/prisma/build/index.js
+
+if [ ! -f "$PRISMA_CLI" ]; then
+  echo "[startup] ERROR: Prisma CLI not found at $PRISMA_CLI"
+  echo "[startup] @prisma/engines contents:"
+  ls /node_modules/@prisma/engines/ 2>/dev/null || echo "  (missing)"
+  echo "[startup] Skipping migrations — app may crash if schema is out of date"
+else
+  echo "[startup] Prisma CLI found. Running migrate deploy..."
+  node "$PRISMA_CLI" migrate deploy --schema /home/site/wwwroot/prisma/schema.prisma
+  echo "[startup] Migrations complete."
+fi
 
 echo "[startup] Starting Next.js server..."
 exec node /home/site/wwwroot/server.js
