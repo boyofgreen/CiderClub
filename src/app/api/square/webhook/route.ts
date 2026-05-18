@@ -40,8 +40,10 @@ export async function POST(req: Request) {
     const referenceId = payment?.referenceId as string | undefined // we set this to orderId
 
     if (paymentId && referenceId) {
+      // Match any non-final status — payment links can be sent before an order is
+      // formally locked (e.g. one-off charges on CUSTOMIZED orders).
       await prisma.order.updateMany({
-        where: { id: referenceId, status: 'LOCKED' },
+        where: { id: referenceId, status: { notIn: ['BILLED', 'CANCELLED'] } },
         data: {
           status: 'BILLED',
           squarePaymentId: paymentId,

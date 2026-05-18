@@ -52,6 +52,24 @@ export async function billOrder(
 
   if (method === 'CARD_ON_FILE') {
     if (!member.squareCustomerId || !member.squareCardId) {
+      // Flag the order and email the member a magic link to set up a card,
+      // mirroring the card-decline path so bulk billing surfaces this clearly.
+      await prisma.order.update({
+        where: { id: orderId },
+        data: { status: 'PAYMENT_FAILED' },
+      })
+      const token = await getMemberPortalToken(member.id)
+      await sendEmail({
+        to: member.email,
+        subject: 'Payment Issue — Card Needed',
+        html: buildPaymentFailedEmail({
+          firstName: member.firstName,
+          quarterLabel: order.quarter.label,
+          portalUrl: `${appUrl}/magic?t=${token}&next=/member/profile?card=1`,
+        }),
+        type: 'PAYMENT_FAILED',
+        memberId: member.id,
+      })
       return { orderId, success: false, method, error: 'No card on file' }
     }
     try {
