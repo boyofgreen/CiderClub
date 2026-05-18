@@ -86,8 +86,13 @@ export default async function AdminOrdersPage({
                   <span className="font-medium text-stone-800">{order.member.firstName} {order.member.lastName}</span>
                   <span className="ml-2 text-sm text-stone-500">{order.quarter.label}</span>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <span className="text-sm text-stone-500">{formatCents(order.totalInCents)}</span>
+                  {order.lastCustomizedAt && (
+                    <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold bg-teal-50 text-teal-700">
+                      Customized
+                    </span>
+                  )}
                   <StatusBadge status={order.status} />
                   <ChevronRight className="h-4 w-4 text-stone-400" />
                 </div>
