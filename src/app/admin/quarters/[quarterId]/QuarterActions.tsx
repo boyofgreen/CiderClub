@@ -43,7 +43,6 @@ export function QuarterActions({
   const [result, setResult] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [billModal, setBillModal] = useState(false)
-  const [billingMethod, setBillingMethod] = useState<'CARD_ON_FILE' | 'PAYMENT_LINK'>('CARD_ON_FILE')
   const [editModal, setEditModal] = useState(false)
   const [cancelModal, setCancelModal] = useState(false)
   const [cancelling, setCancelling] = useState(false)
@@ -97,7 +96,7 @@ export function QuarterActions({
     const res = await fetch(`/api/quarters/${quarterId}/bill`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ method: billingMethod }),
+      body: JSON.stringify({ method: 'CARD_ON_FILE' }),
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
@@ -296,36 +295,16 @@ export function QuarterActions({
         </div>
       )}
 
-      {/* Billing method modal */}
+      {/* Bill confirmation modal */}
       {billModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-sm bg-cream-paper p-6 shadow-xl">
-            <h3 className="font-bold text-stone-900 mb-4">Bill Quarter</h3>
-            <div className="space-y-2 mb-4">
-              {(['CARD_ON_FILE', 'PAYMENT_LINK'] as const).map((m) => (
-                <label key={m} className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 ${
-                  billingMethod === m ? 'border-terracotta' : 'border-stone-200'
-                }`} style={billingMethod === m ? { backgroundColor: 'var(--cream-deep)' } : {}}>
-                  <input
-                    type="radio"
-                    value={m}
-                    checked={billingMethod === m}
-                    onChange={() => setBillingMethod(m)}
-                    className="accent-terracotta"
-                  />
-                  <div>
-                    <p className="font-medium text-sm text-stone-800">
-                      {m === 'CARD_ON_FILE' ? 'Charge Card on File' : 'Send Payment Links'}
-                    </p>
-                    <p className="text-xs text-stone-500">
-                      {m === 'CARD_ON_FILE'
-                        ? 'Charges saved Square cards automatically'
-                        : 'Emails each member a Square payment link'}
-                    </p>
-                  </div>
-                </label>
-              ))}
-            </div>
+            <h3 className="font-bold text-stone-900 mb-3">Bill Quarter?</h3>
+            <p className="text-sm text-stone-600 mb-4">
+              Every eligible order will be charged to the member's card on file.
+              Members without a card will be marked as <strong>Payment Failed</strong> and
+              emailed a magic link to set one up.
+            </p>
             <div className="flex gap-2">
               <Button variant="secondary" onClick={() => setBillModal(false)} className="flex-1">
                 Cancel
