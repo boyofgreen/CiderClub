@@ -149,13 +149,19 @@ export async function billOrder(
   return { orderId, success: false, method, error: 'Unknown billing method' }
 }
 
-/** Bill all locked orders for an entire quarter */
+/** Bill all eligible orders for an entire quarter */
 export async function billQuarter(
   quarterId: string,
   method: BillingMethod
-): Promise<{ success: number; failed: number; skipped: number; results: BillingResult[] }> {
+): Promise<{ total: number; success: number; failed: number; skipped: number; results: BillingResult[] }> {
+  // Include any order that's not already billed or cancelled. billOrder() short-circuits
+  // BILLED orders, so this is safe; expanding the set means admins don't need to run
+  // "Lock Quarter" first for billing to find anything.
   const orders = await prisma.order.findMany({
-    where: { quarterId, status: { in: ['LOCKED', 'AWAITING_PICKUP'] } },
+    where: {
+      quarterId,
+      status: { in: ['PENDING_CUSTOMIZATION', 'CUSTOMIZED', 'LOCKED', 'AWAITING_PICKUP', 'PAYMENT_FAILED'] },
+    },
   })
 
   const results: BillingResult[] = []
@@ -174,5 +180,5 @@ export async function billQuarter(
   // Update quarter status
   await prisma.quarter.update({ where: { id: quarterId }, data: { status: 'BILLING' } })
 
-  return { success, failed, skipped, results }
+  return { total: orders.length, success, failed, skipped, results }
 }
