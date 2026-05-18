@@ -101,7 +101,11 @@ export function QuarterActions({
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
-      setResult(`Billing complete: ${data.success} succeeded, ${data.failed} failed.`)
+      if (data.total === 0) {
+        setResult('No orders eligible to bill. (All orders are already billed, cancelled, or this quarter has no orders.)')
+      } else {
+        setResult(`Billing complete: ${data.success} succeeded, ${data.failed} failed out of ${data.total} order${data.total === 1 ? '' : 's'}.`)
+      }
       router.refresh()
     } else {
       setError(data.error ?? 'Billing failed')
