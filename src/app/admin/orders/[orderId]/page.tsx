@@ -54,7 +54,6 @@ export default async function AdminOrderDetailPage({
         <OrderAdminActions
           orderId={order.id}
           status={order.status}
-          memberHasCard={!!order.member.squareCardId}
           paymentLinkUrl={order.squarePaymentLinkUrl}
         />
       </div>
