@@ -4,6 +4,7 @@ import { formatDate, formatCents } from '@/lib/utils'
 import { StatusBadge } from '@/components/ui/Badge'
 import { ChevronRight } from 'lucide-react'
 import type { Metadata } from 'next'
+import { ImportFromSquare } from './ImportFromSquare'
 
 export const metadata: Metadata = { title: 'Members' }
 
@@ -44,8 +45,9 @@ export default async function AdminMembersPage({
         <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
           Members
         </h1>
-        <div className="flex items-center gap-2 text-sm text-stone-500">
-          {total} member{total !== 1 ? 's' : ''}
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-stone-500">{total} member{total !== 1 ? 's' : ''}</span>
+          <ImportFromSquare />
         </div>
       </div>
 
