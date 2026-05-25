@@ -60,7 +60,7 @@ export async function GET() {
         if (!alreadyImported) {
           try {
             for await (const card of await squareClient.cards.list({ customerId: customer.id })) {
-              if (!card.disabled && card.id) {
+              if (card.enabled !== false && card.id) {
                 squareCardId = card.id
                 break
               }
