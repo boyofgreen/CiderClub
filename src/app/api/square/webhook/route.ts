@@ -31,40 +31,32 @@ export async function POST(req: Request) {
 
   const type = event.type as string
 
-  // Handle payment completion events
-  if (type === 'payment.completed') {
+  // Square uses payment.updated for all payment state changes.
+  // We inspect payment.status to distinguish completed vs failed.
+  if (type === 'payment.updated' || type === 'payment.created') {
     const data = event.data as Record<string, unknown>
     const obj = data?.object as Record<string, unknown>
     const payment = obj?.payment as Record<string, unknown>
     const paymentId = payment?.id as string | undefined
     const referenceId = payment?.referenceId as string | undefined // we set this to orderId
-
-    if (paymentId && referenceId) {
-      // Match any non-final status — payment links can be sent before an order is
-      // formally locked (e.g. one-off charges on CUSTOMIZED orders).
-      await prisma.order.updateMany({
-        where: { id: referenceId, status: { notIn: ['BILLED', 'CANCELLED'] } },
-        data: {
-          status: 'BILLED',
-          squarePaymentId: paymentId,
-          billedAt: new Date(),
-        },
-      })
-    }
-  }
-
-  // Handle payment failure events
-  if (type === 'payment.failed') {
-    const data = event.data as Record<string, unknown>
-    const obj = data?.object as Record<string, unknown>
-    const payment = obj?.payment as Record<string, unknown>
-    const referenceId = payment?.referenceId as string | undefined
+    const status = payment?.status as string | undefined
 
     if (referenceId) {
-      await prisma.order.updateMany({
-        where: { id: referenceId },
-        data: { status: 'PAYMENT_FAILED' },
-      })
+      if (status === 'COMPLETED' && paymentId) {
+        await prisma.order.updateMany({
+          where: { id: referenceId, status: { notIn: ['BILLED', 'CANCELLED'] } },
+          data: {
+            status: 'BILLED',
+            squarePaymentId: paymentId,
+            billedAt: new Date(),
+          },
+        })
+      } else if (status === 'FAILED') {
+        await prisma.order.updateMany({
+          where: { id: referenceId },
+          data: { status: 'PAYMENT_FAILED' },
+        })
+      }
     }
   }
 
