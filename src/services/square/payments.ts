@@ -145,6 +145,7 @@ export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResu
     sourceId: params.squareCardId,
     customerId: params.squareCustomerId,
     orderId: squareOrder.id,
+    locationId,
     amountMoney: {
       amount: BigInt(squareOrderTotal),
       currency: 'USD',
