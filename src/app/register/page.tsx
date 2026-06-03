@@ -198,7 +198,7 @@ function RegisterContent() {
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '48px 16px' }} className="paper-bg">
         <div className="paper-card" style={{ maxWidth: 560, width: '100%' }}>
           {/* Ticket header */}
-          <div style={{ padding: '36px 40px 28px', textAlign: 'center' }}>
+          <div style={{ padding: '36px clamp(20px, 5vw, 40px) 28px', textAlign: 'center' }}>
             <Image src="/brand/logo.png" alt="Hill Country Cider House" width={66} height={77} style={{ objectFit: 'contain', width: 66, height: 'auto', margin: '0 auto 16px' }} />
           </div>
 
@@ -208,7 +208,7 @@ function RegisterContent() {
             <div style={{ position: 'absolute', top: -14, right: -14, width: 28, height: 28, borderRadius: '50%', backgroundColor: 'var(--paper)' }} />
           </div>
 
-          <div style={{ padding: '40px 40px 48px', textAlign: 'center' }}>
+          <div style={{ padding: '40px clamp(20px, 5vw, 40px) 48px', textAlign: 'center' }}>
             {/* ✦ circle */}
             <div style={{ width: 80, height: 80, border: '2px solid var(--gold)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 28px' }}>
               <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 40, color: 'var(--gold-deep)', lineHeight: 1 }}>✦</span>
@@ -261,7 +261,7 @@ function RegisterContent() {
       {/* Card */}
       <div className="paper-card" style={{ maxWidth: 640, width: '100%' }}>
         {/* Ticket Header */}
-        <div style={{ padding: '36px 40px 28px', textAlign: 'center' }}>
+        <div style={{ padding: '36px clamp(20px, 5vw, 40px) 28px', textAlign: 'center' }}>
           <Image src="/brand/logo.png" alt="Hill Country Cider House" width={66} height={77} style={{ objectFit: 'contain', width: 66, height: 'auto', margin: '0 auto 16px' }} />
           <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 32, fontWeight: 400, color: 'var(--ink)', margin: '0 0 8px' }}>
             Welcome to the Club
@@ -278,7 +278,7 @@ function RegisterContent() {
         </div>
 
         {/* Step content */}
-        <div style={{ padding: '32px 40px 40px' }}>
+        <div style={{ padding: 'clamp(24px, 5vw, 32px) clamp(20px, 5vw, 40px) clamp(28px, 5vw, 40px)' }}>
           {error && (
             <div style={{ backgroundColor: 'rgba(182,90,60,0.08)', border: '1px solid rgba(182,90,60,0.3)', color: 'var(--terracotta-deep)', padding: '12px 16px', marginBottom: 24, fontSize: 14 }}>
               {error}
@@ -333,7 +333,7 @@ function RegisterContent() {
                   return (
                     <div key={plan.id} onClick={() => update('planId', plan.id)}
                       style={{
-                        display: 'flex', gap: 16, padding: '20px', cursor: 'pointer',
+                        display: 'flex', gap: 'clamp(10px, 3vw, 16px)', padding: 'clamp(14px, 4vw, 20px)', cursor: 'pointer',
                         border: `1px solid ${selected ? 'var(--terracotta)' : 'var(--rule)'}`,
                         backgroundColor: selected ? 'rgba(182,90,60,0.04)' : 'transparent',
                         transition: 'border-color 0.15s',
