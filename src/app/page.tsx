@@ -94,7 +94,7 @@ export default async function LandingPage() {
 
       {/* ── NAV ─────────────────────────────────────────────────────── */}
       <header style={{ backgroundColor: 'var(--cream-deep)', borderBottom: '1px solid var(--rule)', position: 'sticky', top: 0, zIndex: 30 }}>
-        <div className="mx-auto flex items-center justify-between" style={{ maxWidth: 1280, padding: '18px 56px' }}>
+        <div className="mx-auto flex items-center justify-between" style={{ maxWidth: 1280, padding: '18px clamp(16px,5vw,56px)' }}>
           <Link href="/" className="flex items-center gap-3" style={{ textDecoration: 'none' }}>
             <Image src="/brand/logo.png" alt="Hill Country Cider House" width={48} height={56} style={{ objectFit: 'contain', width: 48, height: 'auto' }} />
             <div>
@@ -106,6 +106,12 @@ export default async function LandingPage() {
               </div>
             </div>
           </Link>
+
+          {/* Mobile CTAs */}
+          <div className="flex lg:hidden items-center gap-3">
+            <Link href="/register" className="btn-saloon" style={{ fontSize: 11, padding: '8px 14px' }}>Join →</Link>
+            <Link href="/magic/request" style={{ fontSize: 10, letterSpacing: '0.16em', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-soft)', textDecoration: 'none' }}>Sign In</Link>
+          </div>
 
           <nav className="hidden lg:flex items-center" style={{ gap: 32 }}>
             {[
@@ -133,8 +139,8 @@ export default async function LandingPage() {
       </header>
 
       {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section className="hero-bg" style={{ padding: '100px 56px 120px' }}>
-        <div className="mx-auto" style={{ maxWidth: 1280, display: 'grid', gridTemplateColumns: '1.3fr 1fr', gap: 80, alignItems: 'center' }}>
+      <section className="hero-bg" style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,5vw,56px)' }}>
+        <div className="mx-auto grid grid-cols-1 lg:grid-cols-[1.3fr_1fr]" style={{ maxWidth: 1280, gap: 'clamp(32px,5vw,80px)', alignItems: 'center' }}>
 
           {/* Left */}
           <div>
@@ -151,7 +157,7 @@ export default async function LandingPage() {
               now.
             </h1>
 
-            <p style={{ fontSize: 19, lineHeight: 1.55, color: 'rgba(247,241,227,0.78)', maxWidth: 540, margin: '0 0 40px' }}>
+            <p style={{ fontSize: 'clamp(15px,4vw,19px)', lineHeight: 1.55, color: 'rgba(247,241,227,0.78)', maxWidth: 540, margin: '0 0 40px' }}>
               Four times a year, we set aside a small batch of our best ciders for the people who make this place feel like home. Pick the bottles you love. Bring a friend. We'll keep the porch light on.
             </p>
 
@@ -160,7 +166,7 @@ export default async function LandingPage() {
             </div>
 
             <div style={{ borderTop: '1px solid var(--rule)', paddingTop: 32 }}>
-              <div className="flex items-start gap-12 flex-wrap">
+              <div className="flex items-start gap-6 sm:gap-12 flex-wrap">
                 {[
                   { value: String(memberCount || 142), label: 'Members' },
                   { value: '26', label: 'Ciders & Counting' },
@@ -213,7 +219,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: 'var(--cream)', padding: '120px 56px' }}>
+      <section style={{ backgroundColor: 'var(--cream)', padding: 'clamp(60px,8vw,120px) clamp(16px,5vw,56px)' }}>
         <div className="mx-auto" style={{ maxWidth: 1280 }}>
           <div className="text-center" style={{ marginBottom: 64 }}>
             <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--terracotta)', marginBottom: 16 }}>
@@ -230,7 +236,7 @@ export default async function LandingPage() {
           </div>
 
           {/* 4-col grid — 1px gold gap creates divider lines */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 1, backgroundColor: 'var(--rule)' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: 1, backgroundColor: 'var(--rule)' }}>
             {[
               { roman: 'I.', title: 'Saddle Up', body: 'Pick your tier, tell us a bit about yourself, and drop a card on file. Takes about two minutes.' },
               { roman: 'II.', title: 'We Holler', body: "When the new quarter opens, you'll get an email with a personal link to your order." },
@@ -254,7 +260,7 @@ export default async function LandingPage() {
       </section>
 
       {/* ── TIER CARDS ───────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: 'var(--cream-deep)', padding: '120px 56px' }}>
+      <section style={{ backgroundColor: 'var(--cream-deep)', padding: 'clamp(60px,8vw,120px) clamp(16px,5vw,56px)' }}>
         <div className="mx-auto" style={{ maxWidth: 1280 }}>
           <div className="text-center" style={{ marginBottom: 64 }}>
             <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-soft)', marginBottom: 16 }}>
@@ -268,7 +274,7 @@ export default async function LandingPage() {
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 28, alignItems: 'stretch' }}>
+          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 28, alignItems: 'stretch' }}>
             {TIER_COPY.map((tier, i) => {
               const plan = plans[i] ?? null
               const featured = !!tier.featured
@@ -351,9 +357,9 @@ export default async function LandingPage() {
       </section>
 
       {/* ── LINEUP ───────────────────────────────────────────────────── */}
-      <section id="lineup" className="hero-bg" style={{ padding: '120px 56px' }}>
+      <section id="lineup" className="hero-bg" style={{ padding: 'clamp(60px,8vw,120px) clamp(16px,5vw,56px)' }}>
         <div className="mx-auto" style={{ maxWidth: 1280 }}>
-          <div className="flex items-end justify-between flex-wrap gap-8" style={{ borderBottom: '1px solid var(--rule)', paddingBottom: 32, marginBottom: 48 }}>
+          <div className="flex items-end justify-between flex-wrap gap-6" style={{ borderBottom: '1px solid var(--rule)', paddingBottom: 32, marginBottom: 48 }}>
             <div>
               <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 12 }}>
                 THIS QUARTER'S POUR
@@ -362,12 +368,12 @@ export default async function LandingPage() {
                 Spring '26 <em>Lineup</em>
               </h2>
             </div>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(247,241,227,0.6)', maxWidth: 300, margin: 0, textAlign: 'right' }}>
+            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(247,241,227,0.6)', maxWidth: 300, margin: 0 }}>
               Members can mix any combination from the lineup — defaults are set, but the choice is always yours.
             </p>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 24 }}>
+          <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: 'clamp(12px,3vw,24px)' }}>
             {lineup.map((bottle) => (
               <div key={bottle.name}>
                 <div className="bottle-frame" style={{ position: 'relative', paddingBottom: '133%' }}>
@@ -388,12 +394,12 @@ export default async function LandingPage() {
       </section>
 
       {/* ── FOUNDER LETTER ───────────────────────────────────────────── */}
-      <section style={{ backgroundColor: 'var(--cream)', padding: '120px 56px' }}>
+      <section style={{ backgroundColor: 'var(--cream)', padding: 'clamp(60px,8vw,120px) clamp(16px,5vw,56px)' }}>
         <div className="mx-auto text-center" style={{ maxWidth: 720 }}>
           <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 80, color: 'var(--gold)', lineHeight: 0.8, marginBottom: 24 }}>
             "
           </div>
-          <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 32, lineHeight: 1.4, color: 'var(--ink)', margin: 0 }}>
+          <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 'clamp(22px,3vw,32px)', lineHeight: 1.4, color: 'var(--ink)', margin: 0 }}>
             We started with a folding table and one cider. Five years on, this club is how we say thank you to the folks who make our cider a part of their lives.
           </p>
           <div style={{ height: 1, width: 80, backgroundColor: 'var(--gold)', margin: '48px auto 24px' }} />
@@ -404,9 +410,9 @@ export default async function LandingPage() {
       </section>
 
       {/* ── FOOTER ───────────────────────────────────────────────────── */}
-      <footer style={{ backgroundColor: 'var(--navy-deep)', padding: '80px 56px 40px' }}>
+      <footer style={{ backgroundColor: 'var(--navy-deep)', padding: 'clamp(48px,6vw,80px) clamp(16px,5vw,56px) clamp(24px,4vw,40px)' }}>
         <div className="mx-auto" style={{ maxWidth: 1280 }}>
-          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr 1fr', gap: 48, paddingBottom: 48, borderBottom: '1px solid var(--rule)' }}>
+          <div className="grid grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]" style={{ gap: 'clamp(24px,4vw,48px)', paddingBottom: 48, borderBottom: '1px solid var(--rule)' }}>
             {/* Col 1 */}
             <div>
               <div style={{ marginBottom: 20 }}>
