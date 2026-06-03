@@ -155,35 +155,35 @@ export default function OrderDetailPage() {
             {quarterProducts.map(({ product }) => (
               <div
                 key={product.id}
-                className="flex items-center gap-4 p-4 transition border hover:border-gold/50"
+                className="flex items-center gap-3 p-3 sm:p-4 transition border hover:border-gold/50"
                 style={{ borderColor: 'var(--rule)' }}
               >
                 <div
-                  className="flex h-10 w-10 shrink-0 items-center justify-center"
+                  className="hidden sm:flex h-10 w-10 shrink-0 items-center justify-center"
                   style={{ backgroundColor: 'var(--cream-deep)' }}
                 >
                   <Beer className="h-5 w-5 text-gold-deep" />
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-medium text-stone-800 truncate">{product.name}</p>
+                  <p className="font-medium text-stone-800 leading-snug">{product.name}</p>
                   {product.style && (
                     <p className="text-xs text-stone-400 mt-0.5">{product.style}</p>
                   )}
                 </div>
-                <div className="flex items-center gap-2 shrink-0">
+                <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
                   <button
                     onClick={() => adjust(product.id, -1)}
                     disabled={(selections[product.id] ?? 0) === 0}
-                    className="flex h-8 w-8 items-center justify-center border border-stone-300 text-stone-600 hover:bg-stone-50 disabled:opacity-30"
+                    className="flex h-9 w-9 items-center justify-center border border-stone-300 text-stone-600 hover:bg-stone-50 disabled:opacity-30"
                   >
                     <Minus className="h-3.5 w-3.5" />
                   </button>
-                  <span className="w-8 text-center font-bold text-stone-900">
+                  <span className="w-7 text-center font-bold text-stone-900">
                     {selections[product.id] ?? 0}
                   </span>
                   <button
                     onClick={() => adjust(product.id, 1)}
-                    className="flex h-8 w-8 items-center justify-center border border-stone-300 text-stone-600 hover:bg-stone-50"
+                    className="flex h-9 w-9 items-center justify-center border border-stone-300 text-stone-600 hover:bg-stone-50"
                   >
                     <Plus className="h-3.5 w-3.5" />
                   </button>
@@ -221,19 +221,19 @@ export default function OrderDetailPage() {
             {order.items.map((item) => (
               <div
                 key={item.productId}
-                className="flex items-center justify-between px-4 py-3"
+                className="flex items-center justify-between gap-3 px-4 py-3"
                 style={{ backgroundColor: 'var(--cream-deep)' }}
               >
-                <div className="flex items-center gap-3">
-                  <Beer className="h-4 w-4 text-gold-deep" />
-                  <div>
-                    <p className="font-medium text-stone-800">{item.product.name}</p>
+                <div className="flex items-center gap-3 min-w-0">
+                  <Beer className="h-4 w-4 shrink-0 text-gold-deep" />
+                  <div className="min-w-0">
+                    <p className="font-medium text-stone-800 leading-snug">{item.product.name}</p>
                     {item.product.style && (
                       <p className="text-xs text-stone-400">{item.product.style}</p>
                     )}
                   </div>
                 </div>
-                <span className="font-semibold text-stone-700">×{item.quantity}</span>
+                <span className="font-semibold text-stone-700 shrink-0">×{item.quantity}</span>
               </div>
             ))}
           </div>
