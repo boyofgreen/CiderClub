@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { ArrowLeft } from 'lucide-react'
 import { QuarterActions } from './QuarterActions'
 import { ProductsTab } from './ProductsTab'
+import { PrintButton } from './PrintButton'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Quarter Detail' }
@@ -34,10 +35,28 @@ export default async function QuarterDetailPage({
 
   if (!quarter) notFound()
 
-  const [allProducts, allPlans] = await Promise.all([
+  const [allProducts, allPlans, rawItems] = await Promise.all([
     prisma.product.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } }),
     prisma.plan.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' } }),
+    prisma.orderItem.findMany({
+      where: { order: { quarterId: params.quarterId, status: { notIn: ['CANCELLED'] } } },
+      include: { product: true },
+    }),
   ])
+
+  // Aggregate quantities per product for the pull sheet
+  const ledgerMap = new Map<string, { name: string; style: string | null; total: number }>()
+  for (const item of rawItems) {
+    const existing = ledgerMap.get(item.productId)
+    if (existing) {
+      existing.total += item.quantity
+    } else {
+      ledgerMap.set(item.productId, { name: item.product.name, style: item.product.style, total: item.quantity })
+    }
+  }
+  const ledger = [...ledgerMap.values()].sort((a, b) => b.total - a.total)
+  const ledgerTotalBottles = ledger.reduce((s, r) => s + r.total, 0)
+  const pendingCount = quarter.orders.filter((o) => o.status === 'PENDING_CUSTOMIZATION').length
 
   const orderStats = {
     total: quarter.orders.length,
@@ -145,6 +164,60 @@ export default async function QuarterDetailPage({
             </div>
           )}
         </Card>
+      </div>
+
+      {/* Pull Sheet */}
+      <div className="border bg-cream-paper shadow-sm overflow-hidden print:shadow-none" style={{ borderColor: 'var(--rule)' }}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
+          <div>
+            <h2 className="font-semibold text-stone-900">Pull Sheet</h2>
+            <p className="text-xs text-stone-400 mt-0.5">
+              {ledgerTotalBottles} bottle{ledgerTotalBottles !== 1 ? 's' : ''} across {ledger.length} cider{ledger.length !== 1 ? 's' : ''} · {quarter.orders.filter(o => o.status !== 'CANCELLED').length} orders included
+              {pendingCount > 0 && (
+                <span className="ml-2 text-amber-600">· {pendingCount} order{pendingCount !== 1 ? 's' : ''} not yet customized (using defaults)</span>
+              )}
+            </p>
+          </div>
+          <PrintButton />
+        </div>
+
+        {ledger.length === 0 ? (
+          <p className="py-8 text-center text-stone-400 text-sm">No order items yet.</p>
+        ) : (
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-stone-100 text-left">
+                <th className="px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wide">Cider</th>
+                <th className="px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wide hidden sm:table-cell">Style</th>
+                <th className="px-6 py-3 text-xs font-semibold text-stone-500 uppercase tracking-wide text-right">Bottles</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-stone-100">
+              {ledger.map((row) => (
+                <tr key={row.name} className="hover:bg-cream-deep transition">
+                  <td className="px-6 py-3 font-medium text-stone-800">{row.name}</td>
+                  <td className="px-6 py-3 text-stone-400 hidden sm:table-cell">{row.style ?? '—'}</td>
+                  <td className="px-6 py-3 text-right">
+                    <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 22, color: 'var(--terracotta)' }}>
+                      {row.total}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+            <tfoot>
+              <tr className="border-t-2 border-stone-200">
+                <td className="px-6 py-3 font-semibold text-stone-700">Total</td>
+                <td className="hidden sm:table-cell" />
+                <td className="px-6 py-3 text-right">
+                  <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 22, color: 'var(--ink)', fontWeight: 600 }}>
+                    {ledgerTotalBottles}
+                  </span>
+                </td>
+              </tr>
+            </tfoot>
+          </table>
+        )}
       </div>
 
       {/* Orders table */}
