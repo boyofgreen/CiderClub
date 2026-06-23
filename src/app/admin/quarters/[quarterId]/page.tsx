@@ -8,6 +8,7 @@ import { ArrowLeft } from 'lucide-react'
 import { QuarterActions } from './QuarterActions'
 import { ProductsTab } from './ProductsTab'
 import { PrintButton } from './PrintButton'
+import { EmailActionButton } from '@/components/admin/EmailActionButton'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Quarter Detail' }
@@ -224,9 +225,19 @@ export default async function QuarterDetailPage({
       <div className="border bg-cream-paper shadow-sm overflow-hidden" style={{ borderColor: 'var(--rule)' }}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
           <h2 className="font-semibold text-stone-900">Orders ({orderStats.total})</h2>
-          <Link href={`/admin/orders?quarter=${quarter.id}`} className="text-xs text-terracotta hover:text-terracotta-deep">
-            View all →
-          </Link>
+          <div className="flex items-center gap-4">
+            {pendingCount > 0 && (
+              <EmailActionButton
+                endpoint={`/api/quarters/${quarter.id}/send-reminders`}
+                label="Send customization reminders"
+                confirm={`Send a customization reminder to the ${pendingCount} member${pendingCount !== 1 ? 's' : ''} who haven't customized yet?`}
+                successText={(n) => `Reminded ${n} member${n !== 1 ? 's' : ''}.`}
+              />
+            )}
+            <Link href={`/admin/orders?quarter=${quarter.id}`} className="text-xs text-terracotta hover:text-terracotta-deep">
+              View all →
+            </Link>
+          </div>
         </div>
         {quarter.orders.length === 0 ? (
           <p className="py-8 text-center text-stone-400 text-sm">

@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma'
-import { sendEmail, buildOrderReadyEmail } from '@/services/email/sender'
+import { sendEmail } from '@/services/email/sender'
+import { renderEmail } from '@/lib/emailTemplates'
 import { appUrl } from '@/lib/resend'
 import { generateOpaqueToken } from '@/lib/tokens'
 import { addDays, format } from 'date-fns'
@@ -118,15 +119,16 @@ export async function generateQuarterOrders(
       ? format(new Date(quarter.endsAt), 'MMMM d, yyyy')
       : 'end of quarter'
 
+    const ready = await renderEmail('ORDER_READY', {
+      firstName: member.firstName,
+      quarterLabel: quarter.label,
+      customizeUrl,
+      deadline,
+    })
     await sendEmail({
       to: member.email,
-      subject: `Your ${quarter.label} Cider Order is Ready to Customize`,
-      html: buildOrderReadyEmail({
-        firstName: member.firstName,
-        quarterLabel: quarter.label,
-        customizeUrl,
-        deadline,
-      }),
+      subject: ready.subject,
+      html: ready.html,
       type: 'ORDER_READY',
       memberId: member.id,
       metadata: { quarterId, orderId: order.id },
@@ -155,6 +157,47 @@ export async function lockQuarterOrders(quarterId: string): Promise<{ locked: nu
   await prisma.quarter.update({ where: { id: quarterId }, data: { status: 'LOCKED' } })
 
   return { locked: result.count }
+}
+
+/**
+ * Send a customization reminder to every member with a still-uncustomized order
+ * for the given quarter. Admin-triggered (there is no cron) — safe to run repeatedly.
+ */
+export async function sendOrderReminders(
+  quarterId: string
+): Promise<{ sent: number }> {
+  const quarter = await prisma.quarter.findUniqueOrThrow({ where: { id: quarterId } })
+  const orders = await prisma.order.findMany({
+    where: { quarterId, status: 'PENDING_CUSTOMIZATION' },
+    include: { member: true },
+  })
+
+  const deadline = quarter.endsAt
+    ? format(new Date(quarter.endsAt), 'MMMM d, yyyy')
+    : 'end of quarter'
+
+  let sent = 0
+  for (const order of orders) {
+    const token = await ensureMemberToken(order.member.id, 'ORDER_ACCESS', order.id)
+    const customizeUrl = `${appUrl}/magic?t=${token}&next=/member/orders/${order.id}`
+    const email = await renderEmail('ORDER_REMINDER', {
+      firstName: order.member.firstName,
+      quarterLabel: quarter.label,
+      customizeUrl,
+      deadline,
+    })
+    await sendEmail({
+      to: order.member.email,
+      subject: email.subject,
+      html: email.html,
+      type: 'ORDER_REMINDER',
+      memberId: order.member.id,
+      metadata: { quarterId, orderId: order.id },
+    })
+    sent++
+  }
+
+  return { sent }
 }
 
 /** Ensure a valid member token exists; creates one if needed */

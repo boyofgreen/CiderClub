@@ -7,6 +7,7 @@ import { Card } from '@/components/ui/Card'
 import { ArrowLeft, MapPin, Clock, CheckCircle } from 'lucide-react'
 import { CheckInButton } from './CheckInButton'
 import { PickupActions } from './PickupActions'
+import { EmailActionButton } from '@/components/admin/EmailActionButton'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Pickup Event' }
@@ -74,6 +75,29 @@ export default async function AdminPickupDetailPage({
           </div>
         ))}
       </div>
+
+      {/* Email actions */}
+      <Card>
+        <h2 className="font-semibold text-stone-900 mb-1">Communications</h2>
+        <p className="text-sm text-stone-500 mb-4">
+          Send emails about this event. Reminders go to members with an order this quarter;
+          event alerts go to all members who opted in.
+        </p>
+        <div className="flex flex-wrap items-start gap-4">
+          <EmailActionButton
+            endpoint={`/api/pickups/${event.id}/send-reminders`}
+            label="Send pickup reminder"
+            confirm="Send a pickup reminder to all members with an order this quarter?"
+            successText={(n) => `Reminded ${n} member${n !== 1 ? 's' : ''}.`}
+          />
+          <EmailActionButton
+            endpoint={`/api/pickups/${event.id}/send-alert`}
+            label="Send event alert"
+            confirm="Announce this event to all members who opted into event alerts?"
+            successText={(n) => `Alerted ${n} member${n !== 1 ? 's' : ''}.`}
+          />
+        </div>
+      </Card>
 
       {/* Orders / check-in list */}
       <Card>

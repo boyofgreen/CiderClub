@@ -1,10 +1,11 @@
 import { prisma } from '@/lib/prisma'
 import { createSquareCustomer } from '@/services/square/customers'
 import { saveCardOnFile } from '@/services/square/cards'
-import { sendEmail, buildWelcomeEmail } from '@/services/email/sender'
+import { sendEmail } from '@/services/email/sender'
+import { renderEmail, baseTemplate } from '@/lib/emailTemplates'
 import { generateOpaqueToken } from '@/lib/tokens'
-import { getMemberPortalToken } from '@/services/orders'
-import { appUrl } from '@/lib/resend'
+import { appUrl, clubName } from '@/lib/resend'
+import { getAdminNotifyEmail, getWelcomeFollowupFrom } from '@/lib/settings'
 import { addDays } from 'date-fns'
 
 interface CreateMemberParams {
@@ -107,20 +108,89 @@ export async function createMember(params: CreateMemberParams) {
 
   const portalUrl = `${appUrl}/magic?t=${token}`
 
+  // 1. Welcome / sign-up confirmation (editable template)
+  const welcome = await renderEmail('WELCOME', {
+    firstName: params.firstName,
+    planName: plan.name,
+    portalUrl,
+  })
   await sendEmail({
     to: member.email,
-    subject: `Welcome to ${plan.name}!`,
-    html: buildWelcomeEmail({
-      firstName: params.firstName,
-      planName: plan.name,
-      portalUrl,
-    }),
+    subject: welcome.subject,
+    html: welcome.html,
     type: 'WELCOME',
     memberId: member.id,
     metadata: { planId: params.planId, status },
   })
 
+  // 2. Personal welcome from JB, scheduled ~24 hours out via Resend (no cron needed).
+  //    Comes from the configured personal address so replies reach the owner.
+  try {
+    const followup = await renderEmail('WELCOME_FOLLOWUP', { firstName: params.firstName })
+    await sendEmail({
+      to: member.email,
+      subject: followup.subject,
+      html: followup.html,
+      type: 'WELCOME_FOLLOWUP',
+      memberId: member.id,
+      from: await getWelcomeFollowupFrom(),
+      scheduledAt: addHoursIso(24),
+    })
+  } catch (err) {
+    console.error('[members] Failed to schedule welcome follow-up:', err)
+  }
+
+  // 3. Internal alert to the owner so new members can be tracked (not editable).
+  try {
+    const notifyTo = await getAdminNotifyEmail()
+    if (notifyTo) {
+      await sendEmail({
+        to: notifyTo,
+        subject: `New member: ${params.firstName} ${params.lastName} (${plan.name})`,
+        html: buildAdminNewMemberAlert({
+          firstName: params.firstName,
+          lastName: params.lastName,
+          email: member.email,
+          phone: params.phone,
+          planName: plan.name,
+          status,
+        }),
+        type: 'ADMIN_NEW_MEMBER',
+      })
+    }
+  } catch (err) {
+    console.error('[members] Failed to send admin new-member alert:', err)
+  }
+
   return { member, status, portalUrl }
+}
+
+/** ISO timestamp N hours from now — for Resend scheduled sends */
+function addHoursIso(hours: number): string {
+  return new Date(Date.now() + hours * 60 * 60 * 1000).toISOString()
+}
+
+/** Internal new-member alert to the owner. Intentionally not admin-editable. */
+function buildAdminNewMemberAlert(p: {
+  firstName: string
+  lastName: string
+  email: string
+  phone?: string
+  planName: string
+  status: string
+}): string {
+  return baseTemplate(`
+    <h2>New ${clubName} Member</h2>
+    <p>A new member just signed up:</p>
+    <ul>
+      <li><strong>Name:</strong> ${p.firstName} ${p.lastName}</li>
+      <li><strong>Email:</strong> ${p.email}</li>
+      ${p.phone ? `<li><strong>Phone:</strong> ${p.phone}</li>` : ''}
+      <li><strong>Plan:</strong> ${p.planName}</li>
+      <li><strong>Status:</strong> ${p.status}</li>
+    </ul>
+    <p style="text-align:center"><a class="btn" href="${appUrl}/admin/members">View in Admin</a></p>
+  `)
 }
 
 /** Pause a member (optionally until a specific quarter) */

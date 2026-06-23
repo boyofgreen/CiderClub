@@ -1,0 +1,22 @@
+import { NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { sendOrderReminders } from '@/services/orders'
+
+// POST — send a customization reminder to members with uncustomized orders
+export async function POST(
+  _req: Request,
+  { params }: { params: { quarterId: string } }
+) {
+  const session = await getServerSession(authOptions)
+  if (session?.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  try {
+    const result = await sendOrderReminders(params.quarterId)
+    return NextResponse.json({ ok: true, ...result })
+  } catch (err) {
+    return NextResponse.json({ error: String(err) }, { status: 500 })
+  }
+}

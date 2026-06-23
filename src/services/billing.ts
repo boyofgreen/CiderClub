@@ -1,7 +1,8 @@
 import { prisma } from '@/lib/prisma'
 import { chargeCardOnFile, createPaymentLink } from '@/services/square/payments'
 import { adjustInventoryForOrder } from '@/services/square/inventory'
-import { sendEmail, buildReceiptEmail, buildPaymentFailedEmail } from '@/services/email/sender'
+import { sendEmail } from '@/services/email/sender'
+import { renderEmail, buildReceiptItemsTable } from '@/lib/emailTemplates'
 import { appUrl } from '@/lib/resend'
 import { getMemberPortalToken } from '@/services/orders'
 import { getSalesTaxPercent } from '@/lib/settings'
@@ -47,6 +48,28 @@ export async function billOrder(
       squareVariationId: i.product.squareVariationId,
       quantity: i.quantity,
     }))).catch((err) => console.error(`[inventory] Failed for order ${orderId}:`, err))
+
+    // In-person checkout means they're walking out with their cider — send the
+    // "already picked up" receipt.
+    const itemsTable = buildReceiptItemsTable(
+      order.items.map((i) => ({ name: i.product.name, quantity: i.quantity })),
+      order.totalInCents
+    )
+    const receipt = await renderEmail('RECEIPT_PICKEDUP', {
+      firstName: member.firstName,
+      quarterLabel: order.quarter.label,
+      itemsTable,
+      receiptLink: '',
+    })
+    await sendEmail({
+      to: member.email,
+      subject: receipt.subject,
+      html: receipt.html,
+      type: 'RECEIPT',
+      memberId: member.id,
+      metadata: { pickedUp: true, method: 'IN_PERSON' },
+    }).catch((err) => console.error(`[billing] receipt email failed for ${orderId}:`, err))
+
     return { orderId, success: true, method }
   }
 
@@ -59,14 +82,15 @@ export async function billOrder(
         data: { status: 'PAYMENT_FAILED' },
       })
       const token = await getMemberPortalToken(member.id)
+      const failed = await renderEmail('PAYMENT_FAILED', {
+        firstName: member.firstName,
+        quarterLabel: order.quarter.label,
+        portalUrl: `${appUrl}/magic?t=${token}&next=/member/profile?card=1`,
+      })
       await sendEmail({
         to: member.email,
-        subject: 'Payment Issue — Card Needed',
-        html: buildPaymentFailedEmail({
-          firstName: member.firstName,
-          quarterLabel: order.quarter.label,
-          portalUrl: `${appUrl}/magic?t=${token}&next=/member/profile?card=1`,
-        }),
+        subject: failed.subject,
+        html: failed.html,
         type: 'PAYMENT_FAILED',
         memberId: member.id,
       })
@@ -97,20 +121,35 @@ export async function billOrder(
         quantity: i.quantity,
       }))).catch((err) => console.error(`[inventory] Failed for order ${orderId}:`, err))
 
-      // Send receipt email
+      // Send the appropriate receipt. If the order was already picked up, thank
+      // them. If we billed with the quarter and they haven't collected yet, prompt
+      // a pickup. (This branch is always CARD_ON_FILE.)
+      const alreadyPickedUp = !!order.pickedUpAt
       const token = await getMemberPortalToken(member.id)
-      await sendEmail({
-        to: member.email,
-        subject: `Receipt — ${order.quarter.label} Cider Club Order`,
-        html: buildReceiptEmail({
+      const itemsTable = buildReceiptItemsTable(
+        order.items.map((i) => ({ name: i.product.name, quantity: i.quantity })),
+        order.totalInCents
+      )
+      const receiptLink = result.receiptUrl
+        ? `<p style="text-align:center"><a href="${result.receiptUrl}">View Square Receipt</a></p>`
+        : ''
+      const receipt = await renderEmail(
+        alreadyPickedUp ? 'RECEIPT_PICKEDUP' : 'RECEIPT_PICKUP_NEEDED',
+        {
           firstName: member.firstName,
           quarterLabel: order.quarter.label,
-          items: order.items.map((i) => ({ name: i.product.name, quantity: i.quantity })),
-          totalInCents: order.totalInCents,
-          receiptUrl: result.receiptUrl ?? undefined,
-        }),
+          itemsTable,
+          receiptLink,
+          portalUrl: `${appUrl}/magic?t=${token}&next=/member/orders/${orderId}`,
+        }
+      )
+      await sendEmail({
+        to: member.email,
+        subject: receipt.subject,
+        html: receipt.html,
         type: 'RECEIPT',
         memberId: member.id,
+        metadata: { pickedUp: alreadyPickedUp },
       })
 
       return { orderId, success: true, method, paymentId: result.paymentId }
@@ -123,14 +162,15 @@ export async function billOrder(
       })
 
       const token = await getMemberPortalToken(member.id)
+      const failed = await renderEmail('PAYMENT_FAILED', {
+        firstName: member.firstName,
+        quarterLabel: order.quarter.label,
+        portalUrl: `${appUrl}/magic?t=${token}`,
+      })
       await sendEmail({
         to: member.email,
-        subject: 'Payment Issue — Action Required',
-        html: buildPaymentFailedEmail({
-          firstName: member.firstName,
-          quarterLabel: order.quarter.label,
-          portalUrl: `${appUrl}/magic?t=${token}`,
-        }),
+        subject: failed.subject,
+        html: failed.html,
         type: 'PAYMENT_FAILED',
         memberId: member.id,
       })
