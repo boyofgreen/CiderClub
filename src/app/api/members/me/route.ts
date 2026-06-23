@@ -27,7 +27,7 @@ export async function PATCH(req: Request) {
   }
 
   const body = await req.json()
-  const allowed = ['firstName', 'lastName', 'phone', 'address1', 'address2', 'city', 'state', 'zip']
+  const allowed = ['firstName', 'lastName', 'phone', 'address1', 'address2', 'city', 'state', 'zip', 'eventAlertsOptIn']
   const data = Object.fromEntries(
     Object.entries(body).filter(([k]) => allowed.includes(k))
   )

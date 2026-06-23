@@ -6,14 +6,14 @@ import { Button } from '@/components/ui/Button'
 import { Card, CardHeader, CardTitle } from '@/components/ui/Card'
 import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
-import { User } from 'lucide-react'
+import { User, Bell } from 'lucide-react'
 import { PaymentMethodCard } from './PaymentMethodCard'
 
 type MemberProfile = {
   id: string; firstName: string; lastName: string; email: string; phone: string | null
   address1: string | null; city: string | null; state: string | null; zip: string | null
   squareCardId: string | null; plan: { name: string }
-  status: string
+  status: string; eventAlertsOptIn: boolean
 }
 
 export default function MemberProfilePage() {
@@ -36,6 +36,18 @@ export default function MemberProfilePage() {
 
   function update(field: string, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
+  }
+
+  async function toggleEventAlerts(next: boolean) {
+    setForm((f) => ({ ...f, eventAlertsOptIn: next }))
+    await fetch('/api/members/me', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ eventAlertsOptIn: next }),
+    }).catch(() => {
+      // revert on failure
+      setForm((f) => ({ ...f, eventAlertsOptIn: !next }))
+    })
   }
 
   async function handleSave(e: React.FormEvent) {
@@ -165,6 +177,37 @@ export default function MemberProfilePage() {
             Save Changes
           </Button>
         </form>
+      </Card>
+
+      {/* Notification preferences */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Bell className="h-4 w-4" style={{ color: 'var(--ink-soft)' }} />
+            <CardTitle>Notifications</CardTitle>
+          </div>
+        </CardHeader>
+        <label className="flex items-start justify-between gap-4 cursor-pointer">
+          <span>
+            <span className="block text-sm font-medium text-stone-800">Event alerts</span>
+            <span className="block text-xs text-stone-500 mt-0.5">
+              Get an email when we announce club events — release parties, tastings, and pickups.
+            </span>
+          </span>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={!!form.eventAlertsOptIn}
+            onClick={() => toggleEventAlerts(!form.eventAlertsOptIn)}
+            className="relative inline-flex h-6 w-11 shrink-0 items-center rounded-full transition"
+            style={{ backgroundColor: form.eventAlertsOptIn ? 'var(--terracotta)' : 'var(--rule)' }}
+          >
+            <span
+              className="inline-block h-5 w-5 transform rounded-full bg-white transition"
+              style={{ transform: form.eventAlertsOptIn ? 'translateX(22px)' : 'translateX(2px)' }}
+            />
+          </button>
+        </label>
       </Card>
 
       {/* Payment method */}

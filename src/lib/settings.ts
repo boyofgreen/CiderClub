@@ -2,10 +2,14 @@ import { prisma } from '@/lib/prisma'
 
 export const SETTING_KEYS = {
   SALES_TAX_PERCENT: 'salesTaxPercent',
+  ADMIN_NOTIFY_EMAIL: 'adminNotifyEmail',
+  WELCOME_FOLLOWUP_FROM: 'welcomeFollowupFrom',
 } as const
 
 const DEFAULTS: Record<string, string> = {
   [SETTING_KEYS.SALES_TAX_PERCENT]: '8.25',
+  [SETTING_KEYS.ADMIN_NOTIFY_EMAIL]: '',
+  [SETTING_KEYS.WELCOME_FOLLOWUP_FROM]: 'JB · Hill Country Cider House <jb@hillcountryciderhouse.com>',
 }
 
 export async function getSetting(key: string): Promise<string | null> {
@@ -17,6 +21,21 @@ export async function getSalesTaxPercent(): Promise<number> {
   const raw = await getSetting(SETTING_KEYS.SALES_TAX_PERCENT)
   const n = Number(raw)
   return Number.isFinite(n) && n >= 0 ? n : 0
+}
+
+/** Address that receives the internal "new member joined" alert. */
+export async function getAdminNotifyEmail(): Promise<string | null> {
+  const raw = (await getSetting(SETTING_KEYS.ADMIN_NOTIFY_EMAIL))?.trim()
+  if (raw) return raw
+  // Fall back to the first configured admin email
+  const fromEnv = process.env.ADMIN_EMAILS?.split(',')[0]?.trim()
+  return fromEnv || null
+}
+
+/** From address used for the personal 24-hour welcome follow-up. */
+export async function getWelcomeFollowupFrom(): Promise<string> {
+  const raw = (await getSetting(SETTING_KEYS.WELCOME_FOLLOWUP_FROM))?.trim()
+  return raw || DEFAULTS[SETTING_KEYS.WELCOME_FOLLOWUP_FROM]
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {

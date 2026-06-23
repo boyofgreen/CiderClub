@@ -31,6 +31,14 @@ export async function PATCH(req: Request) {
     await setSetting(SETTING_KEYS.SALES_TAX_PERCENT, String(n))
   }
 
+  if (typeof body.adminNotifyEmail !== 'undefined') {
+    await setSetting(SETTING_KEYS.ADMIN_NOTIFY_EMAIL, String(body.adminNotifyEmail).trim())
+  }
+
+  if (typeof body.welcomeFollowupFrom !== 'undefined') {
+    await setSetting(SETTING_KEYS.WELCOME_FOLLOWUP_FROM, String(body.welcomeFollowupFrom).trim())
+  }
+
   const settings = await getAllSettings()
   return NextResponse.json({ settings })
 }
