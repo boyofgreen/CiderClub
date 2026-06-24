@@ -397,6 +397,25 @@ model EmailTemplate {
   createdAt DateTime @default(now())
 }
 
+// ─── Club Events ─────────────────────────────────────────────────────────────
+// Standalone events (release parties, tastings, farm visits, etc.)
+// not tied to a pickup quarter.
+
+model ClubEvent {
+  id          String    @id @default(cuid())
+  title       String
+  description String?
+  eventType   String    @default("OTHER") // RELEASE_PARTY | TASTING | FARM_VISIT | WORKSHOP | OTHER
+  startsAt    DateTime
+  endsAt      DateTime?
+  location    String?
+  isPublic    Boolean   @default(true)
+  imageUrl    String?
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+}
+
 // ─── Analytics Snapshots ──────────────────────────────────────────────────────
 
 model AnalyticsSnapshot {

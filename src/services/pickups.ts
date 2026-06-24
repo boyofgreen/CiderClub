@@ -50,6 +50,50 @@ export async function sendPickupReminders(
 }
 
 /**
+ * Announce a standalone club event to all members who opted into event alerts.
+ * Admin-triggered from /admin/events/[eventId].
+ */
+export async function sendClubEventAlert(
+  clubEventId: string
+): Promise<{ sent: number }> {
+  const event = await prisma.clubEvent.findUniqueOrThrow({
+    where: { id: clubEventId },
+  })
+
+  const members = await prisma.member.findMany({
+    where: { status: 'ACTIVE', eventAlertsOptIn: true },
+  })
+
+  const eventDate = event.endsAt
+    ? `${format(new Date(event.startsAt), 'EEEE, MMMM d · h:mma')}–${format(new Date(event.endsAt), 'h:mma')}`
+    : format(new Date(event.startsAt), 'EEEE, MMMM d · h:mma')
+
+  let sent = 0
+  for (const member of members) {
+    const token = await getMemberPortalToken(member.id)
+    const email = await renderEmail('EVENT_ALERT', {
+      firstName: member.firstName,
+      eventTitle: event.title,
+      eventDate,
+      eventLocation: event.location ?? 'The Cider House',
+      eventDetails: event.description ?? event.notes ?? '',
+      portalUrl: `${appUrl}/member/events`,
+    })
+    await sendEmail({
+      to: member.email,
+      subject: email.subject,
+      html: email.html,
+      type: 'EVENT_ALERT',
+      memberId: member.id,
+      metadata: { clubEventId },
+    })
+    sent++
+  }
+
+  return { sent }
+}
+
+/**
  * Announce a pickup event as a club event to all members who opted into event
  * alerts. Admin-triggered.
  */

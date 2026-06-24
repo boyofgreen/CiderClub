@@ -18,6 +18,7 @@ import {
   Beer,
   Megaphone,
   Settings,
+  PartyPopper,
 } from 'lucide-react'
 
 const nav = [
@@ -28,6 +29,7 @@ const nav = [
   { href: '/admin/products', label: 'Products', icon: Beer },
   { href: '/admin/plans', label: 'Plans', icon: ClipboardList },
   { href: '/admin/pickups', label: 'Pickups', icon: Package },
+  { href: '/admin/events', label: 'Club Events', icon: PartyPopper },
   { href: '/admin/waitlist', label: 'Waitlist', icon: ListOrdered },
   { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
   { href: '/admin/email-logs', label: 'Email Logs', icon: Mail },

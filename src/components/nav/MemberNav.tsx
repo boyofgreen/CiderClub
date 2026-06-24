@@ -4,13 +4,14 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
 import { signOut, useSession } from 'next-auth/react'
-import { LayoutDashboard, ShoppingBag, User, Calendar, Gift, Menu, X } from 'lucide-react'
+import { LayoutDashboard, ShoppingBag, User, Calendar, Gift, Menu, X, PartyPopper } from 'lucide-react'
 import { useState } from 'react'
 
 const nav = [
   { href: '/member/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/member/orders', label: 'My Orders', icon: ShoppingBag },
   { href: '/member/pickups', label: 'Pickups', icon: Calendar },
+  { href: '/member/events', label: 'Events', icon: PartyPopper },
   { href: '/member/referrals', label: 'Referrals', icon: Gift },
   { href: '/member/profile', label: 'Profile', icon: User },
 ]
