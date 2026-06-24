@@ -397,6 +397,20 @@ model EmailTemplate {
   createdAt DateTime @default(now())
 }
 
+// ─── Page Views ──────────────────────────────────────────────────────────────
+// Lightweight anonymous visit tracking for the acquisition funnel.
+// No personal data stored — just path, referrer, and timestamp.
+
+model PageView {
+  id        String   @id @default(cuid())
+  path      String
+  referrer  String?
+  createdAt DateTime @default(now())
+
+  @@index([path, createdAt])
+  @@index([createdAt])
+}
+
 // ─── Club Events ─────────────────────────────────────────────────────────────
 // Standalone events (release parties, tastings, farm visits, etc.)
 // not tied to a pickup quarter.
