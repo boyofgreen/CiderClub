@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/services/email/sender'
+import { interpolate } from '@/lib/emailTemplates'
 
 export async function POST(
   _req: Request,
@@ -32,18 +33,24 @@ export async function POST(
 
   const members = await prisma.member.findMany({
     where: { status: { in: statusFilter } },
-    select: { id: true, firstName: true, email: true },
+    select: { id: true, firstName: true, lastName: true, email: true },
   })
 
   let sent = 0
   let failed = 0
 
   for (const member of members) {
+    // Personalize {{firstName}} / {{lastName}} / {{email}} placeholders per recipient
+    const vars = {
+      firstName: member.firstName,
+      lastName: member.lastName,
+      email: member.email,
+    }
     try {
       await sendEmail({
         to: member.email,
-        subject: campaign.subject,
-        html: campaign.bodyHtml,
+        subject: interpolate(campaign.subject, vars),
+        html: interpolate(campaign.bodyHtml, vars),
         memberId: member.id,
         type: 'CAMPAIGN',
       })
