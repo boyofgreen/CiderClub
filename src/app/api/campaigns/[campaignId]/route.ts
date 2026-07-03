@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { markdownToHtml } from '@/lib/markdown'
 
 export async function GET(
   _req: Request,
@@ -29,7 +30,7 @@ export async function PATCH(
   }
 
   const body = await req.json()
-  const allowed = ['subject', 'bodyHtml', 'bodyText', 'recipientFilter', 'scheduledAt']
+  const allowed = ['subject', 'bodyMarkdown', 'bodyHtml', 'bodyText', 'recipientFilter', 'scheduledAt']
   const raw = Object.fromEntries(Object.entries(body).filter(([k]) => allowed.includes(k)))
 
   const campaign = await prisma.campaign.findUnique({ where: { id: params.campaignId } })
@@ -39,6 +40,10 @@ export async function PATCH(
   }
 
   const data: Record<string, unknown> = { ...raw }
+  // Markdown is the source of truth — re-render bodyHtml whenever it changes.
+  if (typeof raw.bodyMarkdown === 'string') {
+    data.bodyHtml = markdownToHtml(raw.bodyMarkdown)
+  }
   if (raw.recipientFilter !== undefined) {
     data.recipientFilter = raw.recipientFilter ? JSON.stringify(raw.recipientFilter) : null
   }
