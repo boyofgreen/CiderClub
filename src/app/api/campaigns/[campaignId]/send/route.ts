@@ -3,7 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/services/email/sender'
-import { interpolate } from '@/lib/emailTemplates'
+import { interpolate, baseTemplate } from '@/lib/emailTemplates'
 
 export async function POST(
   _req: Request,
@@ -50,7 +50,7 @@ export async function POST(
       await sendEmail({
         to: member.email,
         subject: interpolate(campaign.subject, vars),
-        html: interpolate(campaign.bodyHtml, vars),
+        html: baseTemplate(interpolate(campaign.bodyHtml, vars)),
         memberId: member.id,
         type: 'CAMPAIGN',
       })

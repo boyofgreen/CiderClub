@@ -345,7 +345,8 @@ model WaitlistEntry {
 model Campaign {
   id             String   @id @default(cuid())
   subject        String
-  bodyHtml       String
+  bodyHtml       String   // rendered HTML (from bodyMarkdown), used for send + preview
+  bodyMarkdown   String?  // markdown source of truth authored by the admin
   bodyText       String?
   status         String   @default("DRAFT") // DRAFT | SCHEDULED | SENDING | SENT | CANCELLED
   sentAt         DateTime?

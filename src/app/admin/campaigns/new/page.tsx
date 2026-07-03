@@ -6,15 +6,26 @@ import Link from 'next/link'
 import { Input, Textarea } from '@/components/ui/Input'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
-import { ArrowLeft, Send } from 'lucide-react'
+import { ArrowLeft } from 'lucide-react'
+import { markdownToHtml } from '@/lib/markdown'
+
+const PLACEHOLDER = `## Hello {{firstName}},
+
+We've got something new pouring at the cider house this season.
+
+- **Fresh pressed** and ready for pickup
+- Tasting notes and pairing ideas inside
+- [See what's new](https://club.hillcountryciderhouse.com)
+
+Cheers,
+The Hill Country Cider House team`
 
 export default function NewCampaignPage() {
   const router = useRouter()
   const [subject, setSubject] = useState('')
-  const [bodyHtml, setBodyHtml] = useState('')
+  const [bodyMarkdown, setBodyMarkdown] = useState('')
   const [filter, setFilter] = useState({ status: 'ACTIVE' })
   const [saving, setSaving] = useState(false)
-  const [sending, setSending] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [preview, setPreview] = useState(false)
 
@@ -24,7 +35,7 @@ export default function NewCampaignPage() {
     const res = await fetch('/api/campaigns', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subject, bodyHtml, recipientFilter: JSON.stringify(filter) }),
+      body: JSON.stringify({ subject, bodyMarkdown, recipientFilter: JSON.stringify(filter) }),
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
@@ -34,8 +45,6 @@ export default function NewCampaignPage() {
     }
     setSaving(false)
   }
-
-  const fullHtml = `<!DOCTYPE html><html><body style="font-family:sans-serif;max-width:600px;margin:40px auto;padding:20px">${bodyHtml}</body></html>`
 
   return (
     <div className="max-w-3xl space-y-6">
@@ -80,7 +89,7 @@ export default function NewCampaignPage() {
 
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <label className="label mb-0">Email body (HTML)</label>
+            <label className="label mb-0">Email body (Markdown)</label>
             <button
               type="button"
               onClick={() => setPreview(!preview)}
@@ -91,23 +100,29 @@ export default function NewCampaignPage() {
           </div>
           {preview ? (
             <div
-              className="min-h-[300px] rounded-lg border border-stone-200 p-4 overflow-auto text-sm"
-              dangerouslySetInnerHTML={{ __html: bodyHtml }}
+              className="campaign-preview min-h-[300px] rounded-lg border border-stone-200 p-6 overflow-auto text-sm"
+              style={{ backgroundColor: '#fbf6e9' }}
+              dangerouslySetInnerHTML={{ __html: markdownToHtml(bodyMarkdown) }}
             />
           ) : (
             <Textarea
-              rows={14}
-              placeholder={`<h2>Hello {{firstName}},</h2>\n<p>Your message here...</p>`}
-              value={bodyHtml}
-              onChange={(e) => setBodyHtml(e.target.value)}
+              rows={16}
+              placeholder={PLACEHOLDER}
+              value={bodyMarkdown}
+              onChange={(e) => setBodyMarkdown(e.target.value)}
               className="font-mono text-xs"
             />
           )}
-          <p className="text-xs text-stone-400">Write HTML email content. Use {'{{firstName}}'} to personalize.</p>
+          <p className="text-xs text-stone-400">
+            Write in Markdown — <code>## Heading</code>, <code>**bold**</code>, <code>*italic*</code>,{' '}
+            <code>- bullet</code>, <code>[link](url)</code>. Use <code>{'{{firstName}}'}</code>,{' '}
+            <code>{'{{lastName}}'}</code>, or <code>{'{{email}}'}</code> to personalize. Your message is
+            automatically wrapped in the club letterhead.
+          </p>
         </div>
 
         <div className="flex gap-3 pt-2">
-          <Button variant="secondary" onClick={saveDraft} loading={saving} disabled={!subject || !bodyHtml}>
+          <Button variant="secondary" onClick={saveDraft} loading={saving} disabled={!subject || !bodyMarkdown}>
             Save Draft
           </Button>
           <p className="text-xs text-stone-400 self-center">Save first, then send from the campaign detail page.</p>

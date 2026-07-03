@@ -11,7 +11,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { ArrowLeft, Send, Users } from 'lucide-react'
 
 type Campaign = {
-  id: string; subject: string; bodyHtml: string; status: string
+  id: string; subject: string; bodyHtml: string; bodyMarkdown: string | null; status: string
   sentAt: string | null; sentCount: number; recipientFilter: string | null
   createdAt: string
 }
@@ -89,13 +89,19 @@ export default function CampaignDetailPage() {
             onClick={() => setPreview(!preview)}
             className="text-xs text-terracotta hover:text-terracotta-deep"
           >
-            {preview ? 'Show HTML' : 'Preview'}
+            {preview ? 'Show Markdown' : 'Preview'}
           </button>
         </div>
         {preview ? (
-          <div className="rounded-lg border border-stone-200 p-4 text-sm overflow-auto" dangerouslySetInnerHTML={{ __html: campaign.bodyHtml }} />
+          <div
+            className="campaign-preview rounded-lg border border-stone-200 p-6 text-sm overflow-auto"
+            style={{ backgroundColor: '#fbf6e9' }}
+            dangerouslySetInnerHTML={{ __html: campaign.bodyHtml }}
+          />
         ) : (
-          <pre className="text-xs text-stone-600 overflow-auto whitespace-pre-wrap">{campaign.bodyHtml}</pre>
+          <pre className="text-xs text-stone-600 overflow-auto whitespace-pre-wrap">
+            {campaign.bodyMarkdown ?? campaign.bodyHtml}
+          </pre>
         )}
       </div>
 
