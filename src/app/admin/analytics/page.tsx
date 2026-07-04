@@ -1,8 +1,11 @@
 import { prisma } from '@/lib/prisma'
 import { formatCents } from '@/lib/utils'
 import { Users, TrendingUp, ShoppingBag, ArrowRight } from 'lucide-react'
+import { RangePicker } from './RangePicker'
 
 export const metadata = { title: 'Analytics' }
+
+const MS_DAY = 86_400_000
 
 function daysAgo(n: number) {
   const d = new Date()
@@ -11,9 +14,41 @@ function daysAgo(n: number) {
   return d
 }
 
-async function getStats() {
-  const since30 = daysAgo(30)
-  const since14 = daysAgo(14)
+function isoDate(d: Date) {
+  return d.toISOString().slice(0, 10)
+}
+
+function niceDate(d: Date) {
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })
+}
+
+type SearchParams = { range?: string; from?: string; to?: string }
+
+// Resolve the requested date range from query params.
+// Presets: ?range=7|14|30|90|365 (days). Custom: ?from=yyyy-mm-dd&to=yyyy-mm-dd.
+function parseRange(sp: SearchParams) {
+  const endOfToday = new Date()
+  endOfToday.setHours(23, 59, 59, 999)
+
+  if (sp.from || sp.to) {
+    const from = sp.from ? new Date(`${sp.from}T00:00:00`) : daysAgo(29)
+    const to = sp.to ? new Date(`${sp.to}T23:59:59.999`) : endOfToday
+    if (!isNaN(from.getTime()) && !isNaN(to.getTime()) && from <= to) {
+      return { from, to, key: 'custom', label: `${niceDate(from)} – ${niceDate(to)}` }
+    }
+  }
+
+  const days = ['7', '14', '30', '90', '365'].includes(sp.range ?? '') ? Number(sp.range) : 30
+  return {
+    from: daysAgo(days - 1),
+    to: endOfToday,
+    key: String(days),
+    label: `Last ${days} days`,
+  }
+}
+
+async function getStats(from: Date, to: Date) {
+  const inRange = { gte: from, lte: to }
 
   const [
     membersByStatus,
@@ -21,13 +56,13 @@ async function getStats() {
     revenueResult,
     topProducts,
     quarterRevenue,
-    // Acquisition funnel
-    homepageViews30,
-    registerViews30,
-    newMembers30,
-    // Daily traffic (last 14 days)
-    recentViews,
-    // Top referrers
+    // Acquisition funnel (within range)
+    homepageViews,
+    registerViews,
+    newMembers,
+    // Raw views for the traffic chart
+    rangeViews,
+    // Top referrers (within range)
     topReferrers,
   ] = await Promise.all([
     prisma.member.groupBy({ by: ['status'], _count: { _all: true } }),
@@ -35,36 +70,39 @@ async function getStats() {
     prisma.order.aggregate({ where: { status: 'BILLED' }, _sum: { totalInCents: true } }),
     prisma.orderItem.groupBy({ by: ['productId'], _sum: { quantity: true }, orderBy: { _sum: { quantity: 'desc' } }, take: 8 }),
     prisma.order.groupBy({ by: ['quarterId'], where: { status: 'BILLED' }, _sum: { totalInCents: true }, _count: { _all: true } }),
-    // Funnel counts
-    prisma.pageView.count({ where: { path: '/', createdAt: { gte: since30 } } }),
-    prisma.pageView.count({ where: { path: '/register', createdAt: { gte: since30 } } }),
-    prisma.member.count({ where: { createdAt: { gte: since30 } } }),
-    // Raw rows for daily grouping
+    prisma.pageView.count({ where: { path: '/', createdAt: inRange } }),
+    prisma.pageView.count({ where: { path: '/register', createdAt: inRange } }),
+    prisma.member.count({ where: { createdAt: inRange } }),
     prisma.pageView.findMany({
-      where: { createdAt: { gte: since14 } },
-      select: { createdAt: true, path: true },
+      where: { createdAt: inRange },
+      select: { createdAt: true },
     }),
-    // Referrers
     prisma.pageView.groupBy({
       by: ['referrer'],
-      where: { createdAt: { gte: since30 }, referrer: { not: null } },
+      where: { createdAt: inRange, referrer: { not: null } },
       _count: { _all: true },
       orderBy: { _count: { referrer: 'desc' } },
       take: 8,
     }),
   ])
 
-  // Build daily traffic buckets (last 14 days)
-  const dailyMap: Record<string, number> = {}
-  for (let i = 13; i >= 0; i--) {
-    const d = daysAgo(i)
-    dailyMap[d.toISOString().slice(0, 10)] = 0
+  // Traffic buckets: daily for ranges up to 45 days, weekly beyond that.
+  const totalDays = Math.max(1, Math.floor((to.getTime() - from.getTime()) / MS_DAY) + 1)
+  const stepDays = totalDays > 45 ? 7 : 1
+  const numBuckets = Math.ceil(totalDays / stepDays)
+  const counts = new Array<number>(numBuckets).fill(0)
+  for (const row of rangeViews) {
+    const idx = Math.floor((row.createdAt.getTime() - from.getTime()) / (stepDays * MS_DAY))
+    if (idx >= 0 && idx < numBuckets) counts[idx]++
   }
-  for (const row of recentViews) {
-    const key = row.createdAt.toISOString().slice(0, 10)
-    if (key in dailyMap) dailyMap[key]++
-  }
-  const dailyTraffic = Object.entries(dailyMap).map(([date, count]) => ({ date, count }))
+  const traffic = counts.map((count, i) => {
+    const start = new Date(from.getTime() + i * stepDays * MS_DAY)
+    return {
+      iso: isoDate(start),
+      label: `${start.getMonth() + 1}/${start.getDate()}`,
+      count,
+    }
+  })
 
   // Products
   const productIds = topProducts.map((r) => r.productId)
@@ -83,8 +121,9 @@ async function getStats() {
     quarterRevenue: quarterRevenue
       .sort((a, b) => (quarterMap[b.quarterId]?.label ?? '').localeCompare(quarterMap[a.quarterId]?.label ?? ''))
       .map((r) => ({ label: quarterMap[r.quarterId]?.label ?? r.quarterId, revenue: r._sum.totalInCents ?? 0, orders: r._count._all })),
-    funnel: { homepageViews30, registerViews30, newMembers30 },
-    dailyTraffic,
+    funnel: { homepageViews, registerViews, newMembers },
+    traffic,
+    trafficStep: stepDays,
     topReferrers: topReferrers
       .filter((r) => r.referrer)
       .map((r) => ({ referrer: r.referrer!, count: r._count._all })),
@@ -133,30 +172,31 @@ function FunnelStep({
   )
 }
 
-function shortDate(iso: string) {
-  const [, , dd] = iso.split('-')
-  return dd
-}
-
-export default async function AnalyticsPage() {
-  const stats = await getStats()
+export default async function AnalyticsPage({ searchParams }: { searchParams: SearchParams }) {
+  const range = parseRange(searchParams)
+  const stats = await getStats(range.from, range.to)
 
   const totalMembers = Object.values(stats.membersByStatus).reduce((s, n) => s + n, 0)
   const activeMembers = stats.membersByStatus['ACTIVE'] ?? 0
   const totalOrders = Object.values(stats.ordersByStatus).reduce((s, n) => s + n, 0)
   const billedOrders = stats.ordersByStatus['BILLED'] ?? 0
   const maxQty = Math.max(...stats.topProducts.map((p) => p.quantity), 1)
-  const maxDay = Math.max(...stats.dailyTraffic.map((d) => d.count), 1)
+  const maxBucket = Math.max(...stats.traffic.map((d) => d.count), 1)
+  // Thin out x-axis labels when there are many bars
+  const labelEvery = Math.ceil(stats.traffic.length / 16)
 
-  const { homepageViews30, registerViews30, newMembers30 } = stats.funnel
+  const { homepageViews, registerViews, newMembers } = stats.funnel
 
   return (
     <div className="space-y-8">
-      <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
-        Analytics
-      </h1>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
+          Analytics
+        </h1>
+        <RangePicker activeKey={range.key} from={isoDate(range.from)} to={isoDate(range.to)} />
+      </div>
 
-      {/* KPI row */}
+      {/* KPI row (all-time) */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Active Members" value={activeMembers} sub={`${totalMembers} total`} icon={Users} />
         <StatCard label="Total Revenue" value={formatCents(stats.totalRevenue)} sub={`${billedOrders} paid orders`} icon={TrendingUp} />
@@ -168,58 +208,65 @@ export default async function AnalyticsPage() {
       <div className="border bg-cream-paper p-6 shadow-sm" style={{ borderColor: 'var(--rule)' }}>
         <div className="flex items-baseline justify-between mb-5">
           <h2 className="font-semibold text-stone-900">Acquisition Funnel</h2>
-          <span className="text-xs text-stone-400">Last 30 days</span>
+          <span className="text-xs text-stone-400">{range.label}</span>
         </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
           <FunnelStep
             label="Homepage Visits"
-            count={homepageViews30}
+            count={homepageViews}
             sub="unique tab sessions"
-            rate={pct(registerViews30, homepageViews30)}
+            rate={pct(registerViews, homepageViews)}
           />
           <FunnelStep
             label="Join Page Views"
-            count={registerViews30}
+            count={registerViews}
             sub="/register"
-            rate={pct(newMembers30, registerViews30)}
+            rate={pct(newMembers, registerViews)}
           />
           <FunnelStep
             label="New Signups"
-            count={newMembers30}
+            count={newMembers}
             sub="completed registration"
             last
           />
         </div>
-        {homepageViews30 === 0 && (
+        {homepageViews === 0 && (
           <p className="text-xs text-stone-400 mt-4 italic">
-            No visit data yet — tracking starts once the site receives traffic.
+            No visit data in this range — tracking starts once the site receives traffic.
           </p>
         )}
       </div>
 
-      {/* ── DAILY TRAFFIC ── */}
+      {/* ── TRAFFIC CHART ── */}
       <div className="border bg-cream-paper p-6 shadow-sm" style={{ borderColor: 'var(--rule)' }}>
         <div className="flex items-baseline justify-between mb-5">
-          <h2 className="font-semibold text-stone-900">Daily Page Views</h2>
-          <span className="text-xs text-stone-400">Last 14 days</span>
+          <h2 className="font-semibold text-stone-900">
+            {stats.trafficStep === 7 ? 'Weekly Page Views' : 'Daily Page Views'}
+          </h2>
+          <span className="text-xs text-stone-400">
+            {range.label}
+            {stats.trafficStep === 7 ? ' · grouped by week' : ''}
+          </span>
         </div>
-        <div className="flex items-end gap-1.5 h-28">
-          {stats.dailyTraffic.map(({ date, count }) => (
-            <div key={date} className="flex-1 flex flex-col items-center gap-1 group relative">
+        <div className="flex items-end gap-1 h-28">
+          {stats.traffic.map(({ iso, label, count }, i) => (
+            <div key={iso} className="flex-1 flex flex-col items-center gap-1 group relative min-w-0">
               <div
                 className="w-full bg-terracotta/70 group-hover:bg-terracotta transition-colors"
-                style={{ height: `${Math.max(4, Math.round((count / maxDay) * 88))}px` }}
+                style={{ height: `${Math.max(4, Math.round((count / maxBucket) * 88))}px` }}
               />
-              <span className="text-[9px] text-stone-400">{shortDate(date)}</span>
+              <span className="text-[9px] text-stone-400 whitespace-nowrap">
+                {i % labelEvery === 0 ? label : ' '}
+              </span>
               {/* Tooltip */}
-              <div className="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover:block bg-stone-800 text-white text-xs px-2 py-0.5 whitespace-nowrap">
-                {count}
+              <div className="absolute -top-7 left-1/2 -translate-x-1/2 hidden group-hover:block bg-stone-800 text-white text-xs px-2 py-0.5 whitespace-nowrap z-10">
+                {stats.trafficStep === 7 ? `wk of ${label}: ` : `${label}: `}{count}
               </div>
             </div>
           ))}
         </div>
-        {stats.dailyTraffic.every((d) => d.count === 0) && (
-          <p className="text-xs text-stone-400 mt-2 italic text-center">No traffic recorded yet.</p>
+        {stats.traffic.every((d) => d.count === 0) && (
+          <p className="text-xs text-stone-400 mt-2 italic text-center">No traffic recorded in this range.</p>
         )}
       </div>
 
@@ -229,10 +276,10 @@ export default async function AnalyticsPage() {
         <div className="border bg-cream-paper p-6 shadow-sm" style={{ borderColor: 'var(--rule)' }}>
           <div className="flex items-baseline justify-between mb-4">
             <h2 className="font-semibold text-stone-900">Top Referrers</h2>
-            <span className="text-xs text-stone-400">Last 30 days</span>
+            <span className="text-xs text-stone-400">{range.label}</span>
           </div>
           {stats.topReferrers.length === 0 ? (
-            <p className="text-sm text-stone-400 py-4 text-center">No referrer data yet.</p>
+            <p className="text-sm text-stone-400 py-4 text-center">No referrer data in this range.</p>
           ) : (
             <div className="space-y-2">
               {stats.topReferrers.map(({ referrer, count }) => {
