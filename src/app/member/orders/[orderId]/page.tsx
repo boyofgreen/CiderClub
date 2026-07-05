@@ -19,7 +19,7 @@ type Order = {
   totalInCents: number
   memberNotes: string | null
   lastCustomizedAt: string | null
-  quarter: { label: string; name: string | null; status: string; endsAt: string }
+  quarter: { id: string; label: string; name: string | null; status: string; endsAt: string } | null
   items: OrderItem[]
   pickupEvent: { title: string; startsAt: string; location: string | null } | null
   member: { plan: { packsPerOrder: number } }
@@ -44,10 +44,13 @@ export default function OrderDetailPage() {
         const sel: Record<string, number> = {}
         data.order.items.forEach((i: OrderItem) => { sel[i.productId] = i.quantity })
         setSelections(sel)
-        return data.order.quarter.id
+        return data.order.quarter?.id
       })
       .then((quarterId) =>
-        fetch(`/api/quarters/${quarterId}/products`).then((r) => r.json())
+        // Ad-hoc orders have no quarter, so there's no product list to load
+        quarterId
+          ? fetch(`/api/quarters/${quarterId}/products`).then((r) => r.json())
+          : { products: [] }
       )
       .then((data) => setQuarterProducts(data.products ?? []))
       .catch((e) => setError(String(e)))
@@ -61,7 +64,7 @@ export default function OrderDetailPage() {
   const totalSelected = Object.values(selections).reduce((sum, q) => sum + q, 0)
   const canCustomize =
     ['PENDING_CUSTOMIZATION', 'CUSTOMIZED'].includes(order.status) &&
-    order.quarter.status === 'OPEN'
+    order.quarter?.status === 'OPEN'
 
   // Split products into in-box vs available-to-add
   const inBox = quarterProducts.filter(({ product }) => (selections[product.id] ?? 0) > 0)
@@ -112,8 +115,8 @@ export default function OrderDetailPage() {
         </Link>
         <div>
           <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 22, color: 'var(--ink)' }}>
-            {order.quarter.label} Order
-            {order.quarter.name ? ` — ${order.quarter.name}` : ''}
+            {order.quarter ? `${order.quarter.label} Order` : 'Ad Hoc Order'}
+            {order.quarter?.name ? ` — ${order.quarter.name}` : ''}
           </h1>
           <div className="flex items-center gap-2 mt-0.5">
             <StatusBadge status={order.status} />
@@ -275,7 +278,7 @@ export default function OrderDetailPage() {
             )}
           </Button>
 
-          {order.quarter.endsAt && (
+          {order.quarter?.endsAt && (
             <p className="mt-2 text-xs text-center text-stone-400">
               Customization closes on {formatDate(order.quarter.endsAt)}
             </p>

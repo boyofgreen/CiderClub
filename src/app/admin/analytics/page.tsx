@@ -109,9 +109,10 @@ async function getStats(from: Date, to: Date) {
   const products = await prisma.product.findMany({ where: { id: { in: productIds } }, select: { id: true, name: true, style: true } })
   const productMap = Object.fromEntries(products.map((p) => [p.id, p]))
 
-  const quarterIds = quarterRevenue.map((r) => r.quarterId)
+  const quarterIds = quarterRevenue.map((r) => r.quarterId).filter(Boolean) as string[]
   const quarters = await prisma.quarter.findMany({ where: { id: { in: quarterIds } }, select: { id: true, label: true }, orderBy: { label: 'desc' } })
   const quarterMap = Object.fromEntries(quarters.map((q) => [q.id, q]))
+  const quarterLabel = (id: string | null) => (id ? quarterMap[id]?.label ?? id : 'Ad Hoc')
 
   return {
     membersByStatus: Object.fromEntries(membersByStatus.map((r) => [r.status, r._count._all])),
@@ -119,8 +120,8 @@ async function getStats(from: Date, to: Date) {
     totalRevenue: revenueResult._sum.totalInCents ?? 0,
     topProducts: topProducts.map((r) => ({ product: productMap[r.productId], quantity: r._sum.quantity ?? 0 })),
     quarterRevenue: quarterRevenue
-      .sort((a, b) => (quarterMap[b.quarterId]?.label ?? '').localeCompare(quarterMap[a.quarterId]?.label ?? ''))
-      .map((r) => ({ label: quarterMap[r.quarterId]?.label ?? r.quarterId, revenue: r._sum.totalInCents ?? 0, orders: r._count._all })),
+      .sort((a, b) => quarterLabel(b.quarterId).localeCompare(quarterLabel(a.quarterId)))
+      .map((r) => ({ label: quarterLabel(r.quarterId), revenue: r._sum.totalInCents ?? 0, orders: r._count._all })),
     funnel: { homepageViews, registerViews, newMembers },
     traffic,
     trafficStep: stepDays,

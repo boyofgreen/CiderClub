@@ -180,7 +180,7 @@ export default async function MemberDetailPage({
                     href={`/admin/orders/${order.id}`}
                     className="flex items-center justify-between py-2.5 hover:text-terracotta transition"
                   >
-                    <span className="text-sm font-medium text-stone-700">{order.quarter.label}</span>
+                    <span className="text-sm font-medium text-stone-700">{order.quarter?.label ?? 'Ad Hoc'}</span>
                     <div className="flex items-center gap-3">
                       <span className="text-sm text-stone-500">{formatCents(order.totalInCents)}</span>
                       <StatusBadge status={order.status} />

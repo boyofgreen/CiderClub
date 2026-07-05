@@ -49,8 +49,8 @@ export default async function MemberOrdersPage() {
               <div className="flex items-start justify-between">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="font-semibold text-stone-900">{order.quarter.label}</span>
-                    {order.quarter.name && (
+                    <span className="font-semibold text-stone-900">{order.quarter?.label ?? 'Ad Hoc Order'}</span>
+                    {order.quarter?.name && (
                       <span className="text-sm text-stone-500">— {order.quarter.name}</span>
                     )}
                   </div>

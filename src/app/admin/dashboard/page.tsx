@@ -178,7 +178,7 @@ export default async function AdminDashboardPage() {
             >
               <div>
                 <span className="font-medium text-stone-800">{order.member.firstName} {order.member.lastName}</span>
-                <span className="ml-2 text-sm text-stone-500">{order.quarter.label}</span>
+                <span className="ml-2 text-sm text-stone-500">{order.quarter?.label ?? 'Ad Hoc'}</span>
               </div>
               <div className="flex items-center gap-3">
                 <span className="text-sm text-stone-600">{formatCents(order.totalInCents)}</span>
