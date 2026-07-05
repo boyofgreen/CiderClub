@@ -238,8 +238,11 @@ model Order {
   id       String @id @default(cuid())
   memberId String
   member   Member @relation(fields: [memberId], references: [id])
-  quarterId String
-  quarter  Quarter @relation(fields: [quarterId], references: [id])
+  // Null quarterId = ad-hoc order composed by an admin, outside the quarterly
+  // cycle. Postgres treats NULLs as distinct in unique constraints, so members
+  // can hold many ad-hoc orders while staying limited to one per quarter.
+  quarterId String?
+  quarter  Quarter? @relation(fields: [quarterId], references: [id])
 
   // Order status lifecycle:
   // PENDING_CUSTOMIZATION → CUSTOMIZED → LOCKED → AWAITING_PICKUP

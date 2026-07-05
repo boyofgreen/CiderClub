@@ -47,7 +47,7 @@ export default async function AdminOrderDetailPage({
           </h1>
           <div className="flex items-center gap-2 mt-1">
             <StatusBadge status={order.status} />
-            <span className="text-sm text-stone-500">{order.quarter.label}</span>
+            <span className="text-sm text-stone-500">{order.quarter?.label ?? 'Ad Hoc'}</span>
             <span className="text-sm font-semibold text-stone-700">{formatCents(order.totalInCents)}</span>
           </div>
         </div>

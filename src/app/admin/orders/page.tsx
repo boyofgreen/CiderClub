@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import { formatCents, formatDate } from '@/lib/utils'
 import { StatusBadge } from '@/components/ui/Badge'
-import { ChevronRight } from 'lucide-react'
+import { ChevronRight, Plus } from 'lucide-react'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Orders' }
@@ -19,7 +19,8 @@ export default async function AdminOrdersPage({
 
   const where = {
     ...(status ? { status } : {}),
-    ...(quarterId ? { quarterId } : {}),
+    // 'adhoc' is a virtual filter for orders created outside the quarterly cycle
+    ...(quarterId ? (quarterId === 'adhoc' ? { quarterId: null } : { quarterId }) : {}),
   }
 
   const [orders, total, quarters] = await Promise.all([
@@ -48,7 +49,12 @@ export default async function AdminOrdersPage({
         <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
           Orders
         </h1>
-        <span className="text-sm text-stone-500">{total} orders</span>
+        <div className="flex items-center gap-3">
+          <span className="text-sm text-stone-500">{total} orders</span>
+          <Link href="/admin/orders/new" className="btn-saloon flex items-center gap-1.5" style={{ fontSize: 10, padding: '10px 16px' }}>
+            <Plus className="h-3.5 w-3.5" /> New Ad Hoc Order
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
@@ -72,6 +78,9 @@ export default async function AdminOrdersPage({
               {q.label}
             </Link>
           ))}
+          <Link href={`/admin/orders?quarter=adhoc${status ? `&status=${status}` : ''}`} className={`px-3 py-1 text-xs font-medium border transition ${quarterId === 'adhoc' ? activePill : inactivePill}`}>
+            Ad Hoc
+          </Link>
         </div>
       </div>
 
@@ -84,7 +93,7 @@ export default async function AdminOrdersPage({
               <Link key={order.id} href={`/admin/orders/${order.id}`} className="flex items-center justify-between px-6 py-3 hover:bg-cream-deep transition">
                 <div>
                   <span className="font-medium text-stone-800">{order.member.firstName} {order.member.lastName}</span>
-                  <span className="ml-2 text-sm text-stone-500">{order.quarter.label}</span>
+                  <span className="ml-2 text-sm text-stone-500">{order.quarter?.label ?? 'Ad Hoc'}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="text-sm text-stone-500">{formatCents(order.totalInCents)}</span>

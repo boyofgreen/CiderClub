@@ -57,7 +57,7 @@ export async function billOrder(
     )
     const receipt = await renderEmail('RECEIPT_PICKEDUP', {
       firstName: member.firstName,
-      quarterLabel: order.quarter.label,
+      quarterLabel: order.quarter?.label ?? 'Ad Hoc',
       itemsTable,
       receiptLink: '',
     })
@@ -84,7 +84,7 @@ export async function billOrder(
       const token = await getMemberPortalToken(member.id)
       const failed = await renderEmail('PAYMENT_FAILED', {
         firstName: member.firstName,
-        quarterLabel: order.quarter.label,
+        quarterLabel: order.quarter?.label ?? 'Ad Hoc',
         portalUrl: `${appUrl}/magic?t=${token}&next=/member/profile?card=1`,
       })
       await sendEmail({
@@ -104,7 +104,7 @@ export async function billOrder(
         squareCardId: member.squareCardId,
         memberName: `${member.firstName} ${member.lastName}`,
         memberEmail: member.email,
-        quarterLabel: order.quarter.label,
+        quarterLabel: order.quarter?.label ?? 'Ad Hoc',
         discountPercent: member.plan.discountPercent ?? 0,
         taxRatePercent,
         items: order.items.map((i) => ({
@@ -137,7 +137,7 @@ export async function billOrder(
         alreadyPickedUp ? 'RECEIPT_PICKEDUP' : 'RECEIPT_PICKUP_NEEDED',
         {
           firstName: member.firstName,
-          quarterLabel: order.quarter.label,
+          quarterLabel: order.quarter?.label ?? 'Ad Hoc',
           itemsTable,
           receiptLink,
           portalUrl: `${appUrl}/magic?t=${token}&next=/member/orders/${orderId}`,
@@ -164,7 +164,7 @@ export async function billOrder(
       const token = await getMemberPortalToken(member.id)
       const failed = await renderEmail('PAYMENT_FAILED', {
         firstName: member.firstName,
-        quarterLabel: order.quarter.label,
+        quarterLabel: order.quarter?.label ?? 'Ad Hoc',
         portalUrl: `${appUrl}/magic?t=${token}`,
       })
       await sendEmail({
@@ -186,7 +186,7 @@ export async function billOrder(
         orderId,
         memberEmail: member.email,
         memberName: `${member.firstName} ${member.lastName}`,
-        quarterLabel: order.quarter.label,
+        quarterLabel: order.quarter?.label ?? 'Ad Hoc',
         discountPercent: member.plan.discountPercent ?? 0,
         taxRatePercent,
         items: order.items.map((i) => ({

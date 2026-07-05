@@ -76,7 +76,9 @@ export default async function MemberDashboardPage() {
             <div>
               <p className="smallcaps" style={{ color: 'var(--ink-soft)' }}>Current Order</p>
               <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 20, color: 'var(--ink)', marginTop: 4 }}>
-                {currentOrder.quarter.label} — {currentOrder.quarter.name ?? 'Quarterly Order'}
+                {currentOrder.quarter
+                  ? `${currentOrder.quarter.label} — ${currentOrder.quarter.name ?? 'Quarterly Order'}`
+                  : 'Ad Hoc Order'}
               </h2>
               <div className="mt-1 flex items-center gap-2">
                 <StatusBadge status={currentOrder.status} />
@@ -84,7 +86,7 @@ export default async function MemberDashboardPage() {
               </div>
             </div>
             {['PENDING_CUSTOMIZATION', 'CUSTOMIZED'].includes(currentOrder.status) &&
-              currentOrder.quarter.status === 'OPEN' && (
+              currentOrder.quarter?.status === 'OPEN' && (
                 <Link
                   href={`/member/orders/${currentOrder.id}`}
                   className="btn-saloon flex items-center gap-1.5"
@@ -206,7 +208,7 @@ export default async function MemberDashboardPage() {
                 style={{ borderColor: 'var(--rule)' }}
               >
                 <div>
-                  <span className="font-medium text-stone-800">{order.quarter.label}</span>
+                  <span className="font-medium text-stone-800">{order.quarter?.label ?? 'Ad Hoc'}</span>
                   <span className="ml-2 text-sm text-stone-500">{formatCents(order.totalInCents)}</span>
                 </div>
                 <div className="flex items-center gap-2">

@@ -41,12 +41,16 @@ export async function PUT(
     )
   }
 
-  // Members can only pick from quarter products; admins can use any active product
+  // Members can only pick from quarter products; admins can use any active product.
+  // (Ad-hoc orders have no quarter, but members can never edit those — they're
+  // created past the customization statuses — so an empty allowlist is correct.)
   if (!isAdmin) {
-    const quarterProducts = await prisma.quarterProduct.findMany({
-      where: { quarterId: order.quarterId },
-      select: { productId: true },
-    })
+    const quarterProducts = order.quarterId
+      ? await prisma.quarterProduct.findMany({
+          where: { quarterId: order.quarterId },
+          select: { productId: true },
+        })
+      : []
     const allowedProductIds = new Set(quarterProducts.map((qp) => qp.productId))
     for (const item of items) {
       if (!allowedProductIds.has(item.productId)) {
