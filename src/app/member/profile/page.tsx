@@ -8,12 +8,19 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { User, Bell } from 'lucide-react'
 import { PaymentMethodCard } from './PaymentMethodCard'
+import { formatCents } from '@/lib/utils'
 
 type MemberProfile = {
   id: string; firstName: string; lastName: string; email: string; phone: string | null
   address1: string | null; city: string | null; state: string | null; zip: string | null
-  squareCardId: string | null; plan: { name: string }
+  squareCardId: string | null; planId: string; plan: { name: string; priceInCents: number; packsPerOrder: number }
   status: string; eventAlertsOptIn: boolean
+}
+
+type Plan = {
+  id: string; name: string; description: string | null
+  packsPerOrder: number; priceInCents: number; maxCapacity: number | null
+  _count?: { members: number }
 }
 
 export default function MemberProfilePage() {
@@ -24,6 +31,13 @@ export default function MemberProfilePage() {
   const [error, setError] = useState<string | null>(null)
   const [form, setForm] = useState<Partial<MemberProfile>>({})
 
+  // Plan switching
+  const [plans, setPlans] = useState<Plan[]>([])
+  const [showPlans, setShowPlans] = useState(false)
+  const [switchingTo, setSwitchingTo] = useState<string | null>(null)
+  const [planMessage, setPlanMessage] = useState<string | null>(null)
+  const [planError, setPlanError] = useState<string | null>(null)
+
   useEffect(() => {
     fetch('/api/members/me')
       .then((r) => r.json())
@@ -32,7 +46,35 @@ export default function MemberProfilePage() {
         setForm(data.member)
       })
       .finally(() => setLoading(false))
+    fetch('/api/plans')
+      .then((r) => r.json())
+      .then((d) => setPlans(d.plans ?? []))
+      .catch(() => {})
   }, [])
+
+  async function switchPlan(plan: Plan) {
+    if (!window.confirm(
+      `Switch to ${plan.name} (${formatCents(plan.priceInCents)}/quarter)? ` +
+      `Your new plan takes effect with your next quarterly box.`
+    )) return
+    setSwitchingTo(plan.id)
+    setPlanError(null)
+    setPlanMessage(null)
+    const res = await fetch('/api/members/me/change-plan', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ planId: plan.id }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) {
+      setMember(data.member)
+      setShowPlans(false)
+      setPlanMessage(`You're now on ${plan.name}. It takes effect with your next quarterly box.`)
+    } else {
+      setPlanError(data.error ?? 'Could not switch plans. Please try again.')
+    }
+    setSwitchingTo(null)
+  }
 
   function update(field: string, value: string) {
     setForm((f) => ({ ...f, [field]: value }))
@@ -90,10 +132,21 @@ export default function MemberProfilePage() {
         <CardHeader>
           <CardTitle>Membership</CardTitle>
         </CardHeader>
+
+        {planMessage && <Alert type="success" message={planMessage} className="mb-4" />}
+        {planError && <Alert type="error" message={planError} className="mb-4" />}
+
         <div className="space-y-2 text-sm">
           <div className="flex justify-between">
             <span className="text-stone-500">Plan</span>
-            <span className="font-medium text-stone-800">{member.plan.name}</span>
+            <span className="font-medium text-stone-800">
+              {member.plan.name}
+              <span className="text-stone-400 font-normal"> · {formatCents(member.plan.priceInCents)}/quarter</span>
+            </span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-stone-500">Ciders per box</span>
+            <span className="font-medium text-stone-800">{member.plan.packsPerOrder}</span>
           </div>
           <div className="flex justify-between">
             <span className="text-stone-500">Status</span>
@@ -103,9 +156,73 @@ export default function MemberProfilePage() {
             }`}>{member.status}</span>
           </div>
         </div>
+
+        {/* Plan switcher */}
+        {member.status === 'ACTIVE' && plans.length > 1 && (
+          <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
+            {!showPlans ? (
+              <Button variant="secondary" size="sm" onClick={() => setShowPlans(true)}>
+                Change Plan
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between mb-1">
+                  <p className="text-sm font-medium text-stone-800">Choose your new plan</p>
+                  <button onClick={() => setShowPlans(false)} className="text-xs text-stone-400 hover:text-stone-600">
+                    Cancel
+                  </button>
+                </div>
+                {plans.map((plan) => {
+                  const isCurrent = plan.id === member.planId
+                  const isFull = plan.maxCapacity != null && (plan._count?.members ?? 0) >= plan.maxCapacity && !isCurrent
+                  return (
+                    <div
+                      key={plan.id}
+                      className={`flex items-center justify-between gap-3 border p-3 ${isCurrent ? '' : 'bg-white'}`}
+                      style={{
+                        borderColor: isCurrent ? 'var(--terracotta)' : 'var(--rule)',
+                        backgroundColor: isCurrent ? 'var(--cream-deep)' : undefined,
+                      }}
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-stone-900">
+                          {plan.name}
+                          {isCurrent && <span className="ml-2 text-xs font-medium text-terracotta">Current plan</span>}
+                        </p>
+                        <p className="text-xs text-stone-500 mt-0.5">
+                          {plan.packsPerOrder} ciders per quarter · {formatCents(plan.priceInCents)}/quarter
+                        </p>
+                        {plan.description && <p className="text-xs text-stone-400 mt-0.5 line-clamp-1">{plan.description}</p>}
+                      </div>
+                      {!isCurrent && (
+                        <Button
+                          size="sm"
+                          variant="saloon"
+                          disabled={isFull || switchingTo !== null}
+                          loading={switchingTo === plan.id}
+                          onClick={() => switchPlan(plan)}
+                        >
+                          {isFull ? 'Full' : 'Switch'}
+                        </Button>
+                      )}
+                    </div>
+                  )
+                })}
+                <p className="text-xs text-stone-400 italic">
+                  Plan changes take effect with your next quarterly box — your current quarter isn't affected.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="mt-4 pt-4" style={{ borderTop: '1px solid var(--rule)' }}>
           <p className="text-xs text-stone-500">
-            To pause or cancel your membership, email us or contact us directly.
+            Need to cancel? You can cancel your plan after 4 quarters — just reach out to{' '}
+            <a href="mailto:hello@hillcountryciderhouse.com" className="text-terracotta underline">
+              hello@hillcountryciderhouse.com
+            </a>{' '}
+            and we'll take care of it.
           </p>
         </div>
       </Card>

@@ -19,11 +19,13 @@ import {
   Megaphone,
   Settings,
   PartyPopper,
+  UserPlus,
 } from 'lucide-react'
 
 const nav = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/members', label: 'Members', icon: Users },
+  { href: '/admin/leads', label: 'Leads', icon: UserPlus },
   { href: '/admin/quarters', label: 'Quarters', icon: Calendar },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/products', label: 'Products', icon: Beer },

@@ -63,6 +63,12 @@ export async function createMember(params: CreateMemberParams) {
     },
   })
 
+  // If they were captured as a lead mid-signup, mark them converted
+  await prisma.lead.updateMany({
+    where: { email: member.email },
+    data: { status: 'CONVERTED' },
+  })
+
   // Add to waitlist table if needed
   if (status === 'WAITLIST') {
     const position = (await prisma.waitlistEntry.count({ where: { planId: params.planId } })) + 1

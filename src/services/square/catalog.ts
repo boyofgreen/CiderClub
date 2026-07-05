@@ -82,6 +82,31 @@ export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
   const items = response.items ?? []
   console.log(`[square-sync] Found ${items.length} items in category`)
 
+  // Resolve label images: items reference CatalogImage objects by ID, so batch
+  // fetch them all and build an id → url map.
+  const imageUrlById = new Map<string, string>()
+  const allImageIds = Array.from(
+    new Set(
+      items.flatMap((item) =>
+        item.type === 'ITEM' ? item.itemData?.imageIds ?? [] : []
+      )
+    )
+  )
+  if (allImageIds.length > 0) {
+    try {
+      const imgResponse = await squareClient.catalog.batchGet({ objectIds: allImageIds })
+      for (const obj of imgResponse.objects ?? []) {
+        if (obj.type === 'IMAGE' && obj.id && obj.imageData?.url) {
+          imageUrlById.set(obj.id, obj.imageData.url)
+        }
+      }
+      console.log(`[square-sync] Resolved ${imageUrlById.size}/${allImageIds.length} catalog images`)
+    } catch (err) {
+      // Images are nice-to-have — never fail the sync over them
+      console.error('[square-sync] Failed to fetch catalog images:', err)
+    }
+  }
+
   let created = 0
   let updated = 0
   let skipped = 0
@@ -107,7 +132,11 @@ export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
       const squarePriceBigInt: bigint | undefined = variationData?.priceMoney?.amount
       const priceInCents = squarePriceBigInt != null ? Number(squarePriceBigInt) : null
 
-      console.log(`[square-sync] ${name}: variationId=${squareVariationId}, price=${priceInCents}`)
+      // First catalog image = the label
+      const firstImageId = item.itemData.imageIds?.[0]
+      const imageUrl = firstImageId ? imageUrlById.get(firstImageId) ?? null : null
+
+      console.log(`[square-sync] ${name}: variationId=${squareVariationId}, price=${priceInCents}, image=${imageUrl ? 'yes' : 'no'}`)
 
       const existing = await prisma.product.findFirst({ where: { squareItemId } })
 
@@ -120,6 +149,9 @@ export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
             abv,
             squareVariationId,
             ...(priceInCents != null && { priceInCents }),
+            // Only overwrite when Square actually has an image, so a manually
+            // set imageUrl survives syncs for items without Square photos.
+            ...(imageUrl && { imageUrl }),
           },
         })
         updated++
@@ -138,6 +170,7 @@ export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
             priceInCents: priceInCents ?? 2100,
             squareItemId,
             squareVariationId,
+            imageUrl,
             isActive: true,
           },
         })

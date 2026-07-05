@@ -11,6 +11,7 @@ type Product = {
   id: string; name: string; slug: string; description: string | null
   style: string | null; abv: number | null; priceInCents: number
   isActive: boolean; sortOrder: number; squareItemId: string | null
+  imageUrl: string | null
   _count?: { orderItems: number }
 }
 
@@ -30,7 +31,7 @@ export default function AdminProductsPage() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [modal, setModal] = useState<Product | null | 'new'>(null)
-  const [form, setForm] = useState({ name: '', description: '', style: '', abv: '', priceInCents: '2100', sortOrder: '0' })
+  const [form, setForm] = useState({ name: '', description: '', style: '', abv: '', priceInCents: '2100', sortOrder: '0', imageUrl: '' })
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [syncing, setSyncing] = useState(false)
@@ -42,13 +43,13 @@ export default function AdminProductsPage() {
   useEffect(() => { refresh() }, [])
 
   function openNew() {
-    setForm({ name: '', description: '', style: '', abv: '', priceInCents: '2100', sortOrder: '0' })
+    setForm({ name: '', description: '', style: '', abv: '', priceInCents: '2100', sortOrder: '0', imageUrl: '' })
     setModal('new')
     setError(null)
   }
 
   function openEdit(p: Product) {
-    setForm({ name: p.name, description: p.description ?? '', style: p.style ?? '', abv: p.abv?.toString() ?? '', priceInCents: (p.priceInCents ?? 2100).toString(), sortOrder: p.sortOrder.toString() })
+    setForm({ name: p.name, description: p.description ?? '', style: p.style ?? '', abv: p.abv?.toString() ?? '', priceInCents: (p.priceInCents ?? 2100).toString(), sortOrder: p.sortOrder.toString(), imageUrl: p.imageUrl ?? '' })
     setModal(p)
     setError(null)
   }
@@ -65,6 +66,7 @@ export default function AdminProductsPage() {
       abv: form.abv ? parseFloat(form.abv) : null,
       priceInCents: parseInt(form.priceInCents) || 2100,
       sortOrder: parseInt(form.sortOrder),
+      imageUrl: form.imageUrl.trim() || null,
     }
     const url = isNew ? '/api/products' : `/api/products/${(modal as Product).id}`
     const res = await fetch(url, { method: isNew ? 'POST' : 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
@@ -117,33 +119,59 @@ export default function AdminProductsPage() {
         {products.map((p) => (
           <div
             key={p.id}
-            className={`border p-5 ${!p.isActive ? 'opacity-60' : ''}`}
+            className={`border overflow-hidden flex flex-col ${!p.isActive ? 'opacity-60' : ''}`}
             style={{ backgroundColor: 'var(--paper)', borderColor: 'var(--rule)' }}
           >
-            <div className="flex items-start justify-between">
-              <div className="flex h-10 w-10 items-center justify-center" style={{ backgroundColor: 'var(--cream-deep)' }}>
-                <Beer className="h-5 w-5 text-gold-deep" />
-              </div>
-              <div className="flex gap-1">
-                <button onClick={() => openEdit(p)} className="p-1 text-stone-400 hover:text-terracotta transition">
+            {/* Label image */}
+            <div
+              className="relative w-full"
+              style={{ aspectRatio: '4 / 3', backgroundColor: 'var(--cream-deep)' }}
+            >
+              {p.imageUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={p.imageUrl}
+                  alt={p.name}
+                  className="absolute inset-0 h-full w-full object-cover"
+                  loading="lazy"
+                />
+              ) : (
+                <div className="absolute inset-0 flex flex-col items-center justify-center gap-1">
+                  <Beer className="h-8 w-8 text-gold-deep opacity-60" />
+                  <span className="text-[10px] uppercase tracking-widest text-stone-400">No label image</span>
+                </div>
+              )}
+              {/* Hover actions */}
+              <div className="absolute top-2 right-2 flex gap-1">
+                <button
+                  onClick={() => openEdit(p)}
+                  className="flex h-7 w-7 items-center justify-center bg-white/90 text-stone-500 hover:text-terracotta shadow-sm transition"
+                  title="Edit"
+                >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
-                <button onClick={() => toggleActive(p.id, p.isActive)} className="p-1 text-stone-400 hover:text-stone-600 transition text-xs font-medium">
+                <button
+                  onClick={() => toggleActive(p.id, p.isActive)}
+                  className="flex h-7 items-center justify-center bg-white/90 px-2 text-xs font-medium text-stone-500 hover:text-stone-700 shadow-sm transition"
+                >
                   {p.isActive ? 'Hide' : 'Show'}
                 </button>
               </div>
             </div>
-            <h3 className="font-semibold text-stone-900 mt-2">{p.name}</h3>
-            <div className="flex flex-wrap gap-2 mt-1">
-              {p.style && <span className="bg-amber-100 px-2 py-0.5 text-xs text-amber-700">{p.style}</span>}
-              <span className="bg-stone-100 px-2 py-0.5 text-xs text-stone-600">
-                {p.abv != null ? `${p.abv}% ABV` : '— ABV'}
-              </span>
-              <span className="bg-green-100 px-2 py-0.5 text-xs text-green-700 font-medium">
-                {formatCents(p.priceInCents ?? 2100)}
-              </span>
+
+            <div className="p-4 flex-1">
+              <h3 className="font-semibold text-stone-900">{p.name}</h3>
+              <div className="flex flex-wrap gap-2 mt-1.5">
+                {p.style && <span className="bg-amber-100 px-2 py-0.5 text-xs text-amber-700">{p.style}</span>}
+                <span className="bg-stone-100 px-2 py-0.5 text-xs text-stone-600">
+                  {p.abv != null ? `${p.abv}% ABV` : '— ABV'}
+                </span>
+                <span className="bg-green-100 px-2 py-0.5 text-xs text-green-700 font-medium">
+                  {formatCents(p.priceInCents ?? 2100)}
+                </span>
+              </div>
+              {p.description && <p className="mt-2 text-xs text-stone-500 line-clamp-2">{p.description}</p>}
             </div>
-            {p.description && <p className="mt-2 text-xs text-stone-500 line-clamp-2">{p.description}</p>}
           </div>
         ))}
       </div>
@@ -170,6 +198,11 @@ export default function AdminProductsPage() {
                 <Input label="ABV %" type="number" step="0.1" value={form.abv} onChange={(e) => setForm({ ...form, abv: e.target.value })} />
               </div>
               <Input label="Price (cents)" type="number" value={form.priceInCents} onChange={(e) => setForm({ ...form, priceInCents: e.target.value })} disabled={priceFromSquare} hint={priceFromSquare ? 'Set in Square — sync to update' : 'e.g. 2100 = $21.00'} />
+              <Input label="Image URL" value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="https://…" hint="Label photo. Auto-filled by Sync from Square when the item has an image." />
+              {form.imageUrl && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img src={form.imageUrl} alt="Preview" className="h-24 w-24 object-cover border" style={{ borderColor: 'var(--rule)' }} />
+              )}
             </div>
             <div className="mt-5 flex gap-2">
               <Button variant="secondary" onClick={() => setModal(null)} className="flex-1">Cancel</Button>
