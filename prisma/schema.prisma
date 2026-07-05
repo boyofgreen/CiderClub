@@ -340,6 +340,27 @@ model WaitlistEntry {
   createdAt DateTime @default(now())
 }
 
+// ─── Leads ────────────────────────────────────────────────────────────────────
+// People who started the signup flow (gave contact info) but didn't finish.
+// Captured after step 1 of /register so the admin can follow up personally.
+
+model Lead {
+  id        String  @id @default(cuid())
+  email     String  @unique
+  firstName String?
+  lastName  String?
+  phone     String?
+  planId    String? // last plan they were looking at (no FK — plan may be deleted)
+
+  // NEW | FOLLOWED_UP | CONVERTED | DISMISSED
+  status       String    @default("NEW")
+  followedUpAt DateTime?
+  notes        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
 // ─── Email Campaigns ──────────────────────────────────────────────────────────
 
 model Campaign {

@@ -168,8 +168,25 @@ function RegisterContent() {
 
   function update(field: string, value: string) { setForm((f) => ({ ...f, [field]: value })) }
 
-  function goToStep2(e: React.FormEvent) { e.preventDefault(); setError(null); setStep(2) }
-  function goToStep3(e: React.FormEvent) { e.preventDefault(); setError(null); setStep(3) }
+  // Fire-and-forget lead capture so we can follow up with folks who never finish.
+  function captureLead(extra: Record<string, string> = {}) {
+    if (!form.email) return
+    fetch('/api/leads', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: form.email,
+        firstName: form.firstName,
+        lastName: form.lastName,
+        phone: form.phone,
+        ...extra,
+      }),
+      keepalive: true,
+    }).catch(() => {})
+  }
+
+  function goToStep2(e: React.FormEvent) { e.preventDefault(); setError(null); captureLead(); setStep(2) }
+  function goToStep3(e: React.FormEvent) { e.preventDefault(); setError(null); captureLead({ planId: form.planId }); setStep(3) }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault(); setLoading(true); setError(null)

@@ -11,7 +11,7 @@ import { Alert } from '@/components/ui/Alert'
 import { Spinner } from '@/components/ui/Spinner'
 import { Beer, ArrowLeft, Plus, Minus, Save, CheckCircle, X } from 'lucide-react'
 
-type Product = { id: string; name: string; style: string | null; description: string | null }
+type Product = { id: string; name: string; style: string | null; description: string | null; imageUrl: string | null }
 type OrderItem = { productId: string; quantity: number; product: Product }
 type Order = {
   id: string
@@ -170,6 +170,20 @@ export default function OrderDetailPage() {
                     className="flex items-center gap-3 px-3 py-2.5"
                     style={{ backgroundColor: 'var(--cream-deep)' }}
                   >
+                    {product.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="h-12 w-12 shrink-0 object-cover border"
+                        style={{ borderColor: 'var(--rule)' }}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center bg-white/50 border" style={{ borderColor: 'var(--rule)' }}>
+                        <Beer className="h-5 w-5 text-gold-deep opacity-50" />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-stone-800 leading-snug text-sm">{product.name}</p>
                       {product.style && <p className="text-xs text-stone-400 mt-0.5">{product.style}</p>}
@@ -217,6 +231,20 @@ export default function OrderDetailPage() {
                     className="flex items-center gap-3 p-3 border transition"
                     style={{ borderColor: 'var(--rule)' }}
                   >
+                    {product.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img
+                        src={product.imageUrl}
+                        alt={product.name}
+                        className="h-12 w-12 shrink-0 object-cover border"
+                        style={{ borderColor: 'var(--rule)' }}
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center border" style={{ backgroundColor: 'var(--cream-deep)', borderColor: 'var(--rule)' }}>
+                        <Beer className="h-5 w-5 text-gold-deep opacity-50" />
+                      </div>
+                    )}
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-stone-700 leading-snug text-sm">{product.name}</p>
                       {product.style && <p className="text-xs text-stone-400 mt-0.5">{product.style}</p>}
