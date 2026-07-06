@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach } from 'vitest'
 import { prisma, resetDb } from '../helpers/prismaTestClient'
 import { resetSquareState } from '../helpers/squareMock'
 import { createPlan, createProduct, createMember, createQuarter, setSalesTax } from '../helpers/fixtures'
-import { runWithOrg, DEFAULT_ORG_ID } from '../../src/lib/tenancy'
+import { runWithOrg, registerRequestOrgResolver, DEFAULT_ORG_ID } from '../../src/lib/tenancy'
 import { generateQuarterOrders } from '@/services/orders'
 import { getSalesTaxPercent, setSetting } from '@/lib/settings'
 
@@ -72,6 +72,27 @@ describe('tenant scoping', () => {
 
     expect(await getSalesTaxPercent()).toBe(5)
     expect(await runWithOrg(org.id, () => getSalesTaxPercent())).toBe(9)
+  })
+
+  it('request-scope resolver scopes queries, and runWithOrg overrides it', async () => {
+    const org = await createSecondOrg()
+    const plan = await createPlan() // default org
+    await createMember(plan.id)
+
+    // Simulate middleware-driven request scope: resolver says "org B"
+    registerRequestOrgResolver(async () => org.id)
+    try {
+      expect(await prisma.member.findMany()).toHaveLength(0) // org B sees nothing
+
+      const created = await prisma.plan.create({ data: { name: 'B Plan', slug: 'b-plan', packsPerOrder: 1, priceInCents: 1000 } })
+      expect(created.organizationId).toBe(org.id) // creates stamped with org B
+
+      // Explicit runWithOrg beats the request scope
+      const defaultMembers = await runWithOrg(DEFAULT_ORG_ID, () => prisma.member.findMany())
+      expect(defaultMembers).toHaveLength(1)
+    } finally {
+      registerRequestOrgResolver(null)
+    }
   })
 
   it('order generation never crosses tenant boundaries', async () => {

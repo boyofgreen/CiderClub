@@ -3,6 +3,9 @@
 // a hidden directory that Azure's Oryx strips from node_modules.tar.gz.
 import { PrismaClient } from 'prisma-generated'
 import { withTenancy } from '@/lib/tenancy'
+// Side effect: registers the request-header tenant resolver with the tenancy
+// layer, so queries inside a request are scoped to the request's tenant.
+import '@/lib/tenantRequest'
 
 function createClient() {
   const base = new PrismaClient({

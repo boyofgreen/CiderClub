@@ -20,6 +20,14 @@ export const config = {
     get clubName(): string {
       return process.env.NEXT_PUBLIC_CLUB_NAME ?? 'Hill Country Cider Club'
     },
+    /**
+     * Platform root domain for tenant subdomains: <slug>.<rootDomain>.
+     * Requests to the root itself (or www) are "platform" requests and use
+     * the default org. Any other host is treated as a tenant custom domain.
+     */
+    get rootDomain(): string {
+      return process.env.PLATFORM_ROOT_DOMAIN ?? 'localhost'
+    },
   },
 
   auth: {

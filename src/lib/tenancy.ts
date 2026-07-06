@@ -69,6 +69,19 @@ export function clearDefaultOrgCache(): void {
   cachedDefaultOrgId = null
 }
 
+/**
+ * Optional request-scope resolver (wired up by src/lib/tenantRequest.ts,
+ * which maps the middleware's tenant headers to an org id). Kept as a
+ * registration hook so this module never imports next/headers — it must
+ * stay usable from scripts, seeds, and tests.
+ */
+type RequestOrgResolver = () => Promise<string | null>
+let requestOrgResolver: RequestOrgResolver | null = null
+
+export function registerRequestOrgResolver(fn: RequestOrgResolver | null): void {
+  requestOrgResolver = fn
+}
+
 interface OrgUpsertClient {
   organization: {
     upsert(args: {
@@ -80,12 +93,19 @@ interface OrgUpsertClient {
 }
 
 /**
- * Resolve the organization for the current query: request context if set,
- * otherwise the default org (created on first use so fresh databases work).
+ * Resolve the organization for the current query, in priority order:
+ *   1. explicit runWithOrg context
+ *   2. the request's tenant (subdomain / custom domain via middleware headers)
+ *   3. the default org — tenant zero (created on first use so fresh DBs work)
  */
 export async function resolveOrgId(base: OrgUpsertClient): Promise<string> {
   const fromContext = orgContext.getStore()
   if (fromContext) return fromContext
+
+  if (requestOrgResolver) {
+    const fromRequest = await requestOrgResolver()
+    if (fromRequest) return fromRequest
+  }
 
   if (!cachedDefaultOrgId) {
     const org = await base.organization.upsert({
