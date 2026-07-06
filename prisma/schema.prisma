@@ -1,6 +1,8 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../node_modules/prisma-generated"
+  provider        = "prisma-client-js"
+  output          = "../node_modules/prisma-generated"
+  // driverAdapters lets tests run against an in-process PGlite Postgres
+  previewFeatures = ["driverAdapters"]
 }
 
 datasource db {
