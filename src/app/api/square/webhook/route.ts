@@ -1,13 +1,12 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { config } from '@/lib/config'
 import crypto from 'crypto'
-
-const SQUARE_WEBHOOK_SIGNATURE_KEY = process.env.SQUARE_WEBHOOK_SIGNATURE_KEY ?? ''
 
 function isValidSquareSignature(body: string, signature: string, url: string): boolean {
   const combined = url + body
   const expected = crypto
-    .createHmac('sha256', SQUARE_WEBHOOK_SIGNATURE_KEY)
+    .createHmac('sha256', config.square.webhookSignatureKey)
     .update(combined)
     .digest('base64')
   return crypto.timingSafeEqual(Buffer.from(expected), Buffer.from(signature))
@@ -18,7 +17,7 @@ export async function POST(req: Request) {
   const signature = req.headers.get('x-square-hmacsha256-signature') ?? ''
   const url = req.url
 
-  if (SQUARE_WEBHOOK_SIGNATURE_KEY && !isValidSquareSignature(rawBody, signature, url)) {
+  if (config.square.webhookSignatureKey && !isValidSquareSignature(rawBody, signature, url)) {
     return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
   }
 

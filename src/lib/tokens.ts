@@ -5,9 +5,10 @@
  */
 import { SignJWT, jwtVerify } from 'jose'
 import { randomBytes } from 'crypto'
+import { config } from '@/lib/config'
 
 function getSecret() {
-  return new TextEncoder().encode(process.env.NEXTAUTH_SECRET!)
+  return new TextEncoder().encode(config.auth.secret!)
 }
 
 /** Create a signed JWT to set as the member_session cookie */

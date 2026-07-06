@@ -3,12 +3,10 @@ import GoogleProvider from 'next-auth/providers/google'
 import FacebookProvider from 'next-auth/providers/facebook'
 import { PrismaAdapter } from '@next-auth/prisma-adapter'
 import { prisma } from '@/lib/prisma'
+import { config } from '@/lib/config'
 
 function getAdminEmails(): string[] {
-  return (process.env.ADMIN_EMAILS || '')
-    .split(',')
-    .map((e) => e.trim().toLowerCase())
-    .filter(Boolean)
+  return config.auth.adminEmails
 }
 
 export const authOptions: NextAuthOptions = {
@@ -21,12 +19,12 @@ export const authOptions: NextAuthOptions = {
 
   providers: [
     GoogleProvider({
-      clientId: process.env.GOOGLE_CLIENT_ID!,
-      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      clientId: config.auth.google.clientId,
+      clientSecret: config.auth.google.clientSecret,
     }),
     FacebookProvider({
-      clientId: process.env.FACEBOOK_CLIENT_ID!,
-      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+      clientId: config.auth.facebook.clientId,
+      clientSecret: config.auth.facebook.clientSecret,
     }),
   ],
 
@@ -95,5 +93,5 @@ export const authOptions: NextAuthOptions = {
     error: '/login',
   },
 
-  secret: process.env.NEXTAUTH_SECRET,
+  secret: config.auth.secret,
 }

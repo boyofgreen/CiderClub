@@ -1,6 +1,7 @@
 import { squareClient } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
 import { clubName } from '@/lib/resend'
+import { config } from '@/lib/config'
 import type { Square } from 'square'
 
 export interface LineItemParam {
@@ -115,7 +116,7 @@ function buildOrderBody(params: {
 
 /** Charge a saved card on file, creating a proper itemized Square Order first */
 export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResult> {
-  const locationId = process.env.SQUARE_LOCATION_ID
+  const locationId = config.square.locationId
   if (!locationId) throw new Error('SQUARE_LOCATION_ID is not configured')
 
   // 1. Create a Square Order with line items and pickup fulfillment
@@ -175,7 +176,7 @@ export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResu
 export async function createPaymentLink(
   params: PaymentLinkParams
 ): Promise<{ url: string; linkId: string }> {
-  const locationId = process.env.SQUARE_LOCATION_ID
+  const locationId = config.square.locationId
   if (!locationId) throw new Error('SQUARE_LOCATION_ID is not configured')
 
   const response = await squareClient.checkout.paymentLinks.create({

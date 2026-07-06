@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { config } from '@/lib/config'
 
 export const SETTING_KEYS = {
   SALES_TAX_PERCENT: 'salesTaxPercent',
@@ -28,8 +29,7 @@ export async function getAdminNotifyEmail(): Promise<string | null> {
   const raw = (await getSetting(SETTING_KEYS.ADMIN_NOTIFY_EMAIL))?.trim()
   if (raw) return raw
   // Fall back to the first configured admin email
-  const fromEnv = process.env.ADMIN_EMAILS?.split(',')[0]?.trim()
-  return fromEnv || null
+  return config.auth.adminEmails[0] ?? null
 }
 
 /** From address used for the personal 24-hour welcome follow-up. */

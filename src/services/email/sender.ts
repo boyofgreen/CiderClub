@@ -1,5 +1,6 @@
 import { getResend, fromEmail, appUrl, clubName } from '@/lib/resend'
 import { prisma } from '@/lib/prisma'
+import { config } from '@/lib/config'
 import { baseTemplate } from '@/lib/emailTemplates'
 
 interface SendEmailParams {
@@ -20,7 +21,7 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
   let resendId: string | undefined
   let status = 'SENT'
 
-  if (!process.env.RESEND_API_KEY) {
+  if (!config.resend.apiKey) {
     console.warn('[Email] RESEND_API_KEY is not set — skipping send to', params.to)
     status = 'FAILED'
   } else {

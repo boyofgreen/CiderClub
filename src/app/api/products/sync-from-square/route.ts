@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { syncCiderClubProductsFromSquare } from '@/services/square/catalog'
+import { config } from '@/lib/config'
 
 export async function POST() {
   const session = await getServerSession(authOptions)
@@ -10,7 +11,7 @@ export async function POST() {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  if (!process.env.SQUARE_ACCESS_TOKEN) {
+  if (!config.square.configured) {
     return NextResponse.json(
       { error: 'SQUARE_ACCESS_TOKEN is not configured' },
       { status: 500 }

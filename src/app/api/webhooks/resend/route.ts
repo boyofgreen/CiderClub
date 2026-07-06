@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { Webhook } from 'svix'
 import { prisma } from '@/lib/prisma'
+import { config } from '@/lib/config'
 
 // Map Resend event types to our EmailLog status values
 const EVENT_STATUS: Record<string, string> = {
@@ -11,7 +12,7 @@ const EVENT_STATUS: Record<string, string> = {
 }
 
 export async function POST(req: Request) {
-  const secret = process.env.RESEND_WEBHOOK_SECRET
+  const secret = config.resend.webhookSecret
   if (!secret) {
     console.error('[webhook/resend] RESEND_WEBHOOK_SECRET not configured')
     return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 })

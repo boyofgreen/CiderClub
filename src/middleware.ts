@@ -1,13 +1,14 @@
 import { NextResponse, type NextRequest } from 'next/server'
 import { getToken } from 'next-auth/jwt'
 import { verifyMemberSessionJWT } from '@/lib/tokens'
+import { config as appConfig } from '@/lib/config'
 
 export async function middleware(req: NextRequest) {
   const pathname = req.nextUrl.pathname
 
   // ── Admin routes: require OAuth session with ADMIN role ──────────────────
   if (pathname.startsWith('/admin')) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+    const token = await getToken({ req, secret: appConfig.auth.secret })
     if (!token) {
       return NextResponse.redirect(new URL('/login?callbackUrl=/admin/dashboard', req.url))
     }
@@ -20,7 +21,7 @@ export async function middleware(req: NextRequest) {
   // ── Member routes: allow OAuth session OR valid magic-link cookie ─────────
   if (pathname.startsWith('/member')) {
     // Check NextAuth session first
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+    const token = await getToken({ req, secret: appConfig.auth.secret })
     if (token) return NextResponse.next()
 
     // Check magic-link session cookie

@@ -1,4 +1,5 @@
 import { squareClient } from '@/lib/square'
+import { config } from '@/lib/config'
 
 interface OrderItem {
   squareVariationId: string | null
@@ -15,7 +16,7 @@ export async function adjustInventoryForOrder(
   orderId: string,
   items: OrderItem[]
 ): Promise<void> {
-  const locationId = process.env.SQUARE_LOCATION_ID
+  const locationId = config.square.locationId
   if (!locationId) {
     console.warn(`[inventory] SQUARE_LOCATION_ID not set — skipping inventory adjustment for order ${orderId}`)
     return
