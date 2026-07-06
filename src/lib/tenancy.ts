@@ -39,10 +39,9 @@ export const TENANT_MODELS = new Set([
   'AnalyticsSnapshot',
 ])
 
-// Matches the row inserted by the 20260705000000_organizations migration.
-export const DEFAULT_ORG_ID = 'org_tenant_zero_hcch'
-export const DEFAULT_ORG_SLUG = 'hill-country-cider-house'
-export const DEFAULT_ORG_NAME = 'Hill Country Cider Club'
+// Defined in tenantHost.ts (edge-safe); re-exported here for server code.
+import { DEFAULT_ORG_ID, DEFAULT_ORG_SLUG, DEFAULT_ORG_NAME } from '@/lib/tenantHost'
+export { DEFAULT_ORG_ID, DEFAULT_ORG_SLUG, DEFAULT_ORG_NAME }
 
 const orgContext = new AsyncLocalStorage<string>()
 

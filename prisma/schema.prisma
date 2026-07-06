@@ -72,6 +72,7 @@ model Organization {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  users              OrganizationUser[]
   members            Member[]
   memberTokens       MemberToken[]
   plans              Plan[]
@@ -98,13 +99,35 @@ model User {
   email         String?   @unique
   emailVerified DateTime?
   image         String?
-  role          String    @default("MEMBER") // ADMIN | MEMBER
+  role          String    @default("MEMBER") // ADMIN | MEMBER (legacy — org roles live on OrganizationUser)
+  // Platform superadmin: full access to every organization (support/impersonation)
+  isSuperAdmin  Boolean   @default(false)
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  accounts Account[]
-  sessions Session[]
-  member   Member?   @relation("UserMember")
+  accounts       Account[]
+  sessions       Session[]
+  member         Member?            @relation("UserMember")
+  orgMemberships OrganizationUser[]
+}
+
+// ─── Organization membership (operators, not club members) ───────────────────
+// Which Users can run which Organization, and at what level. A user can
+// belong to multiple orgs. Deliberately NOT in TENANT_MODELS — membership
+// queries ("all my orgs") are cross-tenant by nature.
+
+model OrganizationUser {
+  id             String       @id @default(cuid())
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  userId         String
+  user           User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role           String       @default("ADMIN") // OWNER | ADMIN | STAFF
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
+
+  @@unique([organizationId, userId])
+  @@index([userId])
 }
 
 // ─── Members ─────────────────────────────────────────────────────────────────

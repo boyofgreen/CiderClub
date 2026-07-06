@@ -30,3 +30,10 @@ export function parseTenantHost(hostHeader: string | null | undefined, rootDomai
 /** Request headers the middleware sets for the server-side tenant resolver. */
 export const ORG_SLUG_HEADER = 'x-org-slug'
 export const ORG_DOMAIN_HEADER = 'x-org-domain'
+
+// Tenant zero (the original club) — defined here rather than in tenancy.ts
+// because middleware (edge runtime) needs these and tenancy.ts pulls in
+// async_hooks, which edge cannot load. Matches the organizations migration.
+export const DEFAULT_ORG_ID = 'org_tenant_zero_hcch'
+export const DEFAULT_ORG_SLUG = 'hill-country-cider-house'
+export const DEFAULT_ORG_NAME = 'Hill Country Cider Club'
