@@ -46,6 +46,15 @@ export async function middleware(req: NextRequest) {
     return withTenantHeaders()
   }
 
+  // ── Platform console: superadmins only ────────────────────────────────────
+  if (pathname.startsWith('/platform')) {
+    const token = await getToken({ req, secret: appConfig.auth.secret })
+    if (!token?.isSuperAdmin) {
+      return NextResponse.redirect(new URL('/', req.url))
+    }
+    return withTenantHeaders()
+  }
+
   // ── Member routes: allow OAuth session OR valid magic-link cookie ─────────
   if (pathname.startsWith('/member')) {
     // Check NextAuth session first

@@ -2,20 +2,13 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
-import { config } from '@/lib/config'
 import { createOrganization } from '@/services/orgs'
+import { portalUrlFor } from '@/lib/tenantUrls'
 
 const createOrgSchema = z.object({
   name: z.string().min(2, 'Name is too short').max(80, 'Name is too long'),
   slug: z.string().min(3).max(48),
 })
-
-/** Public URL for a tenant's portal, aware of local dev. */
-function portalUrlFor(slug: string): string {
-  const root = config.app.rootDomain
-  if (root === 'localhost') return `http://${slug}.localhost:3000`
-  return `https://${slug}.${root}`
-}
 
 // POST /api/orgs — create a new organization owned by the signed-in user
 export async function POST(req: Request) {

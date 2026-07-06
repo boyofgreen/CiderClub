@@ -73,6 +73,7 @@ model Organization {
   updatedAt DateTime @updatedAt
 
   users              OrganizationUser[]
+  invites            OrgInvite[]
   members            Member[]
   memberTokens       MemberToken[]
   plans              Plan[]
@@ -128,6 +129,25 @@ model OrganizationUser {
 
   @@unique([organizationId, userId])
   @@index([userId])
+}
+
+// Pending invitations for operators to join an organization's team.
+// Accepted by visiting /invite/<token> while signed in with the invited email.
+
+model OrgInvite {
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  email          String
+  role           String       @default("ADMIN") // ADMIN | STAFF (owners are transferred, not invited)
+  token          String       @unique @default(cuid())
+  invitedById    String? // User id of the inviter (no FK — informational)
+  expiresAt      DateTime
+  acceptedAt     DateTime?
+  createdAt      DateTime     @default(now())
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
 }
 
 // ─── Members ─────────────────────────────────────────────────────────────────

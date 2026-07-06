@@ -37,6 +37,7 @@ export const TENANT_MODELS = new Set([
   'PageView',
   'ClubEvent',
   'AnalyticsSnapshot',
+  'OrgInvite',
 ])
 
 // Defined in tenantHost.ts (edge-safe); re-exported here for server code.

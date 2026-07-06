@@ -21,6 +21,8 @@ import {
   PartyPopper,
   UserPlus,
   Upload,
+  UserCog,
+  Building2,
 } from 'lucide-react'
 
 const nav = [
@@ -38,8 +40,15 @@ const nav = [
   { href: '/admin/campaigns', label: 'Campaigns', icon: Megaphone },
   { href: '/admin/email-logs', label: 'Email Logs', icon: Mail },
   { href: '/admin/analytics', label: 'Analytics', icon: BarChart3 },
+  { href: '/admin/team', label: 'Team', icon: UserCog },
   { href: '/admin/settings', label: 'Settings', icon: Settings },
 ]
+
+export interface OrgSwitcherProps {
+  currentName: string
+  options: { name: string; url: string }[]
+  platformConsoleUrl?: string
+}
 
 const LINK_BASE: React.CSSProperties = {
   display: 'flex',
@@ -56,7 +65,7 @@ const LINK_BASE: React.CSSProperties = {
   borderLeft: '2px solid transparent',
 }
 
-export function AdminSidebar() {
+export function AdminSidebar({ orgSwitcher }: { orgSwitcher?: OrgSwitcherProps }) {
   const pathname = usePathname()
 
   return (
@@ -91,6 +100,36 @@ export function AdminSidebar() {
           Admin
         </span>
       </div>
+
+      {/* Org switcher — shown for multi-org operators and superadmins */}
+      {orgSwitcher && (orgSwitcher.options.length > 0 || orgSwitcher.platformConsoleUrl) && (
+        <details style={{ borderBottom: '1px solid var(--rule)' }}>
+          <summary
+            className="cursor-pointer list-none px-5 py-2.5 flex items-center gap-2"
+            style={{ fontFamily: 'var(--font-sans)', fontSize: 9, fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: 'rgba(247,241,227,0.65)' }}
+          >
+            <Building2 className="h-3.5 w-3.5 shrink-0" style={{ color: 'var(--gold)' }} />
+            <span className="truncate">{orgSwitcher.currentName}</span>
+            <span className="ml-auto" style={{ color: 'var(--gold)' }}>▾</span>
+          </summary>
+          <ul className="pb-2">
+            {orgSwitcher.options.map((o) => (
+              <li key={o.url}>
+                <a href={o.url} style={{ ...LINK_BASE, color: 'rgba(247,241,227,0.65)' }}>
+                  {o.name}
+                </a>
+              </li>
+            ))}
+            {orgSwitcher.platformConsoleUrl && (
+              <li>
+                <a href={orgSwitcher.platformConsoleUrl} style={{ ...LINK_BASE, color: 'var(--gold)' }}>
+                  All organizations
+                </a>
+              </li>
+            )}
+          </ul>
+        </details>
+      )}
 
       {/* Nav links */}
       <nav className="flex-1 overflow-y-auto p-2">
