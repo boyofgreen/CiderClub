@@ -20,11 +20,13 @@ import {
   Settings,
   PartyPopper,
   UserPlus,
+  Upload,
 } from 'lucide-react'
 
 const nav = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/members', label: 'Members', icon: Users },
+  { href: '/admin/import', label: 'Import', icon: Upload },
   { href: '/admin/leads', label: 'Leads', icon: UserPlus },
   { href: '/admin/quarters', label: 'Quarters', icon: Calendar },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
