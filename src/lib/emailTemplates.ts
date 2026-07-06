@@ -324,7 +324,7 @@ export async function renderEmail(
   const def = getTemplateDef(key)
   if (!def) throw new Error(`Unknown email template: ${key}`)
 
-  const override = await prisma.emailTemplate.findUnique({ where: { key } }).catch(() => null)
+  const override = await prisma.emailTemplate.findFirst({ where: { key } }).catch(() => null)
   const subjectTpl = override?.subject ?? def.defaultSubject
   const bodyTpl = override?.bodyHtml ?? def.defaultBody
 

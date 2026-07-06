@@ -21,21 +21,25 @@ export async function POST(req: Request) {
   const planId = clean(body.planId, 40)
 
   // Already a member? Nothing to capture.
-  const existingMember = await prisma.member.findUnique({ where: { email } })
+  const existingMember = await prisma.member.findFirst({ where: { email } })
   if (existingMember) return NextResponse.json({ ok: true })
 
-  await prisma.lead.upsert({
-    where: { email },
-    create: { email, firstName, lastName, phone, planId },
-    update: {
-      // Refresh contact details on repeat visits, but never resurrect a
-      // dismissed/converted lead back to NEW.
-      ...(firstName && { firstName }),
-      ...(lastName && { lastName }),
-      ...(phone && { phone }),
-      ...(planId && { planId }),
-    },
-  })
+  const existingLead = await prisma.lead.findFirst({ where: { email } })
+  if (existingLead) {
+    // Refresh contact details on repeat visits, but never resurrect a
+    // dismissed/converted lead back to NEW.
+    await prisma.lead.update({
+      where: { id: existingLead.id },
+      data: {
+        ...(firstName && { firstName }),
+        ...(lastName && { lastName }),
+        ...(phone && { phone }),
+        ...(planId && { planId }),
+      },
+    })
+  } else {
+    await prisma.lead.create({ data: { email, firstName, lastName, phone, planId } })
+  }
 
   return NextResponse.json({ ok: true })
 }

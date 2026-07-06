@@ -93,9 +93,14 @@ export async function createOrder(params: {
 
 /** Pin the sales-tax setting so money math in tests is deterministic. */
 export async function setSalesTax(percent: string) {
-  await prisma.setting.upsert({
-    where: { key: 'salesTaxPercent' },
-    create: { key: 'salesTaxPercent', value: percent },
-    update: { value: percent },
-  })
+  const key = 'salesTaxPercent'
+  const existing = await prisma.setting.findFirst({ where: { key } })
+  if (existing) {
+    await prisma.setting.update({
+      where: { organizationId_key: { organizationId: existing.organizationId, key } },
+      data: { value: percent },
+    })
+  } else {
+    await prisma.setting.create({ data: { key, value: percent } })
+  }
 }

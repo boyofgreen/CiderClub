@@ -25,11 +25,15 @@ export async function PUT(
     return NextResponse.json({ error: 'Subject and body are required' }, { status: 400 })
   }
 
-  const saved = await prisma.emailTemplate.upsert({
-    where: { key: params.key },
-    create: { key: params.key, subject, bodyHtml },
-    update: { subject, bodyHtml },
-  })
+  const existing = await prisma.emailTemplate.findFirst({ where: { key: params.key } })
+  const saved = existing
+    ? await prisma.emailTemplate.update({
+        where: {
+          organizationId_key: { organizationId: existing.organizationId, key: params.key },
+        },
+        data: { subject, bodyHtml },
+      })
+    : await prisma.emailTemplate.create({ data: { key: params.key, subject, bodyHtml } })
 
   return NextResponse.json({ template: saved })
 }

@@ -46,6 +46,50 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
+// ─── Organizations (tenants) ──────────────────────────────────────────────────
+// Each winery/cidery on the platform is an Organization. Every tenant-owned
+// table carries organizationId; queries are scoped via the tenancy Prisma
+// extension (src/lib/tenancy.ts). The original club is backfilled as the
+// default organization by the organizations migration.
+
+model Organization {
+  id           String  @id @default(cuid())
+  name         String
+  slug         String  @unique // subdomain, e.g. "hill-country-cider-house"
+  customDomain String? @unique // e.g. "club.hillcountryciderhouse.com"
+  settings     Json    @default("{}") // theme, terminology, feature flags
+
+  // Per-tenant integrations (populated by later phases; Square OAuth tokens
+  // will be stored encrypted when Phase 3 lands)
+  squareMerchantId String? @unique
+  squareLocationId String?
+  fromEmail        String?
+
+  // Platform billing (Phase 5)
+  planTier    String    @default("FOUNDER") // FOUNDER | TRIAL | STARTER | GROWTH | PRO
+  trialEndsAt DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  members            Member[]
+  memberTokens       MemberToken[]
+  plans              Plan[]
+  products           Product[]
+  quarters           Quarter[]
+  orders             Order[]
+  pickupEvents       PickupEvent[]
+  waitlistEntries    WaitlistEntry[]
+  leads              Lead[]
+  campaigns          Campaign[]
+  emailLogs          EmailLog[]
+  settings_          Setting[]
+  emailTemplates     EmailTemplate[]
+  pageViews          PageView[]
+  clubEvents         ClubEvent[]
+  analyticsSnapshots AnalyticsSnapshot[]
+}
+
 // ─── Users (OAuth accounts) ───────────────────────────────────────────────────
 
 model User {
@@ -66,13 +110,15 @@ model User {
 // ─── Members ─────────────────────────────────────────────────────────────────
 
 model Member {
-  id        String  @id @default(cuid())
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
   // Linked to OAuth User (optional — members can exist without an OAuth account)
   userId    String? @unique
   user      User?   @relation("UserMember", fields: [userId], references: [id], onDelete: SetNull)
 
   // Contact info
-  email     String  @unique
+  email     String
   firstName String
   lastName  String
   phone     String?
@@ -116,12 +162,17 @@ model Member {
   memberTokens       MemberToken[]
   waitlistEntries    WaitlistEntry[]
   pickupAttendances  PickupAttendance[]
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
 }
 
 // ─── Magic Link / Member Access Tokens ───────────────────────────────────────
 
 model MemberToken {
-  id         String   @id @default(cuid())
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
   memberId   String
   member     Member   @relation(fields: [memberId], references: [id], onDelete: Cascade)
   token      String   @unique
@@ -130,14 +181,18 @@ model MemberToken {
   expiresAt  DateTime
   lastUsedAt DateTime?
   createdAt  DateTime @default(now())
+
+  @@index([organizationId])
 }
 
 // ─── Plans ────────────────────────────────────────────────────────────────────
 
 model Plan {
-  id           String  @id @default(cuid())
-  name         String  @unique // "6-Pack Quarterly"
-  slug         String  @unique // "6-pack-quarterly"
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  name         String  // "6-Pack Quarterly"
+  slug         String  // "6-pack-quarterly"
   description  String?
   packsPerOrder Int              // units included per quarterly order
   priceInCents  Int              // charged per quarter (in cents)
@@ -151,14 +206,20 @@ model Plan {
   members         Member[]
   waitlistEntries WaitlistEntry[]
   quarterDefaults QuarterPlanDefault[]
+
+  @@unique([organizationId, name])
+  @@unique([organizationId, slug])
+  @@index([organizationId])
 }
 
 // ─── Products ─────────────────────────────────────────────────────────────────
 
 model Product {
-  id          String   @id @default(cuid())
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
   name        String
-  slug        String   @unique
+  slug        String
   description String?
   style       String?  // dry | semi-sweet | hopped | botanical | seasonal
   abv         Float?
@@ -174,13 +235,18 @@ model Product {
   quarterProducts QuarterProduct[]
   quarterDefaults QuarterPlanDefault[]
   orderItems      OrderItem[]
+
+  @@unique([organizationId, slug])
+  @@index([organizationId])
 }
 
 // ─── Quarters ─────────────────────────────────────────────────────────────────
 
 model Quarter {
-  id     String @id @default(cuid())
-  label  String @unique // "2025-Q2"
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  label  String // "2025-Q2"
   year   Int
   quarter Int               // 1-4
   name  String?             // optional friendly name e.g. "Summer 2025"
@@ -201,6 +267,9 @@ model Quarter {
   planDefaults QuarterPlanDefault[]
   orders       Order[]
   pickupEvents PickupEvent[]
+
+  @@unique([organizationId, label])
+  @@index([organizationId])
 }
 
 // QuarterProduct is the "available products" list for a quarter — one row per product.
@@ -237,7 +306,9 @@ model QuarterPlanDefault {
 // ─── Orders ───────────────────────────────────────────────────────────────────
 
 model Order {
-  id       String @id @default(cuid())
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
   memberId String
   member   Member @relation(fields: [memberId], references: [id])
   // Null quarterId = ad-hoc order composed by an admin, outside the quarterly
@@ -281,6 +352,7 @@ model Order {
   items OrderItem[]
 
   @@unique([memberId, quarterId])
+  @@index([organizationId])
 }
 
 model OrderItem {
@@ -298,7 +370,9 @@ model OrderItem {
 // ─── Pickup Events ────────────────────────────────────────────────────────────
 
 model PickupEvent {
-  id        String  @id @default(cuid())
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
   quarterId String
   quarter   Quarter @relation(fields: [quarterId], references: [id])
   title     String
@@ -313,6 +387,8 @@ model PickupEvent {
 
   orders      Order[]
   attendances PickupAttendance[]
+
+  @@index([organizationId])
 }
 
 model PickupAttendance {
@@ -330,7 +406,9 @@ model PickupAttendance {
 // ─── Waitlist ─────────────────────────────────────────────────────────────────
 
 model WaitlistEntry {
-  id       String  @id @default(cuid())
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
   memberId String?
   member   Member? @relation(fields: [memberId], references: [id])
   email    String
@@ -343,6 +421,8 @@ model WaitlistEntry {
   convertedAt DateTime? // when they became an active member
 
   createdAt DateTime @default(now())
+
+  @@index([organizationId])
 }
 
 // ─── Leads ────────────────────────────────────────────────────────────────────
@@ -350,8 +430,10 @@ model WaitlistEntry {
 // Captured after step 1 of /register so the admin can follow up personally.
 
 model Lead {
-  id        String  @id @default(cuid())
-  email     String  @unique
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  email     String
   firstName String?
   lastName  String?
   phone     String?
@@ -364,12 +446,17 @@ model Lead {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  @@unique([organizationId, email])
+  @@index([organizationId])
 }
 
 // ─── Email Campaigns ──────────────────────────────────────────────────────────
 
 model Campaign {
-  id             String   @id @default(cuid())
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
   subject        String
   bodyHtml       String   // rendered HTML (from bodyMarkdown), used for send + preview
   bodyMarkdown   String?  // markdown source of truth authored by the admin
@@ -381,12 +468,16 @@ model Campaign {
   sentCount      Int      @default(0)
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
+
+  @@index([organizationId])
 }
 
 // ─── Email Logs ───────────────────────────────────────────────────────────────
 
 model EmailLog {
-  id       String  @id @default(cuid())
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
   memberId String?
   member   Member? @relation(fields: [memberId], references: [id])
   toEmail  String
@@ -399,16 +490,22 @@ model EmailLog {
   status   String  @default("SENT") // SENT | FAILED | BOUNCED
   metadata String? // JSON blob for template data
   createdAt DateTime @default(now())
+
+  @@index([organizationId])
 }
 
 // ─── App Settings ─────────────────────────────────────────────────────────────
 // Simple key/value store for admin-configurable app settings (e.g. tax rate).
 
 model Setting {
-  key       String   @id
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  key       String
   value     String
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
+
+  @@id([organizationId, key])
 }
 
 // ─── Editable Email Templates ─────────────────────────────────────────────────
@@ -417,11 +514,15 @@ model Setting {
 // Body + subject support {{variable}} placeholders interpolated at send time.
 
 model EmailTemplate {
-  key       String   @id // matches a key in EMAIL_TEMPLATE_DEFS
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  key       String // matches a key in EMAIL_TEMPLATE_DEFS
   subject   String
   bodyHtml  String
   updatedAt DateTime @updatedAt
   createdAt DateTime @default(now())
+
+  @@id([organizationId, key])
 }
 
 // ─── Page Views ──────────────────────────────────────────────────────────────
@@ -429,13 +530,16 @@ model EmailTemplate {
 // No personal data stored — just path, referrer, and timestamp.
 
 model PageView {
-  id        String   @id @default(cuid())
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
   path      String
   referrer  String?
   createdAt DateTime @default(now())
 
   @@index([path, createdAt])
   @@index([createdAt])
+  @@index([organizationId])
 }
 
 // ─── Club Events ─────────────────────────────────────────────────────────────
@@ -443,7 +547,9 @@ model PageView {
 // not tied to a pickup quarter.
 
 model ClubEvent {
-  id          String    @id @default(cuid())
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
   title       String
   description String?
   eventType   String    @default("OTHER") // RELEASE_PARTY | TASTING | FARM_VISIT | WORKSHOP | OTHER
@@ -455,13 +561,17 @@ model ClubEvent {
   notes       String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+
+  @@index([organizationId])
 }
 
 // ─── Analytics Snapshots ──────────────────────────────────────────────────────
 
 model AnalyticsSnapshot {
-  id               String   @id @default(cuid())
-  snapshotDate     DateTime @unique @default(now())
+  id             String       @id @default(cuid())
+  organizationId String       @default("org_tenant_zero_hcch")
+  organization   Organization @relation(fields: [organizationId], references: [id])
+  snapshotDate     DateTime @default(now())
   totalMembers     Int
   activeMembers    Int
   pausedMembers    Int
@@ -470,4 +580,7 @@ model AnalyticsSnapshot {
   mrrInCents       Int // monthly recurring revenue approximation (qrr / 3)
   qrrInCents       Int // quarterly recurring revenue
   createdAt        DateTime @default(now())
+
+  @@unique([organizationId, snapshotDate])
+  @@index([organizationId])
 }

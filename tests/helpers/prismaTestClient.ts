@@ -10,13 +10,16 @@ import { PrismaPGlite } from 'pglite-prisma-adapter'
 // ARM64, where the native query engine DLL cannot load). It requires a driver
 // adapter, which is exactly how these tests run anyway.
 import { PrismaClient } from 'prisma-generated/wasm'
+import { withTenancy, clearDefaultOrgCache } from '../../src/lib/tenancy'
 import fs from 'fs'
 import path from 'path'
 
 export const pglite = new PGlite()
 
 const adapter = new PrismaPGlite(pglite)
-export const prisma = new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0])
+const base = new PrismaClient({ adapter } as ConstructorParameters<typeof PrismaClient>[0])
+// Same tenancy extension the app uses — tests exercise org scoping for real.
+export const prisma = withTenancy(base as never)
 
 let initialized = false
 
@@ -46,4 +49,6 @@ export async function resetDb(): Promise<void> {
       END LOOP;
     END $$;
   `)
+  // The default org row was truncated too — force re-creation on next query.
+  clearDefaultOrgCache()
 }

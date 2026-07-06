@@ -12,7 +12,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: 'Email is required' }, { status: 400 })
   }
 
-  const member = await prisma.member.findUnique({
+  const member = await prisma.member.findFirst({
     where: { email: email.toLowerCase().trim() },
   })
 

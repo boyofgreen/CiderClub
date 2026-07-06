@@ -1,6 +1,9 @@
-import { PrismaClient } from '@prisma/client'
+import { PrismaClient } from 'prisma-generated'
+import { withTenancy, resolveOrgId } from '../src/lib/tenancy'
 
-const prisma = new PrismaClient()
+const base = new PrismaClient()
+// Org-scoped client: creates are stamped with the default organization.
+const prisma = withTenancy(base)
 
 function slugify(text: string): string {
   return text
@@ -14,11 +17,14 @@ function slugify(text: string): string {
 async function main() {
   console.log('🌱 Seeding database...')
 
+  // Ensure the default organization exists and get its id for upsert keys
+  const orgId = await resolveOrgId(base)
+
   // ─── Plans ────────────────────────────────────────────────────────────────
 
   const plans = await Promise.all([
     prisma.plan.upsert({
-      where: { slug: '6-pack-quarterly' },
+      where: { organizationId_slug: { organizationId: orgId, slug: '6-pack-quarterly' } },
       update: { name: 'The Pickers', packsPerOrder: 3, sortOrder: 0 },
       create: {
         name: 'The Pickers',
@@ -31,7 +37,7 @@ async function main() {
       },
     }),
     prisma.plan.upsert({
-      where: { slug: '12-pack-quarterly' },
+      where: { organizationId_slug: { organizationId: orgId, slug: '12-pack-quarterly' } },
       update: { name: 'The Pressers', packsPerOrder: 6, sortOrder: 1 },
       create: {
         name: 'The Pressers',
@@ -44,7 +50,7 @@ async function main() {
       },
     }),
     prisma.plan.upsert({
-      where: { slug: '24-pack-quarterly' },
+      where: { organizationId_slug: { organizationId: orgId, slug: '24-pack-quarterly' } },
       update: { name: 'Cellar Crew', packsPerOrder: 9, sortOrder: 2 },
       create: {
         name: 'Cellar Crew',
@@ -124,7 +130,7 @@ async function main() {
   const products = await Promise.all(
     productData.map((p, i) =>
       prisma.product.upsert({
-        where: { slug: p.slug },
+        where: { organizationId_slug: { organizationId: orgId, slug: p.slug } },
         update: {},
         create: { ...p, sortOrder: i },
       })
@@ -151,7 +157,7 @@ async function main() {
   const pickupEndsAt = new Date(nextQuarterYear, (nextQuarterNum - 1) * 3 + 2, 31)
 
   const quarter = await prisma.quarter.upsert({
-    where: { label: quarterLabel },
+    where: { organizationId_label: { organizationId: orgId, label: quarterLabel } },
     update: {},
     create: {
       label: quarterLabel,
@@ -195,9 +201,9 @@ async function main() {
 }
 
 main()
-  .then(() => prisma.$disconnect())
+  .then(() => base.$disconnect())
   .catch(async (e) => {
     console.error(e)
-    await prisma.$disconnect()
+    await base.$disconnect()
     process.exit(1)
   })

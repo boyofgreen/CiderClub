@@ -14,7 +14,8 @@ const DEFAULTS: Record<string, string> = {
 }
 
 export async function getSetting(key: string): Promise<string | null> {
-  const row = await prisma.setting.findUnique({ where: { key } })
+  // findFirst (not findUnique) — the tenancy extension scopes it to the org
+  const row = await prisma.setting.findFirst({ where: { key } })
   return row?.value ?? DEFAULTS[key] ?? null
 }
 
@@ -39,11 +40,15 @@ export async function getWelcomeFollowupFrom(): Promise<string> {
 }
 
 export async function setSetting(key: string, value: string): Promise<void> {
-  await prisma.setting.upsert({
-    where: { key },
-    create: { key, value },
-    update: { value },
-  })
+  const existing = await prisma.setting.findFirst({ where: { key } })
+  if (existing) {
+    await prisma.setting.update({
+      where: { organizationId_key: { organizationId: existing.organizationId, key } },
+      data: { value },
+    })
+  } else {
+    await prisma.setting.create({ data: { key, value } })
+  }
 }
 
 export async function getAllSettings(): Promise<Record<string, string>> {

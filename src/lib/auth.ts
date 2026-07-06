@@ -40,7 +40,7 @@ export const authOptions: NextAuthOptions = {
       if (adminEmails.includes(email)) return true
 
       // Allow existing members (matched by email)
-      const member = await prisma.member.findUnique({ where: { email } })
+      const member = await prisma.member.findFirst({ where: { email } })
       if (member && member.status !== 'CANCELLED') return true
 
       // Deny everyone else — they should use the magic link or sign up first
@@ -61,7 +61,7 @@ export const authOptions: NextAuthOptions = {
         } else {
           token.role = 'MEMBER'
           // Find and link member record
-          const member = await prisma.member.findUnique({ where: { email } })
+          const member = await prisma.member.findFirst({ where: { email } })
           if (member) {
             token.memberId = member.id
             // Link OAuth user to member record if not already linked

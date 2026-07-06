@@ -158,7 +158,7 @@ export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
       } else {
         let slug = slugify(name)
         let suffix = 1
-        while (await prisma.product.findUnique({ where: { slug } })) {
+        while (await prisma.product.findFirst({ where: { slug } })) {
           slug = `${slugify(name)}-${suffix++}`
         }
         await prisma.product.create({

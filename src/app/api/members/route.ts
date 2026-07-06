@@ -29,7 +29,7 @@ export async function POST(req: Request) {
   }
 
   // Check if email already exists
-  const existing = await prisma.member.findUnique({
+  const existing = await prisma.member.findFirst({
     where: { email: parsed.data.email.toLowerCase() },
   })
   if (existing) {
