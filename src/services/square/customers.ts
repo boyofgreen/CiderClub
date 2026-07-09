@@ -1,6 +1,7 @@
-import { squareClient } from '@/lib/square'
+import { getSquareForOrg } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'crypto'
+import type { SquareClient } from 'square'
 
 interface MemberInfo {
   id: string
@@ -15,7 +16,7 @@ interface MemberInfo {
 }
 
 /** Find or create a Square customer group by name; returns the group ID */
-async function findOrCreateGroup(name: string): Promise<string> {
+async function findOrCreateGroup(squareClient: SquareClient, name: string): Promise<string> {
   const groups: { id?: string; name?: string }[] = []
   for await (const group of await squareClient.customers.groups.list()) {
     groups.push(group)
@@ -38,6 +39,7 @@ export async function createSquareCustomer(
   planName?: string,
   joinedAt?: Date,
 ): Promise<string> {
+  const { client: squareClient } = await getSquareForOrg()
   const existing = await searchSquareCustomerByEmail(member.email)
   if (existing) {
     await prisma.member.update({
@@ -47,7 +49,7 @@ export async function createSquareCustomer(
     // Still try to add to group if we have a plan name
     if (planName) {
       try {
-        const groupId = await findOrCreateGroup(planName)
+        const groupId = await findOrCreateGroup(squareClient, planName)
         await squareClient.customers.groups.add({ customerId: existing, groupId })
       } catch (err) {
         console.error('[Square] Failed to add existing customer to group:', err)
@@ -93,7 +95,7 @@ export async function createSquareCustomer(
   // Add to the plan group
   if (planName) {
     try {
-      const groupId = await findOrCreateGroup(planName)
+      const groupId = await findOrCreateGroup(squareClient, planName)
       await squareClient.customers.groups.add({ customerId, groupId })
     } catch (err) {
       console.error('[Square] Failed to add customer to group:', err)
@@ -110,6 +112,7 @@ export async function syncSquareCustomer(member: MemberInfo): Promise<void> {
     await createSquareCustomer(member)
     return
   }
+  const { client: squareClient } = await getSquareForOrg()
 
   await squareClient.customers.update({
     customerId: dbMember.squareCustomerId,
@@ -136,16 +139,17 @@ export async function changeMemberPlanInSquare(
   newPlanName: string,
 ): Promise<void> {
   const changeDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+  const { client: squareClient } = await getSquareForOrg()
 
   try {
-    const oldGroupId = await findOrCreateGroup(oldPlanName)
+    const oldGroupId = await findOrCreateGroup(squareClient, oldPlanName)
     await squareClient.customers.groups.remove({ customerId: squareCustomerId, groupId: oldGroupId })
   } catch (err) {
     console.error('[Square] Failed to remove old group:', err)
   }
 
   try {
-    const newGroupId = await findOrCreateGroup(newPlanName)
+    const newGroupId = await findOrCreateGroup(squareClient, newPlanName)
     await squareClient.customers.groups.add({ customerId: squareCustomerId, groupId: newGroupId })
   } catch (err) {
     console.error('[Square] Failed to add new group:', err)
@@ -165,6 +169,7 @@ export async function changeMemberPlanInSquare(
 /** Search Square for a customer by email; returns customerId or null */
 export async function searchSquareCustomerByEmail(email: string): Promise<string | null> {
   try {
+    const { client: squareClient } = await getSquareForOrg()
     const response = await squareClient.customers.search({
       query: {
         filter: {

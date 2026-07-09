@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { squareClient } from '@/lib/square'
+import { getSquareForOrg } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
 
 export interface ImportPreviewMember {
@@ -24,6 +24,7 @@ export async function GET() {
   }
 
   const plans = await prisma.plan.findMany()
+  const { client: squareClient } = await getSquareForOrg()
 
   const allGroups: { id: string; name: string }[] = []
   for await (const group of await squareClient.customers.groups.list()) {

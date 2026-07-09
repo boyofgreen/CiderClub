@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getAppSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
-import { squareClient, formatSquareError } from '@/lib/square'
+import { getSquareForOrg, formatSquareError } from '@/lib/square'
 import { createSquareCustomer } from '@/services/square/customers'
 
 // POST — save a card token (from Square Web Payments SDK) to a member's Square customer
@@ -32,6 +32,7 @@ export async function POST(req: Request) {
   }
 
   try {
+    const { client: squareClient } = await getSquareForOrg()
     const response = await squareClient.cards.create({
       idempotencyKey: `card-${member.id}-${Date.now()}`,
       sourceId,
@@ -64,6 +65,7 @@ export async function DELETE() {
   if (!member.squareCardId) return NextResponse.json({ ok: true })
 
   // Disable in Square — ignore failures (card may already be invalid there)
+  const { client: squareClient } = await getSquareForOrg()
   await squareClient.cards.disable({ cardId: member.squareCardId }).catch(() => {})
 
   await prisma.member.update({

@@ -1,18 +1,90 @@
 import { SquareClient, SquareEnvironment } from 'square'
 import { config } from '@/lib/config'
+import { prisma } from '@/lib/prisma'
+import { getContextOrgId, resolveOrgId, DEFAULT_ORG_ID } from '@/lib/tenancy'
+import { getValidAccessToken } from '@/lib/squareTokens'
 
 // SQUARE_ENVIRONMENT explicitly controls which Square API the app talks to.
 // Set to 'production' for live tokens, 'sandbox' for test tokens.
 // Defaults to sandbox unless explicitly set to production.
+const squareEnvironment =
+  config.square.environment === 'production'
+    ? SquareEnvironment.Production
+    : SquareEnvironment.Sandbox
+
+/**
+ * Legacy env-credential client. Only valid for tenant zero (the original
+ * club) until it completes the OAuth connect flow. New code should use
+ * getSquareForOrg() instead.
+ */
 export const squareClient = new SquareClient({
   token: config.square.accessToken ?? 'sandbox-placeholder',
-  environment:
-    config.square.environment === 'production'
-      ? SquareEnvironment.Production
-      : SquareEnvironment.Sandbox,
+  environment: squareEnvironment,
 })
 
 export const squareConfigured = config.square.configured
+
+export interface OrgSquare {
+  /** SquareClient authorized as the org's merchant (or env fallback). */
+  client: SquareClient
+  locationId: string | null
+  merchantId: string | null
+  /** False when this org has no usable Square connection. */
+  configured: boolean
+}
+
+/**
+ * Square client for the CURRENT org (from tenant context). Per-org OAuth
+ * tokens (encrypted on the Organization row, refreshed transparently) take
+ * priority; tenant zero falls back to the legacy env credentials so the
+ * original club keeps working before it re-connects via OAuth.
+ */
+export async function getSquareForOrg(): Promise<OrgSquare> {
+  const orgId = getContextOrgId() ?? (await resolveOrgId(prisma))
+  const org = await prisma.organization.findUnique({
+    where: { id: orgId },
+    select: {
+      id: true,
+      squareMerchantId: true,
+      squareLocationId: true,
+      squareAccessToken: true,
+      squareRefreshToken: true,
+      squareTokenExpiresAt: true,
+    },
+  })
+
+  if (org?.squareAccessToken) {
+    const token = await getValidAccessToken(org)
+    if (token) {
+      return {
+        client: new SquareClient({ token, environment: squareEnvironment }),
+        locationId: org.squareLocationId,
+        merchantId: org.squareMerchantId,
+        configured: Boolean(org.squareLocationId),
+      }
+    }
+  }
+
+  // Tenant zero legacy fallback: env credentials
+  if (orgId === DEFAULT_ORG_ID && config.square.accessToken) {
+    return {
+      client: squareClient,
+      locationId: config.square.locationId ?? null,
+      merchantId: org?.squareMerchantId ?? null,
+      configured: Boolean(config.square.locationId),
+    }
+  }
+
+  return { client: squareClient, locationId: null, merchantId: null, configured: false }
+}
+
+/** Thrown by money paths when an org hasn't connected Square yet. */
+export class SquareNotConnectedError extends Error {
+  constructor() {
+    super('Square is not connected for this club. Connect it in Settings → Payments.')
+    this.name = 'SquareNotConnectedError'
+  }
+}
 
 /**
  * Square SDK uses BigInt for monetary amounts.

@@ -1,4 +1,4 @@
-import { squareClient } from '@/lib/square'
+import { getSquareForOrg } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
 import { randomUUID } from 'crypto'
 
@@ -9,6 +9,7 @@ export async function saveCardOnFile(params: {
   cardNonce: string
   cardholderName?: string
 }): Promise<{ cardId: string; last4: string; brand: string }> {
+  const { client: squareClient } = await getSquareForOrg()
   const response = await squareClient.cards.create({
     idempotencyKey: randomUUID(),
     sourceId: params.cardNonce,
@@ -35,6 +36,7 @@ export async function saveCardOnFile(params: {
 /** Retrieve card details for display (last4, brand, expiry) */
 export async function getCardDetails(cardId: string) {
   try {
+    const { client: squareClient } = await getSquareForOrg()
     const response = await squareClient.cards.get({ cardId })
     const card = response.card
     if (!card) return null
@@ -52,6 +54,7 @@ export async function getCardDetails(cardId: string) {
 
 /** Remove a card from Square and clear from member record */
 export async function removeCardOnFile(memberId: string, cardId: string): Promise<void> {
+  const { client: squareClient } = await getSquareForOrg()
   await squareClient.cards.disable({ cardId }).catch(() => {})
   await prisma.member.update({
     where: { id: memberId },

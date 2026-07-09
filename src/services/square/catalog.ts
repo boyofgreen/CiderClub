@@ -1,5 +1,6 @@
-import { squareClient } from '@/lib/square'
+import { getSquareForOrg, SquareNotConnectedError } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
+import type { SquareClient } from 'square'
 
 const CIDER_CLUB_CATEGORY = 'Cider Club'
 
@@ -23,7 +24,7 @@ function slugify(name: string): string {
 }
 
 /** Find the Square category whose name matches "Cider Club" */
-async function findCiderClubCategoryId(): Promise<string | null> {
+async function findCiderClubCategoryId(squareClient: SquareClient): Promise<string | null> {
   let count = 0
   const page = await squareClient.catalog.list({ types: 'CATEGORY' })
   for await (const obj of page) {
@@ -51,9 +52,12 @@ export interface SyncResult {
 export async function syncCiderClubProductsFromSquare(): Promise<SyncResult> {
   console.log('[square-sync] Starting catalog sync')
 
+  const { client: squareClient, configured } = await getSquareForOrg()
+  if (!configured) throw new SquareNotConnectedError()
+
   let categoryId: string | null
   try {
-    categoryId = await findCiderClubCategoryId()
+    categoryId = await findCiderClubCategoryId(squareClient)
   } catch (err) {
     const msg = err instanceof Error ? err.message : String(err)
     throw new Error(`Square catalog.list() failed: ${msg}`)

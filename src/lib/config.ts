@@ -59,8 +59,25 @@ export const config = {
     },
   },
 
-  /** Becomes per-tenant (Square OAuth tokens on the Organization) in Phase 3. */
+  /**
+   * Platform-level Square app credentials (OAuth client). Per-tenant access
+   * tokens live encrypted on the Organization record; the env accessToken is
+   * only the legacy fallback for tenant zero.
+   */
   square: {
+    /** OAuth client id — the Square Application ID. */
+    get appId(): string | undefined {
+      return process.env.SQUARE_APP_ID ?? process.env.NEXT_PUBLIC_SQUARE_APP_ID
+    },
+    get appSecret(): string | undefined {
+      return process.env.SQUARE_APP_SECRET
+    },
+    /** Base URL for OAuth endpoints (sandbox vs production). */
+    get oauthBaseUrl(): string {
+      return process.env.SQUARE_ENVIRONMENT?.toLowerCase() === 'production'
+        ? 'https://connect.squareup.com'
+        : 'https://connect.squareupsandbox.com'
+    },
     get accessToken(): string | undefined {
       return process.env.SQUARE_ACCESS_TOKEN
     },

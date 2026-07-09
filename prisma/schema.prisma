@@ -59,11 +59,14 @@ model Organization {
   customDomain String? @unique // e.g. "club.hillcountryciderhouse.com"
   settings     Json    @default("{}") // theme, terminology, feature flags
 
-  // Per-tenant integrations (populated by later phases; Square OAuth tokens
-  // will be stored encrypted when Phase 3 lands)
-  squareMerchantId String? @unique
-  squareLocationId String?
-  fromEmail        String?
+  // Per-tenant Square connection (OAuth). Tokens are encrypted at rest with
+  // AES-256-GCM (src/lib/crypto.ts) — never store them in plaintext.
+  squareMerchantId     String?   @unique
+  squareLocationId     String?
+  squareAccessToken    String? // encrypted
+  squareRefreshToken   String? // encrypted
+  squareTokenExpiresAt DateTime?
+  fromEmail            String?
 
   // Platform billing (Phase 5)
   planTier    String    @default("FOUNDER") // FOUNDER | TRIAL | STARTER | GROWTH | PRO

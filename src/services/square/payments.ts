@@ -1,7 +1,6 @@
-import { squareClient } from '@/lib/square'
+import { getSquareForOrg, SquareNotConnectedError } from '@/lib/square'
 import { prisma } from '@/lib/prisma'
 import { clubName } from '@/lib/resend'
-import { config } from '@/lib/config'
 import type { Square } from 'square'
 
 export interface LineItemParam {
@@ -116,8 +115,8 @@ function buildOrderBody(params: {
 
 /** Charge a saved card on file, creating a proper itemized Square Order first */
 export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResult> {
-  const locationId = config.square.locationId
-  if (!locationId) throw new Error('SQUARE_LOCATION_ID is not configured')
+  const { client: squareClient, locationId, configured } = await getSquareForOrg()
+  if (!configured || !locationId) throw new SquareNotConnectedError()
 
   // 1. Create a Square Order with line items and pickup fulfillment
   const orderResponse = await squareClient.orders.create({
@@ -176,8 +175,8 @@ export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResu
 export async function createPaymentLink(
   params: PaymentLinkParams
 ): Promise<{ url: string; linkId: string }> {
-  const locationId = config.square.locationId
-  if (!locationId) throw new Error('SQUARE_LOCATION_ID is not configured')
+  const { client: squareClient, locationId, configured } = await getSquareForOrg()
+  if (!configured || !locationId) throw new SquareNotConnectedError()
 
   const response = await squareClient.checkout.paymentLinks.create({
     idempotencyKey: `order-link-${params.orderId}`,

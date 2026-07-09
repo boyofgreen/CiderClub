@@ -4,9 +4,23 @@
  * real helper functions. Services under test (payments, customers, cards,
  * inventory) run their actual logic against this fake.
  */
-export { serializeSquare, toCents, toDollars, formatSquareError } from '../../src/lib/square'
+export { serializeSquare, toCents, toDollars, formatSquareError, SquareNotConnectedError } from '../../src/lib/square'
 
 export const squareConfigured = true
+
+/**
+ * Per-org client accessor — tests always get the fake client, "connected"
+ * with a test location. The real implementation is tested directly in
+ * tests/services/squareTenant.test.ts via a relative import.
+ */
+export async function getSquareForOrg() {
+  return {
+    client: squareClient,
+    locationId: process.env.SQUARE_LOCATION_ID ?? 'TEST_LOCATION',
+    merchantId: 'TEST_MERCHANT',
+    configured: true,
+  }
+}
 
 interface FakeLineItem {
   quantity: string
