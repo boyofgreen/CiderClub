@@ -35,7 +35,7 @@ export default function NewCampaignPage() {
     const res = await fetch('/api/campaigns', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ subject, bodyMarkdown, recipientFilter: JSON.stringify(filter) }),
+      body: JSON.stringify({ subject, bodyMarkdown, recipientFilter: filter }),
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
