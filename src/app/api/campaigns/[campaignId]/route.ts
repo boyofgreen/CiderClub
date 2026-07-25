@@ -54,3 +54,23 @@ export async function PATCH(
   const updated = await prisma.campaign.update({ where: { id: params.campaignId }, data })
   return NextResponse.json({ campaign: updated })
 }
+
+// DELETE — remove a draft. Sent campaigns are kept for the record.
+export async function DELETE(
+  _req: Request,
+  { params }: { params: { campaignId: string } }
+) {
+  const session = await getServerSession(authOptions)
+  if (session?.user.role !== 'ADMIN') {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+  }
+
+  const campaign = await prisma.campaign.findUnique({ where: { id: params.campaignId } })
+  if (!campaign) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (campaign.status === 'SENT') {
+    return NextResponse.json({ error: 'Sent campaigns cannot be deleted — they are your send history.' }, { status: 409 })
+  }
+
+  await prisma.campaign.delete({ where: { id: params.campaignId } })
+  return NextResponse.json({ ok: true })
+}
