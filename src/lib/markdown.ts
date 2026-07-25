@@ -22,6 +22,13 @@ function escapeHtml(s: string): string {
 // Apply inline markdown to an already-HTML-escaped string.
 function inline(s: string): string {
   let out = s
+  // images: ![alt](url) — must run before links since the syntax nests.
+  // https only (email clients block or distrust anything else); inline
+  // max-width so images scale in clients that ignore <style> blocks.
+  out = out.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_m, alt: string, url: string) => {
+    if (!/^https:\/\//.test(url)) return alt
+    return `<img src="${url}" alt="${alt}" style="max-width:100%;height:auto;border:0;display:block;margin:0 auto;" />`
+  })
   // links: [text](url) — allow http(s), mailto, root-relative, or a {{var}} url
   out = out.replace(/\[([^\]]+)\]\(([^)\s]+)\)/g, (_m, text: string, url: string) => {
     const safe = /^(https?:\/\/|mailto:|\/|\{\{)/.test(url) ? url : '#'

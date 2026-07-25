@@ -385,3 +385,9 @@
   color: #9c9484;
   font-style: italic;
 }
+.campaign-preview img {
+  max-width: 100%;
+  height: auto;
+  display: block;
+  margin: 0 auto 14px;
+}

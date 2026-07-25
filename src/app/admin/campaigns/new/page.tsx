@@ -115,9 +115,10 @@ export default function NewCampaignPage() {
           )}
           <p className="text-xs text-stone-400">
             Write in Markdown — <code>## Heading</code>, <code>**bold**</code>, <code>*italic*</code>,{' '}
-            <code>- bullet</code>, <code>[link](url)</code>. Use <code>{'{{firstName}}'}</code>,{' '}
-            <code>{'{{lastName}}'}</code>, or <code>{'{{email}}'}</code> to personalize. Your message is
-            automatically wrapped in the club letterhead.
+            <code>- bullet</code>, <code>[link](url)</code>, <code>![caption](image-url)</code>. Use{' '}
+            <code>{'{{firstName}}'}</code>, <code>{'{{lastName}}'}</code>, or <code>{'{{email}}'}</code> to
+            personalize. Your message is automatically wrapped in the club letterhead. Image URLs must be
+            https — tip: copy a label image URL from any product&apos;s edit screen.
           </p>
         </div>
 

@@ -25,6 +25,7 @@ export function baseTemplate(content: string): string {
   .body ul, .body ol { color: #4a4334; font-size: 15px; line-height: 1.7; padding-left: 20px; margin: 0 0 14px; }
   .body li { margin-bottom: 6px; }
   .body strong { color: #1d1a14; font-weight: 600; }
+  .body img { max-width: 100%; height: auto; border: 0; }
   .body a { color: #b65a3c; text-decoration: underline; }
   .btn { display: inline-block; background: #b65a3c; color: #f7f1e3 !important; text-decoration: none !important; padding: 13px 32px; font-weight: 600; font-size: 12px; margin: 8px 0 16px; letter-spacing: 0.12em; text-transform: uppercase; }
   .rule { border: none; border-top: 1px solid rgba(201,161,74,0.4); margin: 24px 0; }
