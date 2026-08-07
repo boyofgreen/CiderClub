@@ -41,6 +41,12 @@ export default function CampaignDetailPage() {
   const [confirmDelete, setConfirmDelete] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  // Test send
+  const [testEmail, setTestEmail] = useState('')
+  const [sendingTest, setSendingTest] = useState(false)
+  const [testResult, setTestResult] = useState<string | null>(null)
+  const [testError, setTestError] = useState<string | null>(null)
+
   // Edit mode
   const [editing, setEditing] = useState(false)
   const [editPreview, setEditPreview] = useState(false)
@@ -52,7 +58,29 @@ export default function CampaignDetailPage() {
       .then((r) => r.json())
       .then((d) => setCampaign(d.campaign))
       .finally(() => setLoading(false))
+    // Remember the last test address across campaigns
+    try { setTestEmail(localStorage.getItem('campaignTestEmail') ?? '') } catch { /* ok */ }
   }, [campaignId])
+
+  async function handleSendTest() {
+    if (!testEmail.trim()) return
+    setSendingTest(true)
+    setTestResult(null)
+    setTestError(null)
+    const res = await fetch(`/api/campaigns/${campaignId}/send-test`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: testEmail.trim() }),
+    })
+    const data = await res.json().catch(() => ({}))
+    if (res.ok) {
+      setTestResult(`Test sent to ${testEmail.trim()} — check your inbox.`)
+      try { localStorage.setItem('campaignTestEmail', testEmail.trim()) } catch { /* ok */ }
+    } else {
+      setTestError(data.error ?? 'Test send failed')
+    }
+    setSendingTest(false)
+  }
 
   function startEditing() {
     if (!campaign) return
@@ -269,6 +297,41 @@ export default function CampaignDetailPage() {
               {campaign.bodyMarkdown ?? campaign.bodyHtml}
             </pre>
           )}
+        </div>
+      )}
+
+      {/* Test send */}
+      {isDraft && !editing && (
+        <div className="border bg-cream-paper p-6 shadow-sm" style={{ borderColor: 'var(--rule)' }}>
+          <h2 className="font-semibold text-stone-900 mb-1">Send a Test First</h2>
+          <p className="text-sm text-stone-500 mb-4">
+            Email yourself a preview before sending to members. The subject is prefixed with
+            [Test] and it doesn&apos;t affect the campaign.
+          </p>
+          {testResult && <Alert type="success" message={testResult} className="mb-3" />}
+          {testError && <Alert type="error" message={testError} className="mb-3" />}
+          <div className="flex flex-wrap items-center gap-2">
+            <input
+              type="email"
+              className="input flex-1 min-w-[220px]"
+              placeholder="you@hillcountryciderhouse.com"
+              value={testEmail}
+              onChange={(e) => setTestEmail(e.target.value)}
+              onKeyDown={(e) => { if (e.key === 'Enter') handleSendTest() }}
+            />
+            <Button
+              variant="secondary"
+              onClick={handleSendTest}
+              loading={sendingTest}
+              disabled={!testEmail.trim()}
+            >
+              <Send className="h-3.5 w-3.5" /> Send Test
+            </Button>
+          </div>
+          <p className="mt-2 text-xs text-stone-400">
+            If the address belongs to a member, their real name fills the {'{{firstName}}'} placeholders;
+            otherwise sample values are used.
+          </p>
         </div>
       )}
 
