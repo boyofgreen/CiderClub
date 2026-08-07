@@ -70,7 +70,11 @@ export default function CampaignDetailPage() {
     const res = await fetch(`/api/campaigns/${campaignId}/send-test`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: testEmail.trim() }),
+      body: JSON.stringify({
+        email: testEmail.trim(),
+        // While editing, test the live editor content — not the saved draft
+        ...(editing ? { subject: editForm.subject, bodyMarkdown: editForm.bodyMarkdown } : {}),
+      }),
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
@@ -301,12 +305,13 @@ export default function CampaignDetailPage() {
       )}
 
       {/* Test send */}
-      {isDraft && !editing && (
+      {isDraft && (
         <div className="border bg-cream-paper p-6 shadow-sm" style={{ borderColor: 'var(--rule)' }}>
           <h2 className="font-semibold text-stone-900 mb-1">Send a Test First</h2>
           <p className="text-sm text-stone-500 mb-4">
-            Email yourself a preview before sending to members. The subject is prefixed with
-            [Test] and it doesn&apos;t affect the campaign.
+            {editing
+              ? 'Tests exactly what’s in the editor right now — including unsaved changes. The subject is prefixed with [Test].'
+              : 'Email yourself a preview before sending to members. The subject is prefixed with [Test] and it doesn’t affect the campaign.'}
           </p>
           {testResult && <Alert type="success" message={testResult} className="mb-3" />}
           {testError && <Alert type="error" message={testError} className="mb-3" />}

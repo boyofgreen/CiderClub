@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/services/email/sender'
 import { interpolate, baseTemplate } from '@/lib/emailTemplates'
+import { markdownToHtml } from '@/lib/markdown'
 
 // POST /api/campaigns/[campaignId]/send-test — send a single preview copy to
 // one address. Does not touch the campaign's status or sent count.
@@ -25,6 +26,15 @@ export async function POST(
   const campaign = await prisma.campaign.findUnique({ where: { id: params.campaignId } })
   if (!campaign) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
+  // Optional overrides so the draft editor can test unsaved content exactly
+  // as it currently reads, without saving first.
+  const subjectTpl = typeof body.subject === 'string' && body.subject.trim()
+    ? body.subject
+    : campaign.subject
+  const bodyHtmlTpl = typeof body.bodyMarkdown === 'string' && body.bodyMarkdown.trim()
+    ? markdownToHtml(body.bodyMarkdown)
+    : campaign.bodyHtml
+
   // If the address belongs to a member, personalize with their real details so
   // the test reads exactly like the live send; otherwise use sample values.
   const member = await prisma.member.findUnique({ where: { email } })
@@ -35,8 +45,8 @@ export async function POST(
   try {
     await sendEmail({
       to: email,
-      subject: `[Test] ${interpolate(campaign.subject, vars)}`,
-      html: baseTemplate(interpolate(campaign.bodyHtml, vars)),
+      subject: `[Test] ${interpolate(subjectTpl, vars)}`,
+      html: baseTemplate(interpolate(bodyHtmlTpl, vars)),
       type: 'CAMPAIGN_TEST',
       memberId: member?.id,
       metadata: { campaignId: campaign.id },
