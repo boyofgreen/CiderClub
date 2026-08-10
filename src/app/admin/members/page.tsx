@@ -18,10 +18,21 @@ export default async function AdminMembersPage({
   const status = searchParams.status
   const search = searchParams.search
 
+  // Case-insensitive search; each word must match a name or email so
+  // "jason smi" finds Jason Smith.
+  const terms = (search ?? '').trim().split(/\s+/).filter(Boolean)
   const where = {
     ...(status ? { status } : {}),
-    ...(search
-      ? { OR: [{ firstName: { contains: search } }, { lastName: { contains: search } }, { email: { contains: search } }] }
+    ...(terms.length
+      ? {
+          AND: terms.map((term) => ({
+            OR: [
+              { firstName: { contains: term, mode: 'insensitive' as const } },
+              { lastName: { contains: term, mode: 'insensitive' as const } },
+              { email: { contains: term, mode: 'insensitive' as const } },
+            ],
+          })),
+        }
       : {}),
   }
 
