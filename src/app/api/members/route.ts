@@ -64,15 +64,20 @@ export async function GET(req: Request) {
   const page = parseInt(url.searchParams.get('page') ?? '1')
   const limit = parseInt(url.searchParams.get('limit') ?? '25')
 
+  // Case-insensitive search; each word must match a name or email so
+  // "jason smi" finds Jason Smith.
+  const terms = (search ?? '').trim().split(/\s+/).filter(Boolean)
   const where = {
     ...(status ? { status } : {}),
-    ...(search
+    ...(terms.length
       ? {
-          OR: [
-            { firstName: { contains: search } },
-            { lastName: { contains: search } },
-            { email: { contains: search } },
-          ],
+          AND: terms.map((term) => ({
+            OR: [
+              { firstName: { contains: term, mode: 'insensitive' as const } },
+              { lastName: { contains: term, mode: 'insensitive' as const } },
+              { email: { contains: term, mode: 'insensitive' as const } },
+            ],
+          })),
         }
       : {}),
   }
