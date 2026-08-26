@@ -95,7 +95,7 @@ export default async function AdminEventDetailPage({
           endpoint={`/api/events/${event.id}/send-alert`}
           label="Send event alert"
           confirm={`Announce "${event.title}" to all members who opted into event alerts?`}
-          successText={(n) => `Alerted ${n} member${n !== 1 ? 's' : ''}.`}
+          successText="Alerted {n} member{s}."
         />
       </Card>
 

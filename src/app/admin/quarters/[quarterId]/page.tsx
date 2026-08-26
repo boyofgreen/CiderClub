@@ -231,7 +231,7 @@ export default async function QuarterDetailPage({
                 endpoint={`/api/quarters/${quarter.id}/send-reminders`}
                 label="Send customization reminders"
                 confirm={`Send a customization reminder to the ${pendingCount} member${pendingCount !== 1 ? 's' : ''} who haven't customized yet?`}
-                successText={(n) => `Reminded ${n} member${n !== 1 ? 's' : ''}.`}
+                successText="Reminded {n} member{s}."
               />
             )}
             <Link href={`/admin/orders?quarter=${quarter.id}`} className="text-xs text-terracotta hover:text-terracotta-deep">

@@ -88,13 +88,13 @@ export default async function AdminPickupDetailPage({
             endpoint={`/api/pickups/${event.id}/send-reminders`}
             label="Send pickup reminder"
             confirm="Send a pickup reminder to all members with an order this quarter?"
-            successText={(n) => `Reminded ${n} member${n !== 1 ? 's' : ''}.`}
+            successText="Reminded {n} member{s}."
           />
           <EmailActionButton
             endpoint={`/api/pickups/${event.id}/send-alert`}
             label="Send event alert"
             confirm="Announce this event to all members who opted into event alerts?"
-            successText={(n) => `Alerted ${n} member${n !== 1 ? 's' : ''}.`}
+            successText="Alerted {n} member{s}."
           />
         </div>
       </Card>

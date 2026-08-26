@@ -7,8 +7,13 @@ interface Props {
   endpoint: string
   label: string
   confirm: string
-  /** Builds the success message from the API's `sent` count */
-  successText?: (sent: number) => string
+  /**
+   * Success message template. `{n}` is replaced with the API's `sent` count and
+   * `{s}` becomes "s" when that count isn't 1 (e.g. "Reminded {n} member{s}.").
+   * Must be a plain string — this component is rendered from server components,
+   * which cannot pass functions as props.
+   */
+  successText?: string
 }
 
 /** Small admin button that POSTs to an email-sending endpoint and reports the result. */
@@ -27,7 +32,12 @@ export function EmailActionButton({ endpoint, label, confirm, successText }: Pro
       const d = await r.json().catch(() => ({}))
       if (r.ok) {
         const sent = typeof d.sent === 'number' ? d.sent : 0
-        setResult(successText ? successText(sent) : `Sent ${sent} email${sent !== 1 ? 's' : ''}.`)
+        const plural = sent !== 1 ? 's' : ''
+        setResult(
+          successText
+            ? successText.replaceAll('{n}', String(sent)).replaceAll('{s}', plural)
+            : `Sent ${sent} email${plural}.`
+        )
       } else {
         setError(d.error ?? 'Failed to send.')
       }
