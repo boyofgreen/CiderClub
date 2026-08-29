@@ -115,16 +115,16 @@ export default async function LandingPage() {
 
           <nav className="hidden lg:flex items-center" style={{ gap: 32 }}>
             {[
-              { label: 'TASTING ROOM',       href: 'https://www.hillcountryciderhouse.com/tasting-room' },
-              { label: "SATURDAY'S IN COMFORT", href: 'https://www.hillcountryciderhouse.com/private-tastings-comfort-tx' },
-              { label: 'APPLE TREES',        href: 'https://www.hillcountryciderhouse.com/apple-trees' },
-              { label: 'ABOUT',              href: 'https://www.hillcountryciderhouse.com/about' },
-              { label: 'CONTACT',            href: 'https://www.hillcountryciderhouse.com/contact' },
+              { label: 'TASTING ROOM',          href: '/tasting-room' },
+              { label: "SATURDAY'S IN COMFORT", href: '/saturdays-in-comfort' },
+              { label: 'APPLE TREES',           href: '/apple-trees' },
+              { label: 'ABOUT',                 href: '/about' },
+              { label: 'CONTACT',               href: '/contact' },
             ].map(({ label, href }) => (
-              <a key={label} href={href} target="_blank" rel="noopener noreferrer"
+              <Link key={label} href={href}
                 style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-soft)', textDecoration: 'none' }}>
                 {label}
-              </a>
+              </Link>
             ))}
             <Link href="/register"
               style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--navy)', textDecoration: 'none', borderBottom: '2px solid var(--gold)', paddingBottom: 2 }}>
@@ -428,10 +428,10 @@ export default async function LandingPage() {
               {
                 heading: 'VISIT',
                 items: [
-                  { label: 'Tasting Room', href: 'https://www.hillcountryciderhouse.com/tasting-room' },
-                  { label: 'Saturdays in Comfort', href: 'https://www.hillcountryciderhouse.com/private-tastings-comfort-tx' },
-                  { label: 'Apple Trees', href: 'https://www.hillcountryciderhouse.com/apple-trees' },
-                  { label: 'Supper Club', href: 'https://ticketscandy.com/e/the-italian-table-a-summer-supper-in-the-hill-country-by-hill-country-cider-house-16385' },
+                  { label: 'Tasting Room', href: '/tasting-room' },
+                  { label: 'Saturdays in Comfort', href: '/saturdays-in-comfort' },
+                  { label: 'Apple Trees', href: '/apple-trees' },
+                  { label: 'Supper Club', href: 'https://ticketscandy.com/e/grown-local-supper-club-in-the-hill-country-by-hill-country-cider-house-19070' },
                 ],
               },
               {
@@ -439,7 +439,7 @@ export default async function LandingPage() {
                 items: [
                   { label: 'Join the Club', href: '/register' },
                   { label: 'Member Sign-in', href: '/magic/request' },
-                  { label: 'FAQs', href: 'https://www.hillcountryciderhouse.com/faqs' },
+                  { label: 'FAQs', href: '/apple-trees' },
                   { label: 'Pickup Schedule', href: null },
                 ],
               },
