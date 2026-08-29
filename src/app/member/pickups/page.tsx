@@ -89,7 +89,7 @@ export default async function MemberPickupsPage() {
               <div
                 key={event.id}
                 className="flex items-center justify-between border px-4 py-3 opacity-60"
-                style={{ backgroundColor: 'var(--cream-paper)', borderColor: 'var(--rule)' }}
+                style={{ backgroundColor: 'var(--paper)', borderColor: 'var(--rule)' }}
               >
                 <div>
                   <span className="font-medium text-stone-700">{event.title}</span>

@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { formatCents } from '@/lib/utils'
 import { Users, TrendingUp, ShoppingBag, ArrowRight } from 'lucide-react'
 import { RangePicker } from './RangePicker'
+import { PATH_LABELS } from '@/lib/siteInfo'
 
 export const metadata = { title: 'Analytics' }
 
@@ -57,20 +58,27 @@ async function getStats(from: Date, to: Date) {
     topProducts,
     quarterRevenue,
     // Acquisition funnel (within range)
-    homepageViews,
+    siteViews,
+    clubViews,
     registerViews,
     newMembers,
     // Raw views for the traffic chart
     rangeViews,
     // Top referrers (within range)
     topReferrers,
+    // Views per page
+    viewsByPath,
   ] = await Promise.all([
     prisma.member.groupBy({ by: ['status'], _count: { _all: true } }),
     prisma.order.groupBy({ by: ['status'], _count: { _all: true } }),
     prisma.order.aggregate({ where: { status: 'BILLED' }, _sum: { totalInCents: true } }),
     prisma.orderItem.groupBy({ by: ['productId'], _sum: { quantity: true }, orderBy: { _sum: { quantity: 'desc' } }, take: 8 }),
     prisma.order.groupBy({ by: ['quarterId'], where: { status: 'BILLED' }, _sum: { totalInCents: true }, _count: { _all: true } }),
-    prisma.pageView.count({ where: { path: '/', createdAt: inRange } }),
+    // Any marketing page counts as a site visit at the top of the funnel
+    prisma.pageView.count({
+      where: { path: { notIn: ['/club', '/register', '/magic/request'] }, createdAt: inRange },
+    }),
+    prisma.pageView.count({ where: { path: '/club', createdAt: inRange } }),
     prisma.pageView.count({ where: { path: '/register', createdAt: inRange } }),
     prisma.member.count({ where: { createdAt: inRange } }),
     prisma.pageView.findMany({
@@ -83,6 +91,13 @@ async function getStats(from: Date, to: Date) {
       _count: { _all: true },
       orderBy: { _count: { referrer: 'desc' } },
       take: 8,
+    }),
+    prisma.pageView.groupBy({
+      by: ['path'],
+      where: { createdAt: inRange },
+      _count: { _all: true },
+      orderBy: { _count: { path: 'desc' } },
+      take: 12,
     }),
   ])
 
@@ -122,12 +137,17 @@ async function getStats(from: Date, to: Date) {
     quarterRevenue: quarterRevenue
       .sort((a, b) => quarterLabel(b.quarterId).localeCompare(quarterLabel(a.quarterId)))
       .map((r) => ({ label: quarterLabel(r.quarterId), revenue: r._sum.totalInCents ?? 0, orders: r._count._all })),
-    funnel: { homepageViews, registerViews, newMembers },
+    funnel: { siteViews, clubViews, registerViews, newMembers },
     traffic,
     trafficStep: stepDays,
     topReferrers: topReferrers
       .filter((r) => r.referrer)
       .map((r) => ({ referrer: r.referrer!, count: r._count._all })),
+    topPages: viewsByPath.map((r) => ({
+      path: r.path,
+      label: PATH_LABELS[r.path] ?? r.path,
+      count: r._count._all,
+    })),
   }
 }
 
@@ -186,7 +206,8 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Se
   // Thin out x-axis labels when there are many bars
   const labelEvery = Math.ceil(stats.traffic.length / 16)
 
-  const { homepageViews, registerViews, newMembers } = stats.funnel
+  const { siteViews, clubViews, registerViews, newMembers } = stats.funnel
+  const maxPageViews = Math.max(...stats.topPages.map((p) => p.count), 1)
 
   return (
     <div className="space-y-8">
@@ -213,10 +234,16 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Se
         </div>
         <div className="flex flex-col sm:flex-row gap-2 sm:items-start">
           <FunnelStep
-            label="Homepage Visits"
-            count={homepageViews}
-            sub="unique tab sessions"
-            rate={pct(registerViews, homepageViews)}
+            label="Site Visits"
+            count={siteViews}
+            sub="all marketing pages"
+            rate={pct(clubViews, siteViews)}
+          />
+          <FunnelStep
+            label="Cider Club Page"
+            count={clubViews}
+            sub="/club"
+            rate={pct(registerViews, clubViews)}
           />
           <FunnelStep
             label="Join Page Views"
@@ -231,7 +258,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Se
             last
           />
         </div>
-        {homepageViews === 0 && (
+        {siteViews === 0 && (
           <p className="text-xs text-stone-400 mt-4 italic">
             No visit data in this range — tracking starts once the site receives traffic.
           </p>
@@ -268,6 +295,37 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Se
         </div>
         {stats.traffic.every((d) => d.count === 0) && (
           <p className="text-xs text-stone-400 mt-2 italic text-center">No traffic recorded in this range.</p>
+        )}
+      </div>
+
+      {/* ── TOP PAGES ── */}
+      <div className="border bg-cream-paper p-6 shadow-sm" style={{ borderColor: 'var(--rule)' }}>
+        <div className="flex items-baseline justify-between mb-4">
+          <h2 className="font-semibold text-stone-900">Top Pages</h2>
+          <span className="text-xs text-stone-400">{range.label}</span>
+        </div>
+        {stats.topPages.length === 0 ? (
+          <p className="text-sm text-stone-400 py-4 text-center">No page views in this range.</p>
+        ) : (
+          <div className="space-y-3">
+            {stats.topPages.map(({ path, label, count }) => (
+              <div key={path}>
+                <div className="flex items-center justify-between text-sm mb-1">
+                  <span className="text-stone-700">
+                    {label}
+                    <span className="ml-2 text-xs text-stone-400">{path}</span>
+                  </span>
+                  <span className="font-semibold text-stone-900">{count.toLocaleString()}</span>
+                </div>
+                <div className="h-1.5 bg-stone-100">
+                  <div
+                    className="h-1.5 bg-terracotta transition-all"
+                    style={{ width: `${Math.round((count / maxPageViews) * 100)}%` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
         )}
       </div>
 

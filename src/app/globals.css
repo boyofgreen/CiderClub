@@ -391,3 +391,28 @@
   display: block;
   margin: 0 auto 14px;
 }
+
+@layer components {
+  /* Outlined button for light/paper backgrounds */
+  .btn-outline-ink {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 13px 28px;
+    background-color: transparent;
+    color: var(--ink);
+    font-family: var(--font-sans, system-ui, sans-serif);
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    border: 1.5px solid var(--rule-strong);
+    cursor: pointer;
+    transition: background-color 0.15s, border-color 0.15s;
+  }
+  .btn-outline-ink:hover {
+    border-color: var(--gold-deep);
+    background-color: var(--cream-deep);
+  }
+}

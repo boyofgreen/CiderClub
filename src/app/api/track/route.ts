@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { TRACKED_PATHS } from '@/lib/siteInfo'
 
-const ALLOWED_PATHS = new Set(['/', '/register', '/magic/request'])
+const ALLOWED_PATHS = new Set<string>(TRACKED_PATHS)
 
 export async function POST(req: Request) {
   try {

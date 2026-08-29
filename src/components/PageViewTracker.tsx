@@ -2,14 +2,21 @@
 
 import { useEffect } from 'react'
 import { usePathname } from 'next/navigation'
+import { TRACKED_PATHS } from '@/lib/siteInfo'
 
-const TRACKED = new Set(['/', '/register', '/magic/request'])
+// Public marketing pages only — signed-in areas are excluded so the analytics
+// reflect visitor acquisition rather than member/admin app usage.
+const TRACKED = new Set<string>(TRACKED_PATHS)
+
+function isTracked(pathname: string): boolean {
+  return TRACKED.has(pathname)
+}
 
 export function PageViewTracker() {
   const pathname = usePathname()
 
   useEffect(() => {
-    if (!TRACKED.has(pathname)) return
+    if (!isTracked(pathname)) return
     const key = `pv:${pathname}`
     try {
       if (sessionStorage.getItem(key)) return
