@@ -13,7 +13,7 @@ export const SITE = {
   instagram: 'https://instagram.com/hillcountrycider',
   facebook: 'https://www.facebook.com/HillCountryCiderHouse',
   shop: 'https://hillcountryciderhouse.square.site/',
-  supperClub: 'https://ticketscandy.com/e/grown-local-supper-club-in-the-hill-country-by-hill-country-cider-house-19070',
+  supperClub: 'https://ticketscandy.com/e/comfort-joy-holiday-orchard-supper-club-by-hill-country-cider-house-20415',
 }
 
 export const HOURS: Array<{ days: string; hours: string }> = [

@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
+import { SITE } from '@/lib/siteInfo'
 
 // Hardcoded tier copy — names/perks are final per design handoff
 const TIER_COPY = [
@@ -431,7 +432,7 @@ export default async function LandingPage() {
                   { label: 'Tasting Room', href: '/tasting-room' },
                   { label: 'Saturdays in Comfort', href: '/saturdays-in-comfort' },
                   { label: 'Apple Trees', href: '/apple-trees' },
-                  { label: 'Supper Club', href: 'https://ticketscandy.com/e/grown-local-supper-club-in-the-hill-country-by-hill-country-cider-house-19070' },
+                  { label: 'Supper Club', href: SITE.supperClub },
                 ],
               },
               {
