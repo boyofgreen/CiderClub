@@ -1,159 +1,199 @@
-import Image from 'next/image'
 import type { Metadata } from 'next'
+import { Hero } from '@/components/site/Hero'
+import { Photo } from '@/components/site/Photo'
 import { SITE } from '@/lib/siteInfo'
-import { MapPin, Phone, Mail } from 'lucide-react'
 
 export const metadata: Metadata = {
-  title: "Saturday's in Comfort",
+  title: 'Saturdays in Comfort',
   description:
-    'A personalized, private cider tasting on twenty acres at Holiday Orchard in Comfort, Texas. One group at a time, ninety minutes, 5–7 ciders.',
+    'A personalized, private cider tasting on twenty acres at Holiday Orchard in Comfort, Texas. One group at a time, ninety minutes, five to seven ciders.',
 }
+
+const BOOKING_MAILTO = `mailto:${SITE.email}?subject=${encodeURIComponent('Saturdays in Comfort booking')}`
 
 const INCLUDED = [
   'Welcome cocktails upon arrival',
-  '5–7 ciders presented for tasting',
-  'Charcuterie and “palette inspirations” presented throughout the tasting',
-  'Exclusive access to Holiday Orchard at Hill Country Cider House',
+  'Five to seven ciders presented for tasting',
+  'Charcuterie and palette inspirations throughout',
+  'Exclusive access to Holiday Orchard',
   'Unmatched Texas hospitality',
 ]
 
-const BOOK_HREF = `mailto:${SITE.email}?subject=Saturdays%20in%20Comfort%20booking&body=Hi%20Hill%20Country%20Cider%20House%2C%0A%0AI%27d%20like%20to%20book%20a%20private%20tasting.%0A%0APreferred%20date%3A%0AParty%20size%3A%0AName%3A%0APhone%3A%0A%0AThank%20you%21`
-
-export default function SaturdaysInComfortPage() {
+export default function ComfortPage() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative h-[62vh] min-h-[420px] w-full">
-        <Image
-          src="/site/comfort-hills.webp"
-          alt="Rolling hill country landscape at Holiday Orchard in Comfort, Texas"
-          fill
-          priority
-          sizes="100vw"
-          style={{ objectFit: 'cover' }}
-        />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(26,37,64,0.42), rgba(26,37,64,0.8))' }} />
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-          <p className="smallcaps mb-4" style={{ color: 'var(--gold)' }}>Comfort, Texas</p>
-          <h1
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontStyle: 'italic',
-              fontWeight: 400,
-              fontSize: 'clamp(32px, 5.5vw, 58px)',
-              color: 'var(--cream)',
-              lineHeight: 1.15,
-            }}
-          >
-            Saturdays in Comfort
-          </h1>
-          <p className="mt-5 max-w-xl" style={{ color: 'rgba(247,241,227,0.82)', fontSize: 16, lineHeight: 1.7 }}>
-            A personalized, private tasting that personifies the Texas hill country experience
-          </p>
-          <a href={BOOK_HREF} className="btn-gold mt-8" style={{ textDecoration: 'none' }}>
-            Book Now
-          </a>
-        </div>
-      </section>
-
-      {/* Welcome */}
-      <section className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <p style={{ color: 'var(--ink-soft)', fontSize: 17, lineHeight: 1.8 }}>
-          Welcome to Holiday Orchard, our micro&#8209;event retreat set across twenty acres of rolling hill
-          country views in Comfort, Texas. Saturdays in Comfort offers a refined, private tasting experience
-          designed to engage every sense&mdash;thoughtful, unhurried, and rooted in the quiet character of
-          this place. We host only one group at a time, ensuring your party has full and exclusive access to
-          the property throughout your visit, with room to explore, savor, and settle into the landscape.
-        </p>
-      </section>
-
-      {/* What's included */}
-      <section style={{ backgroundColor: 'var(--navy)' }}>
-        <div className="mx-auto grid max-w-6xl items-center gap-0 lg:grid-cols-2">
-          <div className="px-6 py-14 sm:px-12">
-            <p className="smallcaps mb-4" style={{ color: 'var(--gold)' }}>Ninety Minutes</p>
-            <h2
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontStyle: 'italic',
-                fontWeight: 400,
-                fontSize: 'clamp(24px, 3.5vw, 36px)',
-                color: 'var(--cream)',
-                lineHeight: 1.25,
-              }}
-            >
-              What&rsquo;s included in my tasting experience
-            </h2>
-            <p className="mt-5 text-sm" style={{ color: 'rgba(247,241,227,0.7)', lineHeight: 1.75 }}>
-              Your private tasting is reserved for parties of two or more, with special pricing and tailored
-              accommodations available for groups of ten or larger. Each experience lasts approximately ninety
-              minutes and is guided by one of our storytelling cider makers, whose role is to help you engage
-              with the land, the craft, and the cider itself in ways that feel both thoughtful and unexpectedly
-              meaningful.
-            </p>
-            <ul className="mt-7 space-y-3">
-              {INCLUDED.map((item) => (
-                <li key={item} className="flex items-start gap-3">
-                  <span style={{ color: 'var(--gold)', fontSize: 13, marginTop: 3 }} aria-hidden="true">✦</span>
-                  <span style={{ color: 'var(--cream)', fontSize: 15, lineHeight: 1.6 }}>{item}</span>
-                </li>
-              ))}
-            </ul>
-            <a href={BOOK_HREF} className="btn-gold mt-9" style={{ textDecoration: 'none' }}>
-              Book Now
-            </a>
-          </div>
-
-          <div className="grid grid-cols-2 gap-0 lg:h-full">
-            <div className="relative h-[220px] w-full lg:h-full">
-              <Image src="/site/comfort-dessert.webp" alt="Plated dessert with blueberry jam, whipped cream, mint and candied lemon" fill sizes="25vw" style={{ objectFit: 'cover' }} />
-            </div>
-            <div className="relative h-[220px] w-full lg:h-full">
-              <Image src="/site/comfort-flutes.webp" alt="Three flutes of cider with pink flowers on a wooden surface" fill sizes="25vw" style={{ objectFit: 'cover' }} />
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Find us */}
-      <section className="mx-auto max-w-4xl px-6 py-16 text-center">
-        <h2
+      <Hero
+        src="/photos/supper-dusk-table.webp"
+        alt="Candlelit table at dusk on the property at Holiday Orchard"
+        vh={86}
+        minHeight={520}
+        objectPosition="50% 45%"
+        scrimV="linear-gradient(180deg,rgba(20,16,12,0.5) 0%,rgba(20,16,12,0.26) 34%,rgba(20,16,12,0.82) 74%,rgba(20,16,12,0.96) 100%)"
+        scrimH="linear-gradient(90deg,rgba(20,16,12,0.72) 0%,rgba(20,16,12,0.26) 56%,rgba(20,16,12,0) 100%)"
+      >
+        <p className="hc-eyebrow">Comfort, Texas · Holiday Orchard</p>
+        <h1
+          className="hc-display"
           style={{
-            fontFamily: 'var(--font-serif)',
-            fontStyle: 'italic',
-            fontWeight: 400,
-            fontSize: 'clamp(24px, 3.5vw, 34px)',
-            color: 'var(--ink)',
+            fontSize: 'clamp(38px,6.6vw,104px)',
+            lineHeight: 0.95,
+            letterSpacing: '-0.042em',
+            maxWidth: '16ch',
           }}
         >
-          Find us in the hills of Comfort Texas
-        </h2>
-        <p className="mt-4" style={{ color: 'var(--ink-soft)', fontSize: 16, lineHeight: 1.7 }}>
-          We are located just minutes from high street, at{' '}
-          <a href={SITE.comfortMapUrl} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--terracotta)' }}>
-            {SITE.comfortAddress}
-          </a>
+          Saturdays in Comfort.
+        </h1>
+        <p
+          style={{
+            fontSize: 19,
+            lineHeight: 1.65,
+            color: 'rgba(245,238,227,0.8)',
+            maxWidth: '52ch',
+            margin: '28px 0 38px',
+            fontWeight: 300,
+          }}
+        >
+          A personalized, private tasting on twenty acres of rolling Hill Country. One group at a
+          time — the whole place is yours.
         </p>
+        <a href={BOOKING_MAILTO} className="hc-btn hc-btn--accent">
+          Book a Saturday
+        </a>
+      </Hero>
 
-        <div className="mt-10 border p-10" style={{ borderColor: 'var(--gold)', backgroundColor: 'var(--cream-deep)' }}>
-          <p className="smallcaps mb-3" style={{ color: 'var(--terracotta)' }}>Now Booking</p>
-          <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 'clamp(22px, 3vw, 30px)', color: 'var(--ink)' }}>
-            Schedule a private tasting
-          </p>
-          <div className="mt-7 flex flex-wrap items-center justify-center gap-4">
-            <a href={BOOK_HREF} className="btn-saloon" style={{ textDecoration: 'none' }}>
-              Book Now
+      {/* ── Ninety minutes ──────────────────────────────────────────────── */}
+      <section className="hc-bone">
+        <div className="hc-split hc-split--even">
+          <div className="hc-split__text">
+            <p className="hc-eyebrow">Ninety Minutes</p>
+            <h2
+              className="hc-display"
+              style={{ fontSize: 'clamp(34px,4.2vw,60px)', lineHeight: 1.03, margin: '0 0 30px' }}
+            >
+              The whole property, just for your party.
+            </h2>
+            <p className="hc-lede" style={{ marginBottom: 22, maxWidth: '54ch' }}>
+              Holiday Orchard is our micro-event retreat in Comfort — twenty acres, thoughtful and
+              unhurried, rooted in the quiet character of this place. Your tasting is guided by one
+              of our storytelling cider makers.
+            </p>
+            <p className="hc-lede" style={{ marginBottom: 44, maxWidth: '54ch' }}>
+              Reserved for parties of two or more, with special pricing and tailored accommodations
+              for groups of ten or larger.
+            </p>
+            <div className="hc-rows" style={{ maxWidth: 560 }}>
+              {INCLUDED.map((item) => (
+                <div key={item} style={{ padding: '20px 0', fontSize: 17.5 }}>
+                  {item}
+                </div>
+              ))}
+            </div>
+          </div>
+          <Photo
+            src="/site/comfort-hills.webp"
+            alt="Rolling Hill Country views at Holiday Orchard in Comfort, Texas"
+            minHeight={860}
+            sizes="(max-width: 900px) 100vw, 50vw"
+            className="hc-img--fill"
+          />
+        </div>
+      </section>
+
+      <section className="hc-tiles hc-tiles--2">
+        <Photo
+          src="/site/comfort-flutes.webp"
+          alt="Three flutes of cider with flowers"
+          height={620}
+          sizes="50vw"
+          className="hc-img--md"
+        />
+        <Photo
+          src="/site/comfort-dessert.webp"
+          alt="Plated dessert with blueberry jam and candied lemon"
+          height={620}
+          sizes="50vw"
+          className="hc-img--md"
+        />
+      </section>
+
+      {/* ── Find us / book ──────────────────────────────────────────────── */}
+      <section className="hc-deep hc-section">
+        <div className="hc-wrap hc-grid-2" style={{ alignItems: 'center' }}>
+          <div>
+            <p className="hc-eyebrow">Find Us</p>
+            <h2
+              className="hc-display"
+              style={{
+                fontSize: 'clamp(32px,3.8vw,54px)',
+                lineHeight: 1.04,
+                margin: '0 0 28px',
+                maxWidth: '22ch',
+              }}
+            >
+              In the hills of Comfort, Texas.
+            </h2>
+            <a
+              href={SITE.comfortMapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontFamily: 'var(--font-display), sans-serif',
+                fontSize: 25,
+                lineHeight: 1.4,
+                display: 'block',
+                letterSpacing: '-0.02em',
+              }}
+            >
+              130 Holiday Road
+              <br />
+              Comfort, TX 78013
             </a>
-            <a href={SITE.phoneHref} className="inline-flex items-center gap-2 text-sm hover:opacity-75" style={{ color: 'var(--ink-soft)', textDecoration: 'none' }}>
-              <Phone className="h-4 w-4" style={{ color: 'var(--gold-deep)' }} /> {SITE.phone}
-            </a>
-            <a href={`mailto:${SITE.email}`} className="inline-flex items-center gap-2 text-sm hover:opacity-75" style={{ color: 'var(--ink-soft)', textDecoration: 'none' }}>
-              <Mail className="h-4 w-4" style={{ color: 'var(--gold-deep)' }} /> {SITE.email}
+            <p
+              style={{
+                fontSize: 17,
+                lineHeight: 1.75,
+                color: 'rgba(245,238,227,0.62)',
+                fontWeight: 300,
+                margin: '22px 0 0',
+                maxWidth: '42ch',
+              }}
+            >
+              Just minutes from High Street.
+            </p>
+          </div>
+
+          <div className="hc-bordered-col">
+            <p className="hc-eyebrow">Now Booking</p>
+            <h3
+              className="hc-display"
+              style={{
+                fontSize: 32,
+                lineHeight: 1.1,
+                letterSpacing: '-0.035em',
+                margin: '0 0 24px',
+              }}
+            >
+              Schedule a private tasting.
+            </h3>
+            <div className="flex flex-wrap" style={{ gap: 14, marginBottom: 26 }}>
+              <a href={BOOKING_MAILTO} className="hc-btn hc-btn--accent">
+                Book Now
+              </a>
+              <a
+                href={SITE.phoneHref}
+                className="hc-btn hc-btn--outline"
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                {SITE.phone}
+              </a>
+            </div>
+            <a
+              href={`mailto:${SITE.email}`}
+              style={{ fontSize: 16, color: 'rgba(245,238,227,0.62)', fontWeight: 300 }}
+            >
+              {SITE.email}
             </a>
           </div>
-          <p className="mt-6 flex items-center justify-center gap-2 text-xs" style={{ color: 'var(--ink-soft)' }}>
-            <MapPin className="h-3.5 w-3.5" style={{ color: 'var(--gold-deep)' }} /> {SITE.comfortAddress}
-          </p>
         </div>
       </section>
     </>

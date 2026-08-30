@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Playfair_Display, Inter_Tight } from 'next/font/google'
+import { Playfair_Display, Inter_Tight, Archivo, Libre_Franklin } from 'next/font/google'
 import './globals.css'
 import { SessionProvider } from '@/components/auth/SessionProvider'
 import { PageViewTracker } from '@/components/PageViewTracker'
@@ -16,6 +16,19 @@ const interTight = Inter_Tight({
   display: 'swap',
 })
 
+const archivo = Archivo({
+  subsets: ['latin'],
+  style: ['normal', 'italic'],
+  variable: '--font-display',
+  display: 'swap',
+})
+
+const libreFranklin = Libre_Franklin({
+  subsets: ['latin'],
+  variable: '--font-body',
+  display: 'swap',
+})
+
 const clubName = process.env.NEXT_PUBLIC_CLUB_NAME ?? 'Cider Club'
 
 export const metadata: Metadata = {
@@ -28,7 +41,7 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" className={`${playfair.variable} ${interTight.variable}`}>
+    <html lang="en" className={`${playfair.variable} ${interTight.variable} ${archivo.variable} ${libreFranklin.variable}`}>
       <body>
         <SessionProvider>
           <PageViewTracker />
