@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: 'About',
   description:
     'Hill Country Cider House is more than a cidery — a gathering place for curious palates in Comfort and Castroville, Texas.',
+  alternates: { canonical: '/about' },
 }
 
 const PLACES = [
