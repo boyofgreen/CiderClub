@@ -1,16 +1,27 @@
 import Link from 'next/link'
-import Image from 'next/image'
-import { prisma } from '@/lib/prisma'
 import { headers } from 'next/headers'
-import { SITE } from '@/lib/siteInfo'
+import { prisma } from '@/lib/prisma'
+import { SiteNav } from '@/components/site/SiteNav'
+import { SiteFooter } from '@/components/site/SiteFooter'
+import { Hero } from '@/components/site/Hero'
+import { Photo } from '@/components/site/Photo'
 
-// Hardcoded tier copy — names/perks are final per design handoff
+export const metadata = {
+  // Absolute: this page sits outside the (site) group, so the root layout's
+  // "%s | Cider Club" template would otherwise render "Cider Club | Cider Club".
+  title: { absolute: 'Cider Club — Hill Country Cider House' },
+  description:
+    "Four times a year we set aside a small batch of our best ciders for the people who make this place feel like home. Three tiers, member pricing, and open-bar pickup parties.",
+}
+
+// Tier copy is final per the design handoff; the DB supplies only the plan id
+// the Saddle Up link needs.
 const TIER_COPY = [
   {
     level: 'Level I',
     name: 'The Pickers',
     bottles: 3,
-    blurb: '"A fine place to start — three of our best, hand-picked."',
+    blurb: 'A fine place to start — three of our best, hand-picked.',
     perks: [
       '10% off club purchase bottles',
       '5% off every day',
@@ -22,8 +33,8 @@ const TIER_COPY = [
     level: 'Level II',
     name: 'The Pressers',
     bottles: 6,
-    blurb: '"Our most-loved tier — six bottles, open bar, and a front-row seat."',
     featured: true,
+    blurb: 'Our most-loved tier — six bottles, open bar, and a front-row seat.',
     perks: [
       '15% off club purchase bottles',
       '5% off every day',
@@ -36,36 +47,45 @@ const TIER_COPY = [
     level: 'Level III',
     name: 'Cellar Crew',
     bottles: 9,
-    blurb: '"For the devoted — nine bottles and first pick of every batch."',
+    blurb: 'For the devoted — nine bottles and first pick of every batch.',
     perks: [
       '20% off club purchase bottles',
       '10% off every day',
       'Free pour for you + a guest',
-      'Open-bar pickup party',
       'First access to limited releases',
       'Free barrel-room reservation',
     ],
   },
 ]
 
+const STEPS: Array<[string, string, string]> = [
+  ['I.', 'Saddle Up', 'Pick your tier, tell us a bit about yourself, drop a card on file. Two minutes.'],
+  ['II.', 'We Holler', 'When the new quarter opens, you get an email with a personal link to your order.'],
+  ['III.', 'Pick Your Bottles', 'Swap in your favorites, or keep our picks. Your call, always.'],
+  ['IV.', 'Come On Down', "Pick up at the quarterly party or whenever you're ready. We charge the card on file."],
+]
 
 const LINEUP_FALLBACK = [
-  { name: 'Pinkerton',          style: 'Dry · Sparkling',    abv: 7.6, img: '/brand/pinkerton.jpg' },
-  { name: 'Blueberry',          style: 'Sweet · Fruit',      abv: 5.8, img: '/brand/blueberry.jpg' },
-  { name: 'Marvelous Manzana',  style: 'Semi-Sweet · Apple', abv: 6.4, img: '/brand/manzana.jpg' },
-  { name: 'Cherry Bloom',       style: 'Dry · Sparkling',    abv: 7.2, img: '/brand/cherry.jpg' },
+  { name: 'Endless Melon', img: '/photos/bottle-pinkerton.webp' },
+  { name: '2022 Vintage Unto Us', img: '/photos/bottle-blueberry.webp' },
+  { name: 'Gala', img: '/brand/manzana.jpg' },
+  { name: 'Cherry Bloom', img: '/brand/cherry.jpg' },
 ]
-const IMG_KEYWORDS: [string, string][] = [
-  ['pinkerton',  '/brand/pinkerton.jpg'],
-  ['blueberry',  '/brand/blueberry.jpg'],
-  ['manzana',    '/brand/manzana.jpg'],
-  ['marvelous',  '/brand/manzana.jpg'],
-  ['cherry',     '/brand/cherry.jpg'],
-  ['pineapple',  '/brand/pineapple.jpg'],
-  ['lemon',      '/brand/lemongrass.jpg'],
-  ['lush',       '/brand/lemongrass.jpg'],
+
+const IMG_KEYWORDS: Array<[string, string]> = [
+  ['pinkerton', '/photos/bottle-pinkerton.webp'],
+  ['blueberry', '/photos/bottle-blueberry.webp'],
+  ['peach', '/photos/bottle-peach.webp'],
+  ['grenadine', '/photos/bottle-grenadine.webp'],
+  ['manzana', '/brand/manzana.jpg'],
+  ['marvelous', '/brand/manzana.jpg'],
+  ['cherry', '/brand/cherry.jpg'],
+  ['pineapple', '/brand/pineapple.jpg'],
+  ['lemon', '/brand/lemongrass.jpg'],
+  ['lush', '/brand/lemongrass.jpg'],
 ]
-const FALLBACK_IMGS = ['/brand/pinkerton.jpg', '/brand/blueberry.jpg', '/brand/manzana.jpg', '/brand/cherry.jpg']
+
+const FALLBACK_IMGS = LINEUP_FALLBACK.map((b) => b.img)
 
 async function getPageData() {
   try {
@@ -76,7 +96,7 @@ async function getPageData() {
     ])
     return { plans, products, memberCount }
   } catch {
-    return { plans: [], products: [], memberCount: 142 }
+    return { plans: [], products: [], memberCount: 0 }
   }
 }
 
@@ -88,418 +108,393 @@ function mainSiteHref(host: string | null): string {
   const h = (host ?? '').toLowerCase().split(':')[0]
   if (!h.startsWith('club.')) return '/'
   const root = h.slice('club.'.length)
-  // Only jump domains for the real site; local/preview hosts stay relative.
   return root.includes('.') ? `https://www.${root}` : '/'
 }
 
-export default async function LandingPage() {
+export default async function ClubPage() {
   const { plans, products, memberCount } = await getPageData()
   const homeHref = mainSiteHref(headers().get('host'))
 
-  const lineup = products.length > 0
-    ? products.map((p, i) => {
-        const lower = p.name.toLowerCase()
-        const img = IMG_KEYWORDS.find(([k]) => lower.includes(k))?.[1] ?? FALLBACK_IMGS[i % 4]
-        return { name: p.name, style: [p.style].filter(Boolean).join(' · '), abv: p.abv, img }
-      })
-    : LINEUP_FALLBACK
+  const lineup =
+    products.length > 0
+      ? products.map((p, i) => {
+          const lower = p.name.toLowerCase()
+          return {
+            name: p.name,
+            img: IMG_KEYWORDS.find(([k]) => lower.includes(k))?.[1] ?? FALLBACK_IMGS[i % 4],
+          }
+        })
+      : LINEUP_FALLBACK
+
+  const stats: Array<[string, string]> = [
+    [memberCount > 0 ? String(memberCount) : '64', 'Members'],
+    ['26', 'Ciders & counting'],
+    ['4×', 'Pickup parties / yr'],
+    ['20%', 'Off bottles, up to'],
+  ]
 
   return (
-    <div style={{ fontFamily: 'var(--font-sans)', color: 'var(--ink)' }}>
+    <div className="hc-theme flex min-h-screen flex-col">
+      <SiteNav homeHref={homeHref} />
 
-      {/* ── NAV ─────────────────────────────────────────────────────── */}
-      <header style={{ backgroundColor: 'var(--cream-deep)', borderBottom: '1px solid var(--rule)', position: 'sticky', top: 0, zIndex: 30 }}>
-        <div className="mx-auto flex items-center justify-between" style={{ maxWidth: 1280, padding: '18px clamp(16px,5vw,56px)' }}>
-          <Link href={homeHref} className="flex items-center gap-3" style={{ textDecoration: 'none' }}>
-            <Image src="/brand/logo.png" alt="Hill Country Cider House" width={48} height={56} style={{ objectFit: 'contain', width: 48, height: 'auto' }} />
-            <div>
-              <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 18, color: 'var(--ink)', lineHeight: 1.1 }}>
-                Hill Country
-              </div>
-              <div style={{ fontSize: 9, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)' }}>
-                CIDER HOUSE
-              </div>
-            </div>
+      <main className="flex-1">
+        <Hero
+          src="/brand/party.jpg"
+          alt="A club pickup party at the cider house"
+          vh={92}
+          minHeight={560}
+          objectPosition="50% 28%"
+          scrimV="linear-gradient(180deg,rgba(20,16,12,0.6) 0%,rgba(20,16,12,0.38) 32%,rgba(20,16,12,0.86) 72%,rgba(20,16,12,0.97) 100%)"
+          scrimH="linear-gradient(90deg,rgba(20,16,12,0.78) 0%,rgba(20,16,12,0.3) 56%,rgba(20,16,12,0) 100%)"
+        >
+          <p className="hc-eyebrow">A Quarterly Cider Club</p>
+          <h1
+            className="hc-display hc-h1--xl"
+            style={{
+              fontSize: 'clamp(44px,7.6vw,124px)',
+              lineHeight: 0.93,
+              letterSpacing: '-0.045em',
+              maxWidth: '14ch',
+            }}
+          >
+            Pull up a chair. You&rsquo;re family now.
+          </h1>
+          <p
+            style={{
+              fontSize: 19,
+              lineHeight: 1.65,
+              color: 'rgba(245,238,227,0.8)',
+              maxWidth: '54ch',
+              margin: '28px 0 38px',
+              fontWeight: 300,
+            }}
+          >
+            Four times a year we set aside a small batch of our best ciders for the people who make
+            this place feel like home. Pick the bottles you love. Bring a friend. We&rsquo;ll keep
+            the porch light on.
+          </p>
+          <Link href="/register" className="hc-btn hc-btn--accent">
+            Join the Club
           </Link>
+        </Hero>
 
-          {/* Mobile CTAs */}
-          <div className="flex lg:hidden items-center gap-3">
-            <Link href="/register" className="btn-saloon" style={{ fontSize: 11, padding: '8px 14px' }}>Join →</Link>
-            <Link href="/magic/request" style={{ fontSize: 10, letterSpacing: '0.16em', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-soft)', textDecoration: 'none' }}>Sign In</Link>
-          </div>
-
-          <nav className="hidden lg:flex items-center" style={{ gap: 32 }}>
-            {[
-              { label: 'TASTING ROOM',          href: '/tasting-room' },
-              { label: "SATURDAY'S IN COMFORT", href: '/saturdays-in-comfort' },
-              { label: 'APPLE TREES',           href: '/apple-trees' },
-              { label: 'ABOUT',                 href: '/about' },
-              { label: 'CONTACT',               href: '/contact' },
-            ].map(({ label, href }) => (
-              <Link key={label} href={href}
-                style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-soft)', textDecoration: 'none' }}>
-                {label}
-              </Link>
-            ))}
-            <Link href="/register"
-              style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--navy)', textDecoration: 'none', borderBottom: '2px solid var(--gold)', paddingBottom: 2 }}>
-              JOIN THE CLUB
-            </Link>
-            <Link href="/magic/request"
-              style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 600, textTransform: 'uppercase', color: 'var(--ink-soft)', opacity: 0.65, textDecoration: 'none' }}>
-              MEMBER SIGN-IN
-            </Link>
-          </nav>
-        </div>
-      </header>
-
-      {/* ── HERO ─────────────────────────────────────────────────────── */}
-      <section className="hero-bg" style={{ padding: 'clamp(60px,8vw,100px) clamp(16px,5vw,56px)' }}>
-        <div className="mx-auto grid grid-cols-1 lg:grid-cols-[1.3fr_1fr]" style={{ maxWidth: 1280, gap: 'clamp(32px,5vw,80px)', alignItems: 'center' }}>
-
-          {/* Left */}
-          <div>
-            <div className="flex items-center gap-4" style={{ marginBottom: 32 }}>
-              <div style={{ height: 1, width: 40, backgroundColor: 'var(--gold)', flexShrink: 0 }} />
-              <span style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)' }}>
-                A QUARTERLY CIDER CLUB ✦ HILL COUNTRY STRONG
-              </span>
-            </div>
-
-            <h1 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(56px,6vw,92px)', fontWeight: 400, lineHeight: 0.96, letterSpacing: '-0.01em', color: 'var(--cream)', margin: '0 0 32px' }}>
-              Pull up<br />a chair.<br />
-              <em style={{ color: 'var(--gold-bright)' }}>You're family</em><br />
-              now.
-            </h1>
-
-            <p style={{ fontSize: 'clamp(15px,4vw,19px)', lineHeight: 1.55, color: 'rgba(247,241,227,0.78)', maxWidth: 540, margin: '0 0 40px' }}>
-              Four times a year, we set aside a small batch of our best ciders for the people who make this place feel like home. Pick the bottles you love. Bring a friend. We'll keep the porch light on.
-            </p>
-
-            <div className="flex flex-wrap items-center gap-4" style={{ marginBottom: 48 }}>
-              <Link href="/register" className="btn-gold">Join the Club →</Link>
-            </div>
-
-            <div style={{ borderTop: '1px solid var(--rule)', paddingTop: 32 }}>
-              <div className="flex items-start gap-6 sm:gap-12 flex-wrap">
-                {[
-                  { value: String(memberCount || 142), label: 'Members' },
-                  { value: '26', label: 'Ciders & Counting' },
-                  { value: '4×', label: 'Pickup Parties / yr' },
-                ].map(({ value, label }) => (
-                  <div key={label}>
-                    <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 36, color: 'var(--gold-bright)', lineHeight: 1 }}>
-                      {value}
-                    </div>
-                    <div style={{ fontSize: 10, letterSpacing: '0.18em', fontWeight: 600, textTransform: 'uppercase', color: 'rgba(247,241,227,0.5)', marginTop: 6 }}>
-                      {label}
-                    </div>
+        {/* ── Stats ─────────────────────────────────────────────────────── */}
+        <section className="hc-bone" style={{ padding: '90px 0' }}>
+          <div className="hc-wrap">
+            <div
+              className="hc-grid-4"
+              style={{ gap: 1, background: 'var(--hc-hairline-light)' }}
+            >
+              {stats.map(([value, label], i) => (
+                <div
+                  key={label}
+                  style={{
+                    background: 'var(--hc-bone)',
+                    padding: i === 0 ? '8px 24px 8px 0' : '8px 24px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-display), sans-serif',
+                      fontSize: 52,
+                      lineHeight: 1,
+                      letterSpacing: '-0.04em',
+                    }}
+                  >
+                    {value}
                   </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          {/* Right — party photo with stamp */}
-          <div className="relative hidden lg:block" style={{ height: 520 }}>
-            <div className="bottle-frame" style={{ position: 'absolute', inset: 0 }}>
-              <Image src="/brand/party.jpg" alt="Hill Country Cider House tasting room" fill sizes="(max-width:1280px) 50vw, 640px" style={{ objectFit: 'cover', objectPosition: 'center top' }} />
-            </div>
-
-            {/* Members-only stamp */}
-            <div style={{
-              position: 'absolute', bottom: 32, right: 24,
-              width: 130, height: 130, borderRadius: '50%',
-              border: '2px solid var(--gold)',
-              transform: 'rotate(-8deg)',
-              backgroundColor: 'rgba(26,37,64,0.88)',
-              display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-              textAlign: 'center', gap: 2,
-            }}>
-              <div style={{ fontSize: 8, letterSpacing: '0.2em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', lineHeight: 1.5 }}>
-                MEMBERS<br />ONLY
-              </div>
-              <div style={{ fontSize: 7, letterSpacing: '0.16em', fontWeight: 700, textTransform: 'uppercase', color: 'rgba(201,161,74,0.7)', marginTop: 2 }}>
-                UP TO
-              </div>
-              <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 28, color: 'var(--gold-bright)', lineHeight: 1 }}>
-                20%
-              </div>
-              <div style={{ fontSize: 8, letterSpacing: '0.2em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)' }}>
-                OFF BOTTLES
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: 'var(--cream)', padding: 'clamp(60px,8vw,120px) clamp(16px,5vw,56px)' }}>
-        <div className="mx-auto" style={{ maxWidth: 1280 }}>
-          <div className="text-center" style={{ marginBottom: 64 }}>
-            <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--terracotta)', marginBottom: 16 }}>
-              HOW IT WORKS
-            </div>
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(40px,4vw,64px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--ink)', margin: '0 0 24px' }}>
-              <em>Four seasons,</em> four good reasons
-            </h2>
-            <div className="flex items-center justify-center gap-3">
-              <div className="rule-gold" style={{ width: 60 }} />
-              <span className="star-divider">✦ ✦ ✦</span>
-              <div className="rule-gold" style={{ width: 60 }} />
-            </div>
-          </div>
-
-          {/* 4-col grid — 1px gold gap creates divider lines */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4" style={{ gap: 1, backgroundColor: 'var(--rule)' }}>
-            {[
-              { roman: 'I.', title: 'Saddle Up', body: 'Pick your tier, tell us a bit about yourself, and drop a card on file. Takes about two minutes.' },
-              { roman: 'II.', title: 'We Holler', body: "When the new quarter opens, you'll get an email with a personal link to your order." },
-              { roman: 'III.', title: 'Pick Your Bottles', body: 'Swap in your favorites from the lineup. Or keep our picks — your call, always.' },
-              { roman: 'IV.', title: 'Come On Down', body: 'Pick up at our quarterly party or when you are ready. We charge your card on file and hand you your haul.' },
-            ].map(({ roman, title, body }) => (
-              <div key={roman} style={{ backgroundColor: 'var(--cream)', padding: '48px 36px' }}>
-                <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 56, fontWeight: 400, color: 'var(--gold-deep)', lineHeight: 1, marginBottom: 20 }}>
-                  {roman}
+                  <div className="hc-label" style={{ marginTop: 10 }}>
+                    {label}
+                  </div>
                 </div>
-                <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 26, fontWeight: 400, color: 'var(--ink)', margin: '0 0 12px' }}>
-                  {title}
-                </h3>
-                <p style={{ fontSize: 14, lineHeight: 1.6, color: 'var(--ink-soft)', margin: 0 }}>
-                  {body}
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── How it works ──────────────────────────────────────────────── */}
+        <section className="hc-dark hc-section">
+          <div className="hc-wrap">
+            <p className="hc-eyebrow" style={{ marginBottom: 24 }}>
+              How It Works
+            </p>
+            <h2
+              className="hc-display"
+              style={{ fontSize: 'clamp(34px,4.2vw,62px)', margin: '0 0 64px' }}
+            >
+              Four seasons, four good reasons.
+            </h2>
+            <div className="hc-grid-4" style={{ gap: 1, background: 'var(--hc-hairline)' }}>
+              {STEPS.map(([numeral, title, body], i) => (
+                <div
+                  key={numeral}
+                  style={{
+                    background: 'var(--hc-ink)',
+                    padding: i === 0 ? '36px 28px 36px 0' : '36px 28px',
+                  }}
+                >
+                  <div
+                    style={{
+                      fontSize: 13,
+                      color: 'var(--hc-accent)',
+                      letterSpacing: '0.2em',
+                      fontWeight: 600,
+                      marginBottom: 24,
+                    }}
+                  >
+                    {numeral}
+                  </div>
+                  <h3
+                    className="hc-display"
+                    style={{ fontSize: 24, letterSpacing: '-0.03em', margin: '0 0 12px' }}
+                  >
+                    {title}
+                  </h3>
+                  <p
+                    style={{
+                      fontSize: 16,
+                      lineHeight: 1.7,
+                      color: 'rgba(245,238,227,0.6)',
+                      fontWeight: 300,
+                      margin: 0,
+                    }}
+                  >
+                    {body}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Tiers ─────────────────────────────────────────────────────── */}
+        <section className="hc-deep hc-section">
+          <div className="hc-wrap">
+            <div className="hc-section-head" style={{ marginBottom: 56 }}>
+              <div>
+                <p className="hc-eyebrow" style={{ marginBottom: 24 }}>
+                  Three Tiers
                 </p>
+                <h2 className="hc-display" style={{ fontSize: 'clamp(34px,4.2vw,62px)' }}>
+                  Choose your seat at the table.
+                </h2>
               </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── TIER CARDS ───────────────────────────────────────────────── */}
-      <section style={{ backgroundColor: 'var(--cream-deep)', padding: 'clamp(60px,8vw,120px) clamp(16px,5vw,56px)' }}>
-        <div className="mx-auto" style={{ maxWidth: 1280 }}>
-          <div className="text-center" style={{ marginBottom: 64 }}>
-            <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--ink-soft)', marginBottom: 16 }}>
-              THREE TIERS
-            </div>
-            <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(40px,4vw,64px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--ink)', margin: '0 0 16px' }}>
-              Choose your <em>seat at the table</em>
-            </h2>
-            <p style={{ fontSize: 15, lineHeight: 1.55, color: 'var(--ink-soft)', margin: 0 }}>
-              Billed quarterly when you pick up. Pause whenever you'd like. Cancel any time, no hard feelings.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-3" style={{ gap: 28, alignItems: 'stretch' }}>
-            {TIER_COPY.map((tier, i) => {
-              const plan = plans[i] ?? null
-              const featured = !!tier.featured
-              return (
-                <div key={tier.level} style={{ position: 'relative', paddingTop: 16, display: 'flex', flexDirection: 'column' }}>
-                  {featured && (
-                    <div style={{
-                      position: 'absolute', top: 0, left: '50%', transform: 'translateX(-50%)',
-                      backgroundColor: 'var(--terracotta)', color: 'var(--cream)',
-                      fontSize: 10, letterSpacing: '0.18em', fontWeight: 700, textTransform: 'uppercase',
-                      padding: '5px 18px', whiteSpace: 'nowrap',
-                    }}>
-                      ★ Most Picked ★
-                    </div>
-                  )}
-
-                  <div style={{
-                    flex: 1, display: 'flex', flexDirection: 'column',
-                    backgroundColor: featured ? 'var(--navy)' : 'var(--paper)',
-                    border: `1px solid ${featured ? 'var(--gold)' : 'var(--rule)'}`,
-                    boxShadow: featured
-                      ? '0 30px 60px rgba(26,37,64,0.25)'
-                      : '0 1px 0 rgba(255,255,255,0.6) inset, 0 4px 14px rgba(26,37,64,0.06)',
-                  }}>
-                    {/* Level + name + bottles */}
-                    <div style={{ padding: '36px 32px 28px', textAlign: 'center', borderBottom: `1px solid ${featured ? 'var(--rule-strong)' : 'var(--rule)'}` }}>
-                      <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 18, color: featured ? 'var(--gold)' : 'var(--gold-deep)', marginBottom: 8 }}>
-                        {tier.level}
-                      </div>
-                      <h3 style={{ fontFamily: 'var(--font-serif)', fontSize: 38, fontWeight: 400, color: featured ? 'var(--cream)' : 'var(--ink)', margin: '0 0 12px' }}>
-                        {tier.name}
-                      </h3>
-                      <div style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: featured ? 'rgba(247,241,227,0.5)' : 'var(--ink-soft)' }}>
-                        {tier.bottles} BOTTLES · EVERY QUARTER
-                      </div>
-                    </div>
-
-                    {/* Bottle count */}
-                    <div style={{ padding: '28px 32px', textAlign: 'center', borderBottom: `1px solid ${featured ? 'var(--rule-strong)' : 'var(--rule)'}` }}>
-                      <div className="flex items-baseline justify-center" style={{ gap: 8 }}>
-                        <span style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 64, fontWeight: 400, color: featured ? 'var(--gold-bright)' : 'var(--ink)', lineHeight: 1 }}>
-                          {tier.bottles}
-                        </span>
-                        <span style={{ fontSize: 14, color: featured ? 'rgba(247,241,227,0.5)' : 'var(--ink-soft)' }}>bottles / quarter</span>
-                      </div>
-                      <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 14, color: featured ? 'rgba(247,241,227,0.7)' : 'var(--ink-soft)', margin: '12px 0 0' }}>
-                        {tier.blurb}
-                      </p>
-                    </div>
-
-                    {/* Perks + CTA */}
-                    <div style={{ padding: '24px 32px 32px', flex: 1, display: 'flex', flexDirection: 'column' }}>
-                      <ul style={{ listStyle: 'none', padding: 0, margin: '0 0 28px', display: 'flex', flexDirection: 'column', gap: 10, flex: 1 }}>
-                        {tier.perks.map((perk) => (
-                          <li key={perk} className="flex items-start gap-2.5" style={{ fontSize: 14, color: featured ? 'rgba(247,241,227,0.82)' : 'var(--ink-soft)' }}>
-                            <span style={{ color: featured ? 'var(--gold-bright)' : 'var(--terracotta)', marginTop: 2, flexShrink: 0, fontSize: 10 }}>✦</span>
-                            {perk}
-                          </li>
-                        ))}
-                      </ul>
-                      <Link
-                        href={plan ? `/register?plan=${plan.id}` : '/register'}
-                        style={{ display: 'block', textAlign: 'center' }}
-                        className={featured ? 'btn-gold' : 'btn-saloon'}
-                      >
-                        Saddle Up →
-                      </Link>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          <p className="text-center" style={{ marginTop: 40, fontSize: 14, color: 'var(--ink-soft)' }}>
-            Already a member?{' '}
-            <Link href="/magic/request" className="link-saloon">Get your access link →</Link>
-          </p>
-        </div>
-      </section>
-
-      {/* ── LINEUP ───────────────────────────────────────────────────── */}
-      <section id="lineup" className="hero-bg" style={{ padding: 'clamp(60px,8vw,120px) clamp(16px,5vw,56px)' }}>
-        <div className="mx-auto" style={{ maxWidth: 1280 }}>
-          <div className="flex items-end justify-between flex-wrap gap-6" style={{ borderBottom: '1px solid var(--rule)', paddingBottom: 32, marginBottom: 48 }}>
-            <div>
-              <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', marginBottom: 12 }}>
-                THIS QUARTER'S POUR
-              </div>
-              <h2 style={{ fontFamily: 'var(--font-serif)', fontSize: 'clamp(40px,4vw,64px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--cream)', margin: 0 }}>
-                Spring '26 <em>Lineup</em>
-              </h2>
-            </div>
-            <p style={{ fontSize: 14, lineHeight: 1.6, color: 'rgba(247,241,227,0.6)', maxWidth: 300, margin: 0 }}>
-              Members can mix any combination from the lineup — defaults are set, but the choice is always yours.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-2 lg:grid-cols-4" style={{ gap: 'clamp(12px,3vw,24px)' }}>
-            {lineup.map((bottle) => (
-              <div key={bottle.name}>
-                <div className="bottle-frame" style={{ position: 'relative', paddingBottom: '133%' }}>
-                  <Image src={bottle.img} alt={bottle.name} fill sizes="(max-width:768px) 50vw, 25vw" style={{ objectFit: 'cover' }} />
-                </div>
-                <div style={{ marginTop: 20 }}>
-                  <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 24, color: 'var(--cream)' }}>
-                    {bottle.name}
-                  </div>
-                  <div style={{ fontSize: 9, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold)', marginTop: 4 }}>
-                    {bottle.style}{bottle.abv ? ` · ${bottle.abv}%` : ''}
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* ── FOUNDER LETTER ───────────────────────────────────────────── */}
-      <section style={{ backgroundColor: 'var(--cream)', padding: 'clamp(60px,8vw,120px) clamp(16px,5vw,56px)' }}>
-        <div className="mx-auto text-center" style={{ maxWidth: 720 }}>
-          <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 80, color: 'var(--gold)', lineHeight: 0.8, marginBottom: 24 }}>
-            "
-          </div>
-          <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 'clamp(22px,3vw,32px)', lineHeight: 1.4, color: 'var(--ink)', margin: 0 }}>
-            We started with a folding table and one cider. Five years on, this club is how we say thank you to the folks who make our cider a part of their lives.
-          </p>
-          <div style={{ height: 1, width: 80, backgroundColor: 'var(--gold)', margin: '48px auto 24px' }} />
-          <div style={{ fontSize: 10, letterSpacing: '0.22em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--terracotta)' }}>
-            — JB · Founder, Hill Country Cider House
-          </div>
-        </div>
-      </section>
-
-      {/* ── FOOTER ───────────────────────────────────────────────────── */}
-      <footer style={{ backgroundColor: 'var(--navy-deep)', padding: 'clamp(48px,6vw,80px) clamp(16px,5vw,56px) clamp(24px,4vw,40px)' }}>
-        <div className="mx-auto" style={{ maxWidth: 1280 }}>
-          <div className="grid grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]" style={{ gap: 'clamp(24px,4vw,48px)', paddingBottom: 48, borderBottom: '1px solid var(--rule)' }}>
-            {/* Col 1 */}
-            <div>
-              <div style={{ marginBottom: 20 }}>
-                <Image src="/brand/logo.png" alt="Hill Country Cider House" width={70} height={82} style={{ objectFit: 'contain', width: 70, height: 'auto' }} />
-              </div>
-              <p style={{ fontSize: 13, lineHeight: 1.6, color: 'rgba(247,241,227,0.5)', margin: 0 }}>
-                Small-batch craft cider, pressed and bottled in the Texas Hill Country since 2020.
+              <p
+                style={{
+                  fontSize: 16.5,
+                  lineHeight: 1.7,
+                  color: 'rgba(245,238,227,0.6)',
+                  maxWidth: '32ch',
+                  fontWeight: 300,
+                  margin: 0,
+                }}
+              >
+                Billed quarterly when you pick up. Pause whenever. Cancel any time, no hard feelings.
               </p>
             </div>
 
-            {/* Link cols */}
-            {([
-              {
-                heading: 'VISIT',
-                items: [
-                  { label: 'Tasting Room', href: '/tasting-room' },
-                  { label: 'Saturdays in Comfort', href: '/saturdays-in-comfort' },
-                  { label: 'Apple Trees', href: '/apple-trees' },
-                  { label: 'Supper Club', href: SITE.supperClub },
-                ],
-              },
-              {
-                heading: 'CLUB',
-                items: [
-                  { label: 'Join the Club', href: '/register' },
-                  { label: 'Member Sign-in', href: '/magic/request' },
-                  { label: 'FAQs', href: '/apple-trees' },
-                  { label: 'Pickup Schedule', href: null },
-                ],
-              },
-              {
-                heading: 'REACH US',
-                items: [
-                  { label: 'hello@hillcountryciderhouse.com', href: 'mailto:hello@hillcountryciderhouse.com' },
-                  { label: '(830) 344-0441', href: 'tel:+18303440441' },
-                  { label: 'Comfort, Texas', href: null },
-                  { label: '@hillcountrycider', href: 'https://instagram.com/hillcountrycider' },
-                ],
-              },
-            ] as const).map(({ heading, items }) => (
-              <div key={heading}>
-                <div style={{ fontSize: 10, letterSpacing: '0.28em', fontWeight: 700, textTransform: 'uppercase', color: 'var(--gold-bright)', marginBottom: 20 }}>
-                  {heading}
-                </div>
-                <ul style={{ listStyle: 'none', padding: 0, margin: 0, display: 'flex', flexDirection: 'column', gap: 10 }}>
-                  {items.map(({ label, href }) => (
-                    <li key={label}>
-                      {href ? (
-                        <Link href={href} style={{ fontSize: 13, color: 'rgba(247,241,227,0.5)', textDecoration: 'none' }}
-                          {...(href.startsWith('http') ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
-                          {label}
-                        </Link>
-                      ) : (
-                        <span style={{ fontSize: 13, color: 'rgba(247,241,227,0.5)' }}>{label}</span>
-                      )}
-                    </li>
-                  ))}
-                </ul>
-              </div>
-            ))}
-          </div>
+            <div className="hc-grid-3" style={{ gap: 24 }}>
+              {TIER_COPY.map((tier, i) => {
+                const plan = plans[i] ?? null
+                const featured = !!tier.featured
+                return (
+                  <div
+                    key={tier.level}
+                    style={{
+                      border: `1px solid ${featured ? 'var(--hc-accent)' : 'rgba(245,238,227,0.18)'}`,
+                      background: featured ? 'rgba(185,162,106,0.06)' : undefined,
+                      padding: '44px 36px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      position: 'relative',
+                    }}
+                  >
+                    {featured && (
+                      <div
+                        style={{
+                          position: 'absolute',
+                          top: -1,
+                          right: -1,
+                          background: 'var(--hc-accent)',
+                          color: 'var(--hc-on-accent)',
+                          fontSize: 10.5,
+                          letterSpacing: '0.2em',
+                          textTransform: 'uppercase',
+                          fontWeight: 600,
+                          padding: '9px 16px',
+                        }}
+                      >
+                        Most Picked
+                      </div>
+                    )}
 
-          <div className="flex items-center justify-between flex-wrap gap-4" style={{ marginTop: 32 }}>
-            <span style={{ fontSize: 10, letterSpacing: '0.14em', fontWeight: 600, textTransform: 'uppercase', color: 'rgba(247,241,227,0.28)' }}>
-              © 2026 Hill Country Cider House · Small Batch · Quality Cider
-            </span>
-            <span style={{ fontSize: 10, letterSpacing: '0.14em', fontWeight: 600, textTransform: 'uppercase', color: 'rgba(247,241,227,0.28)' }}>
-              Drink responsibly · 21+
-            </span>
+                    <div
+                      style={{
+                        fontSize: 11,
+                        letterSpacing: '0.22em',
+                        textTransform: 'uppercase',
+                        color: 'rgba(245,238,227,0.5)',
+                        marginBottom: 18,
+                      }}
+                    >
+                      {tier.level}
+                    </div>
+                    <h3
+                      className="hc-display"
+                      style={{ fontSize: 32, letterSpacing: '-0.035em', margin: '0 0 8px' }}
+                    >
+                      {tier.name}
+                    </h3>
+                    <div
+                      style={{
+                        fontSize: 12.5,
+                        letterSpacing: '0.16em',
+                        textTransform: 'uppercase',
+                        color: 'var(--hc-accent)',
+                        fontWeight: 600,
+                        marginBottom: 28,
+                      }}
+                    >
+                      {tier.bottles} bottles · every quarter
+                    </div>
+                    <p
+                      style={{
+                        fontSize: 17,
+                        lineHeight: 1.7,
+                        color: 'rgba(245,238,227,0.7)',
+                        fontWeight: 300,
+                        margin: '0 0 28px',
+                      }}
+                    >
+                      {tier.blurb}
+                    </p>
+
+                    <div className="hc-rows" style={{ marginBottom: 32 }}>
+                      {tier.perks.map((perk) => (
+                        <div
+                          key={perk}
+                          style={{
+                            padding: '14px 0',
+                            fontSize: 16,
+                            color: 'rgba(245,238,227,0.82)',
+                          }}
+                        >
+                          {perk}
+                        </div>
+                      ))}
+                    </div>
+
+                    <Link
+                      href={plan ? `/register?plan=${plan.id}` : '/register'}
+                      className={`hc-btn ${featured ? 'hc-btn--accent' : 'hc-btn--outline'}`}
+                      style={{ marginTop: 'auto', padding: '17px 28px' }}
+                    >
+                      Saddle Up
+                    </Link>
+                  </div>
+                )
+              })}
+            </div>
+
+            <p
+              style={{
+                fontSize: 16,
+                color: 'rgba(245,238,227,0.55)',
+                fontWeight: 300,
+                margin: '36px 0 0',
+              }}
+            >
+              Already a member?{' '}
+              <Link href="/magic/request" style={{ color: 'var(--hc-accent)', fontWeight: 500 }}>
+                Get your access link →
+              </Link>
+            </p>
           </div>
-        </div>
-      </footer>
+        </section>
+
+        {/* ── Lineup ────────────────────────────────────────────────────── */}
+        <section id="lineup" className="hc-dark hc-section">
+          <div className="hc-wrap">
+            <p className="hc-eyebrow" style={{ marginBottom: 24 }}>
+              This Quarter&rsquo;s Pour
+            </p>
+            <h2
+              className="hc-display"
+              style={{ fontSize: 'clamp(34px,4.2vw,62px)', margin: '0 0 20px' }}
+            >
+              Spring &rsquo;26 lineup.
+            </h2>
+            <p
+              style={{
+                fontSize: 17,
+                lineHeight: 1.7,
+                color: 'rgba(245,238,227,0.6)',
+                fontWeight: 300,
+                margin: '0 0 52px',
+                maxWidth: '56ch',
+              }}
+            >
+              Members can mix any combination from the lineup — defaults are set, but the choice is
+              always yours.
+            </p>
+            <div className="hc-grid-4" style={{ gap: 24 }}>
+              {lineup.map((bottle) => (
+                <div key={bottle.name}>
+                  <Photo
+                    src={bottle.img}
+                    alt={`${bottle.name} cider`}
+                    height={400}
+                    sizes="(max-width: 900px) 50vw, 25vw"
+                    className="hc-img--md"
+                  />
+                  <div
+                    style={{
+                      fontFamily: 'var(--font-display), sans-serif',
+                      fontSize: 23,
+                      letterSpacing: '-0.03em',
+                      margin: '20px 0 0',
+                    }}
+                  >
+                    {bottle.name}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+
+        {/* ── Founder ───────────────────────────────────────────────────── */}
+        <section className="hc-bone hc-section">
+          <div className="hc-wrap hc-wrap--tight" style={{ textAlign: 'center' }}>
+            <p
+              className="hc-display"
+              style={{
+                fontWeight: 500,
+                fontSize: 'clamp(26px,3.2vw,42px)',
+                lineHeight: 1.22,
+                letterSpacing: '-0.035em',
+                margin: '0 0 32px',
+              }}
+            >
+              &ldquo;We started with a folding table and one cider. Five years on, this club is how
+              we say thank you to the folks who make our cider part of their lives.&rdquo;
+            </p>
+            <div
+              style={{
+                fontSize: 12,
+                letterSpacing: '0.2em',
+                textTransform: 'uppercase',
+                color: 'var(--hc-light-muted)',
+                fontWeight: 600,
+              }}
+            >
+              JB · Founder
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <SiteFooter />
     </div>
   )
 }

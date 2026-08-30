@@ -1,122 +1,258 @@
-import Image from 'next/image'
-import Link from 'next/link'
 import type { Metadata } from 'next'
-import { HoursCard } from '@/components/site/HoursCard'
-import { SITE } from '@/lib/siteInfo'
+import { Hero } from '@/components/site/Hero'
+import { Photo } from '@/components/site/Photo'
+import { SITE, HOURS } from '@/lib/siteInfo'
 
 export const metadata: Metadata = {
   title: 'Tasting Room',
   description:
-    'Our Castroville tasting room on HWY 90 — 6 ciders on tap, 20+ in bottle, family friendly, open Wednesday through Saturday.',
+    'Six ciders on tap and twenty-plus in bottle at 405 HWY 90 West in Castroville, twenty minutes west of San Antonio. Family friendly, Wednesday through Saturday.',
 }
+
+const FACTS = [
+  ['Flights', 'Four pours, your pick'],
+  ['Family', 'All ages welcome'],
+  ['Non-Alc', 'Always one on tap'],
+  ['Private', 'Book the whole room'],
+]
+
+const BOARD: Array<[string, string, string]> = [
+  ['/photos/bottle-pinkerton.webp', 'Pinkerton', 'Dry, bright, a little tannic'],
+  ['/photos/bottle-peach.webp', 'Peach', 'Orchard sweet, Texas summer'],
+  ['/photos/bottle-blueberry.webp', 'Blueberry Buckle', 'Sweet, jammy, dessert in a glass'],
+  ['/photos/bottle-grenadine.webp', 'Grenadine', 'Pomegranate, tart finish'],
+]
+
+const STRIP: Array<[string, string]> = [
+  ['/brand/storefront.jpg', 'The storefront on HWY 90'],
+  ['/site/cider-flight.webp', 'A flight of cider'],
+  ['/brand/bottles-shelf.jpg', 'Bottles on the shelf'],
+  ['/photos/social-april.webp', 'An afternoon at the cider house'],
+]
 
 export default function TastingRoomPage() {
   return (
     <>
-      {/* Hero */}
-      <section className="relative h-[52vh] min-h-[360px] w-full">
-        <Image
-          src="/site/tasting-room-sign.webp"
-          alt="Hill Country Cider House sign — Small Batch, Quality Cider, 2020"
-          fill
-          priority
-          sizes="100vw"
-          style={{ objectFit: 'cover' }}
-        />
-        <div className="absolute inset-0" style={{ background: 'linear-gradient(to bottom, rgba(26,37,64,0.5), rgba(26,37,64,0.75))' }} />
-        <div className="absolute inset-0 flex flex-col items-center justify-center px-6 text-center">
-          <h1
-            style={{
-              fontFamily: 'var(--font-serif)',
-              fontStyle: 'italic',
-              fontWeight: 400,
-              fontSize: 'clamp(28px, 5vw, 52px)',
-              color: 'var(--cream)',
-              lineHeight: 1.2,
-              maxWidth: 820,
-            }}
-          >
-            Don&apos;t just drink the cider, experience it.
-          </h1>
-          <p className="smallcaps mt-5" style={{ color: 'var(--gold)' }}>
-            Where American cider meets Texas hospitality
-          </p>
-        </div>
-      </section>
-
-      {/* What's on offer */}
-      <section className="mx-auto max-w-5xl px-6 py-16">
-        <div className="grid gap-10 md:grid-cols-3 text-center">
-          {[
-            { stat: '6', label: 'Ciders on tap', note: 'Always one no-alcohol' },
-            { stat: '20+', label: 'Ciders in bottle', note: 'Dry, fruit, botanical & more' },
-            { stat: 'Free', label: '"Sips" always', note: 'Try before you pour' },
-          ].map((s) => (
-            <div key={s.label} className="border p-8" style={{ borderColor: 'var(--rule)', backgroundColor: 'var(--paper)' }}>
-              <p style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 44, color: 'var(--terracotta)', lineHeight: 1 }}>
-                {s.stat}
-              </p>
-              <p className="smallcaps mt-3" style={{ color: 'var(--ink)' }}>{s.label}</p>
-              <p className="mt-1.5 text-xs" style={{ color: 'var(--ink-soft)' }}>{s.note}</p>
-            </div>
-          ))}
-        </div>
-
-        <div className="mx-auto mt-14 max-w-2xl text-center" style={{ color: 'var(--ink-soft)', fontSize: 16, lineHeight: 1.75 }}>
-          <p>
-            Whether you are looking for the small town Texas experience, or your local hangout, we serve
-            cider with a smile. Family friendly and open Wednesday through Saturday.
-          </p>
-        </div>
-      </section>
-
-      {/* Location & hours */}
-      <section style={{ backgroundColor: 'var(--cream-deep)', borderTop: '1px solid var(--rule)', borderBottom: '1px solid var(--rule)' }}>
-        <div className="mx-auto max-w-4xl px-6 py-16">
-          <div className="text-center mb-10">
-            <h2
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontStyle: 'italic',
-                fontWeight: 400,
-                fontSize: 'clamp(24px, 3.5vw, 34px)',
-                color: 'var(--ink)',
-              }}
-            >
-              Location and Hours
-            </h2>
-          </div>
-          <HoursCard />
-        </div>
-      </section>
-
-      {/* Questions */}
-      <section className="mx-auto max-w-3xl px-6 py-16 text-center">
-        <h2
+      <Hero
+        src="/site/tasting-room-sign.webp"
+        alt="Hill Country Cider House tasting room sign"
+        vh={80}
+        minHeight={480}
+        scrimV="linear-gradient(180deg,rgba(20,16,12,0.55) 0%,rgba(20,16,12,0.28) 30%,rgba(20,16,12,0.72) 62%,rgba(20,16,12,0.95) 100%)"
+        scrimH="linear-gradient(90deg,rgba(20,16,12,0.7) 0%,rgba(20,16,12,0.25) 55%,rgba(20,16,12,0) 100%)"
+      >
+        <p className="hc-eyebrow">405 HWY 90 West · Castroville</p>
+        <h1
+          className="hc-display"
           style={{
-            fontFamily: 'var(--font-serif)',
-            fontStyle: 'italic',
-            fontWeight: 400,
-            fontSize: 'clamp(22px, 3vw, 30px)',
-            color: 'var(--ink)',
+            fontSize: 'clamp(38px,6.6vw,104px)',
+            lineHeight: 0.95,
+            letterSpacing: '-0.042em',
+            maxWidth: '18ch',
           }}
         >
-          Have questions or looking for more information?
-        </h2>
-        <p className="mt-4" style={{ color: 'var(--ink-soft)', fontSize: 16 }}>
-          Call us at{' '}
-          <a href={SITE.phoneHref} style={{ color: 'var(--terracotta)' }}>{SITE.phone}</a>{' '}
-          or email us at{' '}
-          <a href={`mailto:${SITE.email}`} style={{ color: 'var(--terracotta)' }}>{SITE.email}</a>
+          The tasting room.
+        </h1>
+        <p
+          style={{
+            fontSize: 19,
+            lineHeight: 1.65,
+            color: 'rgba(245,238,227,0.78)',
+            maxWidth: '52ch',
+            margin: '28px 0 0',
+            fontWeight: 300,
+          }}
+        >
+          Wednesday through Saturday, twenty minutes west of San Antonio. Pull off the highway, take
+          a stool, and stay a while.
         </p>
-        <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <Link href="/contact" className="btn-saloon" style={{ textDecoration: 'none' }}>
-            Contact Us
-          </Link>
-          <Link href="/club" className="btn-outline-ink" style={{ textDecoration: 'none' }}>
-            Join the Cider Club
-          </Link>
+      </Hero>
+
+      {/* ── What to expect ──────────────────────────────────────────────── */}
+      <section className="hc-bone hc-section">
+        <div className="hc-wrap hc-grid-2" style={{ alignItems: 'center' }}>
+          <Photo
+            src="/photos/tasting-room-crowd.webp"
+            alt="A busy afternoon in the tasting room"
+            height={620}
+            sizes="(max-width: 900px) 100vw, 50vw"
+            className="hc-img--md"
+          />
+          <div>
+            <p className="hc-eyebrow">What to Expect</p>
+            <h2
+              className="hc-display"
+              style={{ fontSize: 'clamp(34px,4.2vw,60px)', lineHeight: 1.03, margin: '0 0 30px' }}
+            >
+              Sips are always free.
+            </h2>
+            <p className="hc-lede" style={{ marginBottom: 22, maxWidth: '52ch' }}>
+              Six ciders on tap — always one with no alcohol — and more than twenty in bottle. Never
+              had a dry cider? Say so. We&rsquo;ll walk you down the board until something lands.
+            </p>
+            <p className="hc-lede" style={{ marginBottom: 40, maxWidth: '52ch' }}>
+              Kids are welcome, dogs are welcome on the patio, and the pizza next door travels well.
+            </p>
+            <div
+              style={{
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                gap: 1,
+                background: 'var(--hc-hairline-light)',
+              }}
+            >
+              {FACTS.map(([label, value], i) => (
+                <div
+                  key={label}
+                  style={{
+                    background: 'var(--hc-bone)',
+                    padding: i % 2 === 0 ? '24px 24px 24px 0' : 24,
+                  }}
+                >
+                  <div className="hc-label" style={{ marginBottom: 8 }}>
+                    {label}
+                  </div>
+                  <div style={{ fontSize: 17 }}>{value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
+      </section>
+
+      {/* ── On the board ────────────────────────────────────────────────── */}
+      <section className="hc-dark hc-section">
+        <div className="hc-wrap">
+          <p className="hc-eyebrow" style={{ marginBottom: 24 }}>
+            On the Board
+          </p>
+          <h2
+            className="hc-display"
+            style={{ fontSize: 'clamp(34px,4.2vw,62px)', margin: '0 0 56px' }}
+          >
+            What&rsquo;s pouring now.
+          </h2>
+          <div className="hc-grid-4">
+            {BOARD.map(([src, name, note]) => (
+              <div key={name}>
+                <Photo
+                  src={src}
+                  alt={`${name} cider`}
+                  height={400}
+                  sizes="(max-width: 900px) 50vw, 25vw"
+                  className="hc-img--md"
+                />
+                <div
+                  style={{
+                    fontFamily: 'var(--font-display), sans-serif',
+                    fontSize: 24,
+                    margin: '22px 0 8px',
+                  }}
+                >
+                  {name}
+                </div>
+                <div style={{ fontSize: 15.5, color: 'rgba(245,238,227,0.58)', fontWeight: 300 }}>
+                  {note}
+                </div>
+              </div>
+            ))}
+          </div>
+          <p
+            style={{
+              fontSize: 16,
+              color: 'rgba(245,238,227,0.5)',
+              fontWeight: 300,
+              margin: '44px 0 0',
+            }}
+          >
+            Taps rotate weekly — the full bottle list lives in the{' '}
+            <a href={SITE.shop} target="_blank" rel="noopener noreferrer">
+              shop
+            </a>
+            .
+          </p>
+        </div>
+      </section>
+
+      {/* ── Hours + getting here ────────────────────────────────────────── */}
+      <section className="hc-deep hc-section">
+        <div className="hc-wrap hc-grid-2">
+          <div>
+            <p className="hc-eyebrow" style={{ marginBottom: 32 }}>
+              Hours
+            </p>
+            <div className="hc-rows">
+              {HOURS.map((h) => (
+                <div
+                  key={h.days}
+                  className="hc-hours-row"
+                  style={{ color: h.hours === 'Closed' ? 'rgba(245,238,227,0.5)' : undefined }}
+                >
+                  <span>{h.days}</span>
+                  <span>{h.hours}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <p className="hc-eyebrow" style={{ marginBottom: 32 }}>
+              Getting Here
+            </p>
+            <a
+              href={SITE.addressMapUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                fontFamily: 'var(--font-display), sans-serif',
+                fontSize: 27,
+                lineHeight: 1.4,
+                display: 'block',
+                marginBottom: 22,
+              }}
+            >
+              405 HWY 90 West
+              <br />
+              Castroville, TX 78009
+            </a>
+            <p
+              style={{
+                fontSize: 17,
+                lineHeight: 1.75,
+                color: 'rgba(245,238,227,0.66)',
+                fontWeight: 300,
+                margin: '0 0 34px',
+                maxWidth: '44ch',
+              }}
+            >
+              Twenty-five minutes west of downtown San Antonio on HWY 90. Free parking out front.
+              Look for the longhorn.
+            </p>
+            <div className="flex flex-wrap" style={{ gap: 14 }}>
+              <a
+                href={SITE.addressMapUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hc-btn hc-btn--accent"
+              >
+                Get Directions
+              </a>
+              <a
+                href={SITE.phoneHref}
+                className="hc-btn hc-btn--outline"
+                style={{ whiteSpace: 'nowrap' }}
+              >
+                {SITE.phone}
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="hc-tiles">
+        {STRIP.map(([src, alt]) => (
+          <Photo key={src} src={src} alt={alt} height={300} sizes="25vw" className="hc-img--md" />
+        ))}
       </section>
     </>
   )
