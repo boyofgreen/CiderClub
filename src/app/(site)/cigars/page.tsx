@@ -80,9 +80,15 @@ export default function CigarsPage() {
               We carry Mayfin.
             </h2>
             <p className="hc-lede" style={{ marginBottom: 22, maxWidth: '52ch' }}>
-              Mayfin is a small-batch cigar maker, and that suits us &mdash; we spend our days
-              pressing fruit in small lots, so we know what care at that scale looks like. We keep a
-              humidor behind the bar and a rotating handful of their sticks in it.
+              Mayfin rolled their first cigars in 2024. We pressed our first cider in 2020 &mdash;
+              close enough to remember exactly what that stretch feels like. Small batches. A name
+              nobody knows yet. Everything riding on whether the thing in someone&rsquo;s hand is
+              actually good.
+            </p>
+            <p className="hc-lede" style={{ marginBottom: 22, maxWidth: '52ch' }}>
+              So when we went looking for cigars to put behind the bar, we didn&rsquo;t chase the
+              old names. We backed the folks standing about where we stood four years ago &mdash;
+              and we think you&rsquo;ll be glad we did.
             </p>
             <p className="hc-lede" style={{ marginBottom: 40, maxWidth: '52ch' }}>
               New to cigars? Say so. Same as the cider board &mdash; tell us what you like and
