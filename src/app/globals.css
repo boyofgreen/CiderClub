@@ -754,12 +754,15 @@ body:has(.hc-theme) {
   align-items: center;
 }
 
-@media (min-width: 1101px) {
+/* The six nav links plus the CTA stop fitting on one row below ~1180px, and a
+   wrapped nav would push the header past the --hc-header-h the heroes subtract.
+   Hand off to the menu panel before that can happen. */
+@media (min-width: 1200px) {
   .hc-mobile-only {
     display: none !important;
   }
 }
-@media (max-width: 1100px) {
+@media (max-width: 1199px) {
   .hc-desktop-nav {
     display: none !important;
   }
