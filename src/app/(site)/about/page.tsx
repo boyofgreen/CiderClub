@@ -1,7 +1,7 @@
-import Image from 'next/image'
 import Link from 'next/link'
+import Image from 'next/image'
 import type { Metadata } from 'next'
-import { ContactForm } from '@/components/site/ContactForm'
+import { ContactSection } from '@/components/site/ContactSection'
 
 export const metadata: Metadata = {
   title: 'About',
@@ -9,122 +9,158 @@ export const metadata: Metadata = {
     'Hill Country Cider House is more than a cidery — a gathering place for curious palates in Comfort and Castroville, Texas.',
 }
 
+const PLACES = [
+  {
+    href: '/tasting-room',
+    src: '/brand/storefront.jpg',
+    alt: 'The tasting room on HWY 90 in Castroville',
+    place: 'Castroville, Texas',
+    title: 'The Tasting Room',
+    body: 'Our everyday home on HWY 90, minutes from San Antonio. Six on tap, twenty-plus in bottle, a howdy with every visit.',
+    cta: 'Plan a visit →',
+    objectPosition: undefined as string | undefined,
+  },
+  {
+    href: '/saturdays-in-comfort',
+    src: '/site/comfort-hills.webp',
+    alt: 'Twenty acres of rolling views at Holiday Orchard',
+    place: 'Comfort, Texas',
+    title: 'Holiday Orchard',
+    body: 'Twenty acres of rolling views, reserved one group at a time for private Saturday tastings and events.',
+    cta: 'Book a tasting →',
+    objectPosition: '50% 22%',
+  },
+]
+
 export default function AboutPage() {
   return (
     <>
-      {/* Intro */}
-      <section className="mx-auto max-w-6xl px-6 py-16 sm:py-20">
-        <div className="grid items-center gap-12 lg:grid-cols-2">
-          <div>
-            <p className="smallcaps mb-4" style={{ color: 'var(--terracotta)' }}>Our Story</p>
-            <h1
-              style={{
-                fontFamily: 'var(--font-serif)',
-                fontStyle: 'italic',
-                fontWeight: 400,
-                fontSize: 'clamp(30px, 4.5vw, 48px)',
-                color: 'var(--ink)',
-                lineHeight: 1.2,
-              }}
-            >
-              Who we are
-            </h1>
-            <div className="mt-6 space-y-4" style={{ color: 'var(--ink-soft)', fontSize: 16, lineHeight: 1.75 }}>
-              <p>
-                Whether it&rsquo;s a special event at our place nestled in the rolling hills of Comfort, Texas
-                or an everyday visit to our tasting room in historic Castroville, Hill Country Cider House is
-                more than a cidery&mdash;it&apos;s a gathering place for curious palates, passionate drinkers,
-                and anyone who believes that apples deserve a little more spotlight.
-              </p>
-              <p>
-                We are a family of craftsmen with a deep love for cider making and a flair for storytelling.
-                Our cidery brings together tradition and innovation. Each batch is a blend of technical
-                precision and creative spirit&mdash;whether it&apos;s a barrel aged dry or a fruit infused
-                cider bursting with flavor.
-              </p>
-              <p>
-                We host seasonal releases, themed events, and cider club gatherings that turn neighbors into
-                friends and tastings into celebrations. From rodeo parties to orchard-inspired cocktail
-                nights, we believe cider should be shared, savored, and occasionally frozen into a ciderita!
-              </p>
-              <p style={{ color: 'var(--ink)', fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 20, lineHeight: 1.5 }}>
-                At Hill Country Cider House, we&rsquo;re building more than a product&mdash;we&rsquo;re
-                cultivating a community. Come for the cider, stay for the stories.
-              </p>
-            </div>
-          </div>
-
-          <div className="relative w-full" style={{ aspectRatio: '4 / 5' }}>
-            <Image
-              src="/site/about-bottles.webp"
-              alt="Lemongrass and strawberry cider bottles with swing-top caps on a dark wooden shelf"
-              fill
-              priority
-              sizes="(max-width: 1024px) 100vw, 50vw"
-              style={{ objectFit: 'cover' }}
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Two homes */}
-      <section style={{ backgroundColor: 'var(--navy)' }}>
-        <div className="mx-auto max-w-5xl px-6 py-16">
-          <div className="grid gap-10 sm:grid-cols-2">
-            {[
-              {
-                place: 'Castroville',
-                title: 'The Tasting Room',
-                body: 'Our everyday home on HWY 90, minutes from San Antonio. Six ciders on tap, twenty-plus in bottle, and a howdy with every visit.',
-                href: '/tasting-room',
-                cta: 'Plan a Visit',
-              },
-              {
-                place: 'Comfort',
-                title: 'Holiday Orchard',
-                body: 'Twenty acres of rolling hill country views, reserved one group at a time for private Saturday tastings and events.',
-                href: '/saturdays-in-comfort',
-                cta: 'Book a Tasting',
-              },
-            ].map((c) => (
-              <div key={c.place}>
-                <p className="smallcaps mb-2" style={{ color: 'var(--gold)' }}>{c.place}, Texas</p>
-                <h3 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 26, color: 'var(--cream)' }}>
-                  {c.title}
-                </h3>
-                <p className="mt-3 text-sm" style={{ color: 'rgba(247,241,227,0.7)', lineHeight: 1.7 }}>
-                  {c.body}
-                </p>
-                <Link href={c.href} className="btn-ghost-cream mt-6" style={{ textDecoration: 'none' }}>
-                  {c.cta}
-                </Link>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Contact */}
-      <section className="mx-auto max-w-2xl px-6 py-16 sm:py-20">
-        <div className="text-center mb-8">
-          <h2
+      <section className="hc-dark hc-section--top">
+        <div className="hc-wrap">
+          <p className="hc-eyebrow" style={{ marginBottom: 28 }}>
+            Our Story
+          </p>
+          <h1
+            className="hc-display"
             style={{
-              fontFamily: 'var(--font-serif)',
-              fontStyle: 'italic',
-              fontWeight: 400,
-              fontSize: 'clamp(24px, 3.5vw, 34px)',
-              color: 'var(--ink)',
+              fontSize: 'clamp(38px,6.4vw,100px)',
+              lineHeight: 0.96,
+              letterSpacing: '-0.042em',
+              maxWidth: '20ch',
             }}
           >
-            Contact us
-          </h2>
-          <p className="mt-3" style={{ color: 'var(--ink-soft)', fontSize: 15, lineHeight: 1.7 }}>
-            Want to learn more? Fill out some info and we will be in touch shortly. We can&rsquo;t wait to
-            hear from you!
-          </p>
+            More than a cidery.
+          </h1>
         </div>
-        <ContactForm />
       </section>
+
+      <section
+        style={{ position: 'relative', height: '70vh', minHeight: 460, overflow: 'hidden' }}
+      >
+        <Image
+          src="/site/about-bottles.webp"
+          alt="Cider bottles with swing-top caps on a dark wooden shelf"
+          fill
+          priority
+          sizes="100vw"
+          style={{ objectFit: 'cover' }}
+        />
+      </section>
+
+      {/* ── Story ───────────────────────────────────────────────────────── */}
+      <section className="hc-bone hc-section">
+        <div className="hc-wrap hc-story">
+          <h2
+            className="hc-display"
+            style={{ fontSize: 'clamp(30px,3.4vw,46px)', lineHeight: 1.06 }}
+          >
+            Come for the cider, stay for the stories.
+          </h2>
+          <div>
+            <p className="hc-story__p">
+              Whether it&rsquo;s a special event at our place in the rolling hills of Comfort or an
+              everyday visit to our tasting room in historic Castroville, Hill Country Cider House
+              is a gathering place for curious palates, passionate drinkers, and anyone who believes
+              apples deserve a little more spotlight.
+            </p>
+            <p className="hc-story__p">
+              We&rsquo;re a family of craftsmen with a deep love for cider making and a flair for
+              storytelling. Every batch blends technical precision with creative spirit — a
+              barrel-aged dry one week, a fruit-infused cider bursting with flavor the next.
+            </p>
+            <p className="hc-story__p" style={{ marginBottom: 0 }}>
+              We host seasonal releases, themed events, and club gatherings that turn neighbors into
+              friends and tastings into celebrations. From rodeo parties to orchard cocktail nights,
+              we believe cider should be shared, savored, and occasionally frozen into a ciderita.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Two places ──────────────────────────────────────────────────── */}
+      <section className="hc-deep">
+        <div className="hc-tiles hc-tiles--2">
+          {PLACES.map((p) => (
+            <div
+              key={p.href}
+              className="hc-place"
+              style={{
+                position: 'relative',
+                minHeight: 560,
+                display: 'flex',
+                alignItems: 'flex-end',
+                overflow: 'hidden',
+              }}
+            >
+              <Image
+                src={p.src}
+                alt={p.alt}
+                fill
+                sizes="(max-width: 900px) 100vw, 50vw"
+                style={{ objectFit: 'cover', objectPosition: p.objectPosition }}
+              />
+              <div
+                className="hc-hero__scrim"
+                style={{
+                  background:
+                    'linear-gradient(180deg,rgba(20,16,12,0.2) 30%,rgba(20,16,12,0.94) 100%)',
+                }}
+              />
+              <div style={{ position: 'relative', padding: '56px 48px' }}>
+                <p
+                  className="hc-eyebrow"
+                  style={{ letterSpacing: '0.24em', fontSize: 11, marginBottom: 16 }}
+                >
+                  {p.place}
+                </p>
+                <h3
+                  className="hc-display"
+                  style={{ fontSize: 34, letterSpacing: '-0.035em', margin: '0 0 14px' }}
+                >
+                  {p.title}
+                </h3>
+                <p
+                  style={{
+                    fontSize: 17,
+                    lineHeight: 1.7,
+                    color: 'rgba(245,238,227,0.76)',
+                    fontWeight: 300,
+                    margin: '0 0 24px',
+                    maxWidth: '40ch',
+                  }}
+                >
+                  {p.body}
+                </p>
+                <Link href={p.href} className="hc-arrow">
+                  {p.cta}
+                </Link>
+              </div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <ContactSection id="contact" />
     </>
   )
 }

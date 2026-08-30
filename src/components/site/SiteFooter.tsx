@@ -1,101 +1,147 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import { SITE, HOURS } from '@/lib/siteInfo'
-import { MapPin, Phone, Mail, Instagram, Facebook, ShoppingBag } from 'lucide-react'
+import { SITE, HOURS, FOOTER_EXPLORE } from '@/lib/siteInfo'
+
+const COL_HEAD: React.CSSProperties = {
+  fontSize: 11,
+  letterSpacing: '0.24em',
+  textTransform: 'uppercase',
+  color: 'var(--hc-accent)',
+  fontWeight: 600,
+  marginBottom: 22,
+}
+
+const COL_BODY: React.CSSProperties = {
+  display: 'grid',
+  gap: 13,
+  fontSize: 16,
+  color: 'rgba(245,238,227,0.72)',
+  fontWeight: 300,
+}
 
 export function SiteFooter() {
+  const open = HOURS.filter((h) => h.hours !== 'Closed')
+
   return (
-    <footer style={{ backgroundColor: 'var(--navy)', borderTop: '2px solid var(--gold)' }}>
-      <div className="mx-auto max-w-6xl px-4 sm:px-6 py-12 grid gap-10 sm:grid-cols-2 lg:grid-cols-4">
-        {/* Brand */}
-        <div>
-          <div className="flex items-center gap-3 mb-4">
-            <Image src="/brand/logo.png" alt="Hill Country Cider House" width={40} height={40} style={{ objectFit: 'contain' }} />
-            <div className="flex flex-col leading-none" style={{ gap: 3 }}>
-              <span style={{ fontFamily: 'var(--font-serif)', fontSize: 15, color: 'var(--cream)' }}>Hill Country</span>
-              <span style={{ fontFamily: 'var(--font-sans)', fontSize: 8, fontWeight: 700, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--gold)' }}>Cider House</span>
+    <footer
+      className="hc-dark"
+      style={{ borderTop: '1px solid rgba(245,238,227,0.14)', padding: '100px 0 44px' }}
+    >
+      <div className="hc-wrap">
+        <div className="hc-footer-cols" style={{ paddingBottom: 72 }}>
+          <div>
+            <div className="flex items-center" style={{ gap: 14, marginBottom: 22 }}>
+              <Image
+                src="/brand/logo.png"
+                alt=""
+                width={112}
+                height={112}
+                style={{ height: 56, width: 'auto', display: 'block' }}
+              />
+              <span
+                style={{
+                  fontFamily: 'var(--font-display), sans-serif',
+                  fontSize: 19,
+                  lineHeight: 1.05,
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Hill Country
+                <br />
+                <span style={{ opacity: 0.72 }}>Cider House</span>
+              </span>
+            </div>
+            <p
+              style={{
+                fontSize: 15,
+                letterSpacing: '0.06em',
+                color: 'rgba(245,238,227,0.5)',
+                fontWeight: 300,
+                margin: '0 0 24px',
+              }}
+            >
+              Small batch, quality cider · Est. 2020
+              <br />
+              Castroville &amp; Comfort, Texas
+            </p>
+            <div
+              className="flex"
+              style={{
+                gap: 20,
+                fontSize: 11.5,
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                fontWeight: 600,
+              }}
+            >
+              <a href={SITE.facebook} target="_blank" rel="noopener noreferrer">
+                Facebook
+              </a>
+              <a href={SITE.instagram} target="_blank" rel="noopener noreferrer">
+                Instagram
+              </a>
             </div>
           </div>
-          <p className="text-xs leading-relaxed" style={{ color: 'rgba(247,241,227,0.5)' }}>
-            {SITE.tagline}
-          </p>
-          <div className="flex gap-3 mt-4">
-            <a href={SITE.facebook} target="_blank" rel="noopener noreferrer" aria-label="Facebook" style={{ color: 'rgba(247,241,227,0.55)' }} className="hover:opacity-80">
-              <Facebook className="h-4 w-4" />
-            </a>
-            <a href={SITE.instagram} target="_blank" rel="noopener noreferrer" aria-label="Instagram" style={{ color: 'rgba(247,241,227,0.55)' }} className="hover:opacity-80">
-              <Instagram className="h-4 w-4" />
-            </a>
-            <a href={SITE.shop} target="_blank" rel="noopener noreferrer" aria-label="Shop" style={{ color: 'rgba(247,241,227,0.55)' }} className="hover:opacity-80">
-              <ShoppingBag className="h-4 w-4" />
-            </a>
+
+          <div>
+            <div style={COL_HEAD}>Explore</div>
+            <div style={COL_BODY}>
+              {FOOTER_EXPLORE.map(({ href, label, external }) =>
+                external ? (
+                  <a key={label} href={href} target="_blank" rel="noopener noreferrer">
+                    {label}
+                  </a>
+                ) : (
+                  <Link key={label} href={href}>
+                    {label}
+                  </Link>
+                ),
+              )}
+            </div>
+          </div>
+
+          <div>
+            <div style={COL_HEAD}>Visit</div>
+            <div style={COL_BODY}>
+              <a href={SITE.addressMapUrl} target="_blank" rel="noopener noreferrer">
+                405 HWY 90 West
+                <br />
+                Castroville, TX 78009
+              </a>
+              {open.map((h) => (
+                <span key={h.days}>
+                  {h.days} · {h.hours}
+                </span>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <div style={COL_HEAD}>Get in Touch</div>
+            <div style={COL_BODY}>
+              <a href={`mailto:${SITE.email}`}>{SITE.email}</a>
+              <a href={SITE.phoneHref}>{SITE.phone}</a>
+              <a href={SITE.shop} target="_blank" rel="noopener noreferrer">
+                Online Shop
+              </a>
+              <Link href="/login">Member sign in</Link>
+            </div>
           </div>
         </div>
 
-        {/* Visit */}
-        <div>
-          <p className="smallcaps mb-3" style={{ color: 'var(--gold)' }}>Visit</p>
-          <a href={SITE.addressMapUrl} target="_blank" rel="noopener noreferrer" className="flex items-start gap-2 text-xs leading-relaxed hover:opacity-80" style={{ color: 'rgba(247,241,227,0.7)', textDecoration: 'none' }}>
-            <MapPin className="h-3.5 w-3.5 mt-0.5 shrink-0" style={{ color: 'var(--gold)' }} />
-            {SITE.address}
-          </a>
-          <div className="mt-3 space-y-1">
-            {HOURS.map((h) => (
-              <div key={h.days} className="flex justify-between text-xs" style={{ color: 'rgba(247,241,227,0.55)' }}>
-                <span>{h.days}</span>
-                <span>{h.hours}</span>
-              </div>
-            ))}
-          </div>
+        <div
+          className="hc-footer-legal"
+          style={{
+            borderTop: '1px solid rgba(245,238,227,0.12)',
+            paddingTop: 32,
+            fontSize: 13.5,
+            color: 'rgba(245,238,227,0.4)',
+            fontWeight: 300,
+          }}
+        >
+          <span>© {new Date().getFullYear()} Hill Country Cider House. All rights reserved.</span>
+          <span>Please drink responsibly.</span>
         </div>
-
-        {/* Explore */}
-        <div>
-          <p className="smallcaps mb-3" style={{ color: 'var(--gold)' }}>Explore</p>
-          <div className="flex flex-col gap-2">
-            {[
-              { href: '/tasting-room', label: 'Tasting Room' },
-              { href: '/saturdays-in-comfort', label: "Saturday's in Comfort" },
-              { href: '/apple-trees', label: 'Apple Trees' },
-              { href: '/club', label: 'Join the Cider Club' },
-              { href: '/about', label: 'About' },
-              { href: '/contact', label: 'Contact' },
-            ].map((l) => (
-              <Link key={l.href} href={l.href} className="text-xs hover:opacity-80" style={{ color: 'rgba(247,241,227,0.7)', textDecoration: 'none' }}>
-                {l.label}
-              </Link>
-            ))}
-            <a href={SITE.shop} target="_blank" rel="noopener noreferrer" className="text-xs hover:opacity-80" style={{ color: 'rgba(247,241,227,0.7)', textDecoration: 'none' }}>
-              Shop
-            </a>
-          </div>
-        </div>
-
-        {/* Contact */}
-        <div>
-          <p className="smallcaps mb-3" style={{ color: 'var(--gold)' }}>Get in Touch</p>
-          <a href={`mailto:${SITE.email}`} className="flex items-center gap-2 text-xs hover:opacity-80 mb-2" style={{ color: 'rgba(247,241,227,0.7)', textDecoration: 'none' }}>
-            <Mail className="h-3.5 w-3.5" style={{ color: 'var(--gold)' }} />
-            {SITE.email}
-          </a>
-          <a href={SITE.phoneHref} className="flex items-center gap-2 text-xs hover:opacity-80" style={{ color: 'rgba(247,241,227,0.7)', textDecoration: 'none' }}>
-            <Phone className="h-3.5 w-3.5" style={{ color: 'var(--gold)' }} />
-            {SITE.phone}
-          </a>
-          <Link
-            href="/login"
-            className="inline-block mt-4 text-xs hover:opacity-80"
-            style={{ color: 'rgba(247,241,227,0.45)', textDecoration: 'underline' }}
-          >
-            Member sign in
-          </Link>
-        </div>
-      </div>
-
-      <div style={{ borderTop: '1px solid rgba(201,161,74,0.25)' }} className="py-4 text-center">
-        <p className="text-[11px]" style={{ color: 'rgba(247,241,227,0.4)' }}>
-          © {new Date().getFullYear()} Hill Country Cider House. All rights reserved. · Castroville &amp; Comfort, Texas
-        </p>
       </div>
     </footer>
   )

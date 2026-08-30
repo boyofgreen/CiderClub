@@ -1,152 +1,162 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname } from 'next/navigation'
-import { Menu, X, ExternalLink } from 'lucide-react'
-import { NAV_LINKS } from '@/lib/siteInfo'
+import { NAV_LINKS, SITE } from '@/lib/siteInfo'
 
-const LINK_STYLE: React.CSSProperties = {
-  fontFamily: 'var(--font-sans)',
-  fontSize: 10,
-  fontWeight: 700,
-  letterSpacing: '0.18em',
-  textTransform: 'uppercase',
-  padding: '6px 10px',
-  textDecoration: 'none',
-  transition: 'color 0.15s',
-  borderBottom: '2px solid transparent',
-  display: 'inline-flex',
-  alignItems: 'center',
-  gap: 4,
-}
-
-export function SiteNav() {
+/**
+ * `homeHref` exists because the club.* subdomain rewrites "/" onto the club
+ * page — there the wordmark has to jump back to the apex domain.
+ */
+export function SiteNav({ homeHref = '/' }: { homeHref?: string }) {
   const pathname = usePathname()
   const [open, setOpen] = useState(false)
 
+  useEffect(() => {
+    document.body.style.overflow = open ? 'hidden' : ''
+    return () => {
+      document.body.style.overflow = ''
+    }
+  }, [open])
+
+  const wordmark = (
+    <>
+      <Image
+        src="/brand/logo.png"
+        alt=""
+        width={92}
+        height={92}
+        priority
+        style={{ height: 46, width: 'auto', display: 'block' }}
+      />
+      <span
+        style={{
+          fontFamily: 'var(--font-display), sans-serif',
+          fontSize: 17,
+          lineHeight: 1.05,
+          letterSpacing: '0.02em',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        Hill Country
+        <br />
+        <span style={{ opacity: 0.72 }}>Cider House</span>
+      </span>
+    </>
+  )
+
   return (
-    <header
-      style={{ backgroundColor: 'var(--navy)', borderBottom: '1px solid var(--rule)' }}
-      className="sticky top-0 z-30"
-    >
-      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
-        {/* Wordmark */}
-        <Link href="/" className="flex items-center gap-3 shrink-0" style={{ textDecoration: 'none' }}>
-          <Image
-            src="/brand/logo.png"
-            alt="Hill Country Cider House"
-            width={34}
-            height={34}
-            style={{ objectFit: 'contain' }}
-          />
-          <div className="flex flex-col leading-none" style={{ gap: 3 }}>
-            <span style={{ fontFamily: 'var(--font-serif)', fontSize: 14, fontWeight: 400, letterSpacing: '0.02em', color: 'var(--cream)' }}>
-              Hill Country
-            </span>
-            <span style={{ fontFamily: 'var(--font-sans)', fontSize: 8, fontWeight: 700, letterSpacing: '0.3em', textTransform: 'uppercase', color: 'var(--gold)' }}>
-              Cider House
-            </span>
-          </div>
-        </Link>
-
-        {/* Desktop links */}
-        <nav className="hidden lg:flex items-center">
-          {NAV_LINKS.map(({ href, label, external }) => {
-            const active = !external && pathname === href
-            return external ? (
-              <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={{ ...LINK_STYLE, color: 'rgba(247,241,227,0.65)' }}>
-                {label} <ExternalLink className="h-2.5 w-2.5 opacity-60" />
-              </a>
-            ) : (
-              <Link
-                key={label}
-                href={href}
-                style={{
-                  ...LINK_STYLE,
-                  color: active ? 'var(--gold)' : 'rgba(247,241,227,0.65)',
-                  borderBottomColor: active ? 'var(--gold)' : 'transparent',
-                }}
-              >
-                {label}
-              </Link>
-            )
-          })}
+    <>
+      <header className="hc-header">
+        <div className="hc-header__bar">
           <Link
-            href="/club"
-            className="ml-3"
-            style={{
-              fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700,
-              letterSpacing: '0.18em', textTransform: 'uppercase',
-              backgroundColor: 'var(--gold)', color: 'var(--navy-deep)',
-              padding: '9px 16px', textDecoration: 'none',
-            }}
+            href={homeHref}
+            className="flex items-center"
+            style={{ gap: 14 }}
+            aria-label="Hill Country Cider House — home"
           >
-            Join the Club
+            {wordmark}
           </Link>
-        </nav>
 
-        {/* Mobile hamburger */}
-        <button
-          className="lg:hidden"
-          onClick={() => setOpen(!open)}
-          style={{ color: 'var(--cream)', background: 'transparent', border: 'none', cursor: 'pointer', padding: 8 }}
-          aria-label="Toggle menu"
-        >
-          {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-        </button>
-      </div>
+          <button
+            type="button"
+            className="hc-mobile-only hc-menu-toggle"
+            onClick={() => setOpen(true)}
+            aria-expanded={open}
+          >
+            Menu
+          </button>
 
-      {/* Mobile menu */}
-      {open && (
-        <div
-          style={{ borderTop: '1px solid var(--rule)', backgroundColor: 'var(--navy-soft)' }}
-          className="px-4 py-3 lg:hidden"
-        >
-          <nav>
-            {NAV_LINKS.map(({ href, label, external }) => {
-              const active = !external && pathname === href
-              const style: React.CSSProperties = {
-                display: 'flex',
-                alignItems: 'center',
-                gap: 8,
-                padding: '10px 12px',
-                fontFamily: 'var(--font-sans)',
-                fontSize: 10,
-                fontWeight: 700,
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                color: active ? 'var(--gold)' : 'rgba(247,241,227,0.8)',
-                borderLeft: active ? '2px solid var(--gold)' : '2px solid transparent',
-                textDecoration: 'none',
-              }
-              return external ? (
-                <a key={label} href={href} target="_blank" rel="noopener noreferrer" style={style} onClick={() => setOpen(false)}>
-                  {label} <ExternalLink className="h-3 w-3 opacity-60" />
+          <nav className="hc-nav hc-desktop-nav">
+            {NAV_LINKS.map(({ href, label, external }) =>
+              external ? (
+                <a key={label} href={href} target="_blank" rel="noopener noreferrer">
+                  {label}
                 </a>
               ) : (
-                <Link key={label} href={href} style={style} onClick={() => setOpen(false)}>
+                <Link key={label} href={href} aria-current={pathname === href ? 'page' : undefined}>
                   {label}
                 </Link>
-              )
-            })}
-            <Link
-              href="/club"
-              onClick={() => setOpen(false)}
-              style={{
-                display: 'inline-block', margin: '10px 12px 4px',
-                fontFamily: 'var(--font-sans)', fontSize: 10, fontWeight: 700,
-                letterSpacing: '0.18em', textTransform: 'uppercase',
-                backgroundColor: 'var(--gold)', color: 'var(--navy-deep)',
-                padding: '10px 18px', textDecoration: 'none',
-              }}
-            >
+              ),
+            )}
+            <Link href="/club" className="hc-btn hc-btn--accent">
               Join the Club
             </Link>
           </nav>
         </div>
+      </header>
+
+      {open && (
+        <div className="hc-menu hc-mobile-only" role="dialog" aria-modal="true" aria-label="Menu">
+          <div
+            className="flex items-center justify-between"
+            style={{ minHeight: 56, marginBottom: 24 }}
+          >
+            <Image
+              src="/brand/logo.png"
+              alt=""
+              width={88}
+              height={88}
+              style={{ height: 44, width: 'auto', display: 'block' }}
+            />
+            <button type="button" className="hc-menu-toggle" onClick={() => setOpen(false)}>
+              Close
+            </button>
+          </div>
+
+          <div style={{ display: 'grid', gap: 2, borderTop: '1px solid var(--hc-hairline)' }}>
+            <Link href="/" className="hc-menu__link" onClick={() => setOpen(false)}>
+              Home
+            </Link>
+            {NAV_LINKS.map(({ href, label, external }) =>
+              external ? (
+                <a
+                  key={label}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="hc-menu__link"
+                  onClick={() => setOpen(false)}
+                >
+                  {label}
+                </a>
+              ) : (
+                <Link
+                  key={label}
+                  href={href}
+                  className="hc-menu__link"
+                  onClick={() => setOpen(false)}
+                >
+                  {label}
+                </Link>
+              ),
+            )}
+            <Link href="/contact" className="hc-menu__link" onClick={() => setOpen(false)}>
+              Contact
+            </Link>
+          </div>
+
+          <div style={{ display: 'grid', gap: 10, marginTop: 'auto', paddingTop: 22 }}>
+            <Link
+              href="/club"
+              className="hc-btn hc-btn--accent"
+              style={{ padding: '20px 24px', letterSpacing: '0.2em' }}
+              onClick={() => setOpen(false)}
+            >
+              Join the Club
+            </Link>
+            <a
+              href={SITE.phoneHref}
+              className="hc-btn hc-btn--outline"
+              style={{ padding: '20px 24px', letterSpacing: '0.2em' }}
+            >
+              {SITE.phone}
+            </a>
+          </div>
+        </div>
       )}
-    </header>
+    </>
   )
 }
