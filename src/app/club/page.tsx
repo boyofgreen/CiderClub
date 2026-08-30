@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import Image from 'next/image'
 import { prisma } from '@/lib/prisma'
+import { headers } from 'next/headers'
 import { SITE } from '@/lib/siteInfo'
 
 // Hardcoded tier copy — names/perks are final per design handoff
@@ -79,8 +80,21 @@ async function getPageData() {
   }
 }
 
+/**
+ * Where the wordmark should link. On the club.* subdomain "/" is rewritten back
+ * to this page, so send visitors to the main site instead of a dead click.
+ */
+function mainSiteHref(host: string | null): string {
+  const h = (host ?? '').toLowerCase().split(':')[0]
+  if (!h.startsWith('club.')) return '/'
+  const root = h.slice('club.'.length)
+  // Only jump domains for the real site; local/preview hosts stay relative.
+  return root.includes('.') ? `https://www.${root}` : '/'
+}
+
 export default async function LandingPage() {
   const { plans, products, memberCount } = await getPageData()
+  const homeHref = mainSiteHref(headers().get('host'))
 
   const lineup = products.length > 0
     ? products.map((p, i) => {
@@ -96,7 +110,7 @@ export default async function LandingPage() {
       {/* ── NAV ─────────────────────────────────────────────────────── */}
       <header style={{ backgroundColor: 'var(--cream-deep)', borderBottom: '1px solid var(--rule)', position: 'sticky', top: 0, zIndex: 30 }}>
         <div className="mx-auto flex items-center justify-between" style={{ maxWidth: 1280, padding: '18px clamp(16px,5vw,56px)' }}>
-          <Link href="/" className="flex items-center gap-3" style={{ textDecoration: 'none' }}>
+          <Link href={homeHref} className="flex items-center gap-3" style={{ textDecoration: 'none' }}>
             <Image src="/brand/logo.png" alt="Hill Country Cider House" width={48} height={56} style={{ objectFit: 'contain', width: 48, height: 'auto' }} />
             <div>
               <div style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontSize: 18, color: 'var(--ink)', lineHeight: 1.1 }}>
