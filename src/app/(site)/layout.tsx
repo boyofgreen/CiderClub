@@ -5,7 +5,9 @@ import { SiteFooter } from '@/components/site/SiteFooter'
 export const metadata: Metadata = {
   title: {
     template: '%s | Hill Country Cider House',
-    default: 'Hill Country Cider House — Craft Hard Cider in Castroville, TX',
+    // Absolute: the root layout's own "%s | Cider Club" template would otherwise
+    // append to this already-complete title on the homepage.
+    absolute: 'Hill Country Cider House — Craft Hard Cider in Castroville, TX',
   },
   description:
     'Small batch, quality hard cider just a stones throw from San Antonio in Castroville, TX. Tasting room, cider club, private tastings in Comfort, and Texas-grown apples.',
