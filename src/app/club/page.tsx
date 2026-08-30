@@ -7,7 +7,9 @@ import { Hero } from '@/components/site/Hero'
 import { Photo } from '@/components/site/Photo'
 
 export const metadata = {
-  title: 'Cider Club',
+  // Absolute: this page sits outside the (site) group, so the root layout's
+  // "%s | Cider Club" template would otherwise render "Cider Club | Cider Club".
+  title: { absolute: 'Cider Club — Hill Country Cider House' },
   description:
     "Four times a year we set aside a small batch of our best ciders for the people who make this place feel like home. Three tiers, member pricing, and open-bar pickup parties.",
 }
