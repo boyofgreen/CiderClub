@@ -58,7 +58,6 @@ export const NAV_LINKS: Array<{ href: string; label: string; external?: boolean 
   { href: '/tasting-room', label: 'Tasting Room' },
   { href: '/saturdays-in-comfort', label: 'Saturdays in Comfort' },
   { href: SITE.supperClub, label: 'Supper Club', external: true },
-  { href: '/apple-trees', label: 'Apple Trees' },
   { href: '/about', label: 'About' },
   { href: SITE.shop, label: 'Shop', external: true },
 ]
