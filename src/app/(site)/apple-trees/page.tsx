@@ -2,11 +2,13 @@ import type { Metadata } from 'next'
 import { Hero } from '@/components/site/Hero'
 import { Photo } from '@/components/site/Photo'
 import { SITE } from '@/lib/siteInfo'
+import { JsonLd, faqSchema } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Apple Trees',
   description:
     'Have apple trees on your property? We pick them for free and turn them into Texas cider — you get a bottle for every three bushels.',
+  alternates: { canonical: '/apple-trees' },
 }
 
 const TREES_MAILTO = `mailto:${SITE.email}?subject=${encodeURIComponent('Apple trees')}`
@@ -54,6 +56,7 @@ const FAQ: Array<[string, string]> = [
 export default function AppleTreesPage() {
   return (
     <>
+      <JsonLd data={faqSchema(FAQ)} />
       <Hero
         src="/site/apple-tree-home.webp"
         alt="A Texas home with an apple tree bearing ripe red apples"

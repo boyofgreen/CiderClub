@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: 'Tasting Room',
   description:
     'Six ciders on tap and twenty-plus in bottle at 405 HWY 90 West in Castroville, twenty minutes west of San Antonio. Family friendly, Wednesday through Saturday.',
+  alternates: { canonical: '/tasting-room' },
 }
 
 const FACTS = [

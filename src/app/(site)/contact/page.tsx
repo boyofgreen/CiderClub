@@ -7,6 +7,7 @@ export const metadata: Metadata = {
   title: 'Contact',
   description:
     'Give us a ring, send us a text, email us, or fill out the form — Hill Country Cider House, Castroville and Comfort, Texas.',
+  alternates: { canonical: '/contact' },
 }
 
 export default function ContactPage() {

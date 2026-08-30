@@ -2,11 +2,13 @@ import type { Metadata } from 'next'
 import { Hero } from '@/components/site/Hero'
 import { Photo } from '@/components/site/Photo'
 import { SITE } from '@/lib/siteInfo'
+import { JsonLd, comfortVenueSchema } from '@/lib/seo'
 
 export const metadata: Metadata = {
   title: 'Saturdays in Comfort',
   description:
     'A personalized, private cider tasting on twenty acres at Holiday Orchard in Comfort, Texas. One group at a time, ninety minutes, five to seven ciders.',
+  alternates: { canonical: '/saturdays-in-comfort' },
 }
 
 const BOOKING_MAILTO = `mailto:${SITE.email}?subject=${encodeURIComponent('Saturdays in Comfort booking')}`
@@ -22,6 +24,7 @@ const INCLUDED = [
 export default function ComfortPage() {
   return (
     <>
+      <JsonLd data={comfortVenueSchema()} />
       <Hero
         src="/photos/supper-dusk-table.webp"
         alt="Candlelit table at dusk on the property at Holiday Orchard"
