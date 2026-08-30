@@ -33,6 +33,7 @@ export const TRACKED_PATHS = [
   '/',
   '/tasting-room',
   '/saturdays-in-comfort',
+  '/cigars',
   '/apple-trees',
   '/about',
   '/contact',
@@ -46,6 +47,7 @@ export const PATH_LABELS: Record<string, string> = {
   '/': 'Home',
   '/tasting-room': 'Tasting Room',
   '/saturdays-in-comfort': "Saturday's in Comfort",
+  '/cigars': 'Cigars',
   '/apple-trees': 'Apple Trees',
   '/about': 'About',
   '/contact': 'Contact',
@@ -57,6 +59,7 @@ export const PATH_LABELS: Record<string, string> = {
 export const NAV_LINKS: Array<{ href: string; label: string; external?: boolean }> = [
   { href: '/tasting-room', label: 'Tasting Room' },
   { href: '/saturdays-in-comfort', label: 'Saturdays in Comfort' },
+  { href: '/cigars', label: 'Cigars' },
   { href: SITE.supperClub, label: 'Supper Club', external: true },
   { href: '/about', label: 'About' },
   { href: SITE.shop, label: 'Shop', external: true },
@@ -66,6 +69,7 @@ export const NAV_LINKS: Array<{ href: string; label: string; external?: boolean 
 export const FOOTER_EXPLORE: Array<{ href: string; label: string; external?: boolean }> = [
   { href: '/tasting-room', label: 'Tasting Room' },
   { href: '/saturdays-in-comfort', label: 'Saturdays in Comfort' },
+  { href: '/cigars', label: 'Cigars' },
   { href: SITE.supperClub, label: 'Supper Club', external: true },
   { href: '/apple-trees', label: 'Apple Trees' },
   { href: '/club', label: 'Join the Cider Club' },
