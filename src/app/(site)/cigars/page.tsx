@@ -11,12 +11,10 @@ export const metadata: Metadata = {
   alternates: { canonical: '/cigars' },
 }
 
-// NOTE: these are stand-ins from the existing library so the page reads well
-// today. Swap the four paths below for real cigar photography when it lands —
-// nothing else needs to change.
-const HERO_IMG = '/photos/rodeo-night.webp'
-const HUMIDOR_IMG = '/photos/social-april.webp'
-const FLIGHT_IMG = '/site/cider-flight.webp'
+const HERO_IMG = '/photos/cigar-barrel-table.webp'
+const HUMIDOR_IMG = '/photos/cigar-mayfin-band.webp'
+const FLIGHT_IMG = '/photos/cigar-cider-overhead.webp'
+// Our actual outdoor space — stands in until there's a porch photo.
 const PORCH_IMG = '/photos/supper-dusk-table.webp'
 
 const PORCH_FACTS: Array<[string, string]> = [
@@ -31,11 +29,11 @@ export default function CigarsPage() {
     <>
       <Hero
         src={HERO_IMG}
-        alt="An evening on the porch at Hill Country Cider House"
+        alt="Two Mayfin cigars in an ashtray beside a glass of cider on a barrel top"
         vh={80}
         minHeight={480}
-        objectPosition="50% 45%"
-        scrimV="linear-gradient(180deg,rgba(20,16,12,0.58) 0%,rgba(20,16,12,0.3) 30%,rgba(20,16,12,0.78) 66%,rgba(20,16,12,0.96) 100%)"
+        objectPosition="50% 62%"
+        scrimV="linear-gradient(180deg,rgba(20,16,12,0.5) 0%,rgba(20,16,12,0.2) 34%,rgba(20,16,12,0.72) 70%,rgba(20,16,12,0.95) 100%)"
         scrimH="linear-gradient(90deg,rgba(20,16,12,0.74) 0%,rgba(20,16,12,0.28) 56%,rgba(20,16,12,0) 100%)"
       >
         <p className="hc-eyebrow">Mayfin Cigars · On the Porch</p>
@@ -102,7 +100,7 @@ export default function CigarsPage() {
           </div>
           <Photo
             src={HUMIDOR_IMG}
-            alt="An evening at the cider house"
+            alt="A lit Mayfin cigar showing the band"
             height={620}
             sizes="(max-width: 900px) 100vw, 50vw"
             className="hc-img--md"
@@ -115,7 +113,7 @@ export default function CigarsPage() {
         <div className="hc-wrap hc-grid-2" style={{ alignItems: 'center' }}>
           <Photo
             src={FLIGHT_IMG}
-            alt="A flight of cider ready for pairing"
+            alt="A cigar resting in an ashtray beside a glass of cider, seen from above"
             height={620}
             sizes="(max-width: 900px) 100vw, 50vw"
             className="hc-img--md"
