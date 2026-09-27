@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { chargeCardOnFile, createPaymentLink } from '@/services/square/payments'
+import { chargeCardOnFile, createPaymentLink, BillingInProgressError } from '@/services/square/payments'
 import { adjustInventoryForOrder } from '@/services/square/inventory'
 import { sendEmail } from '@/services/email/sender'
 import { renderEmail, buildReceiptItemsTable } from '@/lib/emailTemplates'
@@ -154,6 +154,11 @@ export async function billOrder(
 
       return { orderId, success: true, method, paymentId: result.paymentId }
     } catch (err) {
+      // Another request is mid-charge (e.g. a double-click). Leave the order
+      // alone — marking it failed and emailing the member would be wrong.
+      if (err instanceof BillingInProgressError) {
+        return { orderId, success: false, method, error: err.message }
+      }
       console.error(`[billing] chargeCardOnFile failed for order ${orderId}:`, err)
       // Mark as failed and notify member
       await prisma.order.update({

@@ -118,9 +118,64 @@ export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResu
   const locationId = process.env.SQUARE_LOCATION_ID
   if (!locationId) throw new Error('SQUARE_LOCATION_ID is not configured')
 
+  const attempt = await claimBillingAttempt(params.orderId)
+  try {
+    return await chargeAttempt(params, locationId, attempt)
+  } finally {
+    await prisma.order
+      .update({ where: { id: params.orderId }, data: { billingLockedAt: null } })
+      .catch((err) => console.error(`[billing] failed to release lock on ${params.orderId}:`, err))
+  }
+}
+
+/** Thrown when another request holds the billing lock. Not a card decline. */
+export class BillingInProgressError extends Error {
+  constructor() {
+    super('This order is already billed or being billed right now. Refresh in a moment.')
+    this.name = 'BillingInProgressError'
+  }
+}
+
+/** A lock older than this is assumed to belong to a crashed request. */
+const BILLING_LOCK_TTL_MS = 2 * 60 * 1000
+
+/**
+ * Take the per-order billing lock and bump the attempt counter in one atomic
+ * update. Square idempotency keys are derived from the attempt number, so a
+ * retry after a decline (or after the member updates their card) is a genuine
+ * new charge rather than a replay of the old response — while the lock keeps a
+ * double-click from charging twice.
+ */
+async function claimBillingAttempt(orderId: string): Promise<number> {
+  const claimed = await prisma.order.updateMany({
+    where: {
+      id: orderId,
+      status: { not: 'BILLED' },
+      OR: [
+        { billingLockedAt: null },
+        { billingLockedAt: { lt: new Date(Date.now() - BILLING_LOCK_TTL_MS) } },
+      ],
+    },
+    data: { billingLockedAt: new Date(), billingAttempts: { increment: 1 } },
+  })
+  if (claimed.count === 0) {
+    throw new BillingInProgressError()
+  }
+  const { billingAttempts } = await prisma.order.findUniqueOrThrow({
+    where: { id: orderId },
+    select: { billingAttempts: true },
+  })
+  return billingAttempts
+}
+
+async function chargeAttempt(
+  params: ChargeParams,
+  locationId: string,
+  attempt: number
+): Promise<ChargeResult> {
   // 1. Create a Square Order with line items and pickup fulfillment
   const orderResponse = await squareClient.orders.create({
-    idempotencyKey: `order-create-${params.orderId}`,
+    idempotencyKey: `order-${params.orderId}-${attempt}`,
     order: buildOrderBody({
       locationId,
       squareCustomerId: params.squareCustomerId,
@@ -141,7 +196,7 @@ export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResu
 
   // 2. Pay the Square Order
   const paymentResponse = await squareClient.payments.create({
-    idempotencyKey: `order-bill-${params.orderId}`,
+    idempotencyKey: `bill-${params.orderId}-${attempt}`,
     sourceId: params.squareCardId,
     customerId: params.squareCustomerId,
     orderId: squareOrder.id,
@@ -165,6 +220,7 @@ export async function chargeCardOnFile(params: ChargeParams): Promise<ChargeResu
       squareReceiptUrl: payment.receiptUrl ?? null,
       billedAt: new Date(),
       billingMethod: 'CARD_ON_FILE',
+      billingLockedAt: null,
     },
   })
 
@@ -178,8 +234,14 @@ export async function createPaymentLink(
   const locationId = process.env.SQUARE_LOCATION_ID
   if (!locationId) throw new Error('SQUARE_LOCATION_ID is not configured')
 
+  const { billingAttempts: attempt } = await prisma.order.update({
+    where: { id: params.orderId },
+    data: { billingAttempts: { increment: 1 } },
+    select: { billingAttempts: true },
+  })
+
   const response = await squareClient.checkout.paymentLinks.create({
-    idempotencyKey: `order-link-${params.orderId}`,
+    idempotencyKey: `link-${params.orderId}-${attempt}`,
     description: `${clubName} — ${params.quarterLabel} order`,
     order: buildOrderBody({
       locationId,

@@ -263,6 +263,11 @@ model Order {
   pickedUpAt    DateTime?
 
   // Billing
+  // Each charge attempt gets its own Square idempotency key (bill-<id>-<n>), so
+  // retries after a decline or card change are real retries. billingLockedAt
+  // stops two concurrent attempts (e.g. a double-click) from both charging.
+  billingAttempts Int       @default(0)
+  billingLockedAt DateTime?
   billedAt      DateTime?
   billingMethod String?   // CARD_ON_FILE | PAYMENT_LINK | IN_PERSON
 
