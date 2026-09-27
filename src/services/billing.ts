@@ -170,7 +170,7 @@ export async function billOrder(
       const failed = await renderEmail('PAYMENT_FAILED', {
         firstName: member.firstName,
         quarterLabel: order.quarter?.label ?? 'Ad Hoc',
-        portalUrl: `${appUrl}/magic?t=${token}`,
+        portalUrl: `${appUrl}/magic?t=${token}&next=/member/profile?card=1`,
       })
       await sendEmail({
         to: member.email,

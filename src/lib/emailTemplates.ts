@@ -212,13 +212,15 @@ export const EMAIL_TEMPLATE_DEFS: EmailTemplateDef[] = [
     key: 'PAYMENT_FAILED',
     label: 'Payment issue',
     description: 'Sent when a card declines or no card is on file at billing time.',
-    defaultSubject: 'Payment Issue — Action Required',
+    defaultSubject: 'A quick hiccup with your card',
     defaultBody: `
-    <h2>Payment Issue — Action Required</h2>
+    <h2>A quick hiccup with your card</h2>
     <p>Hi {{firstName}},</p>
-    <p>We had trouble charging the card on file for your <strong>{{quarterLabel}}</strong> cider order. Please update your payment method as soon as possible so we can get your order to you.</p>
-    ${CTA('{{portalUrl}}', 'Update Payment Method')}
-    <p>If you need help, just reply to this email and we'll sort it out.</p>`,
+    <p>We had a little trouble with the card on file for your <strong>{{quarterLabel}}</strong> cider order. Nine times out of ten that's just an expired card, or a change on your bank's end.</p>
+    <p>We'd be grateful if you'd take a moment to check your card details and make any changes needed, so we can keep your cider flowing.</p>
+    ${CTA('{{portalUrl}}', 'Check My Card')}
+    <p>Your order is safe and waiting for you. If anything looks off or you'd rather sort it out in person, just reply to this email or mention it next time you're in the tasting room.</p>
+    <p>Thanks for being part of the club,<br/>The Hill Country Cider House team</p>`,
     vars: [
       { name: 'firstName', description: "Member's first name" },
       { name: 'quarterLabel', description: 'The quarter (e.g. 2026-Q3)' },
