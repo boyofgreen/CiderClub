@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { parseEventBody } from '@/lib/eventForm'
 
 export async function GET(
   _req: Request,
@@ -27,26 +28,13 @@ export async function PUT(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const body = await req.json().catch(() => ({}))
-  const { title, description, eventType, startsAt, endsAt, location, isPublic, imageUrl, notes } = body
+  const parsed = parseEventBody(await req.json().catch(() => ({})))
+  if ('error' in parsed) return NextResponse.json({ error: parsed.error }, { status: 400 })
 
-  if (!title || !startsAt) {
-    return NextResponse.json({ error: 'Title and start time are required' }, { status: 400 })
-  }
-
+  // source/sourceUrl record where the event came from; editing doesn't change that.
   const event = await prisma.clubEvent.update({
     where: { id: params.eventId },
-    data: {
-      title,
-      description: description || null,
-      eventType: eventType || 'OTHER',
-      startsAt: new Date(startsAt),
-      endsAt: endsAt ? new Date(endsAt) : null,
-      location: location || null,
-      isPublic: isPublic !== false,
-      imageUrl: imageUrl || null,
-      notes: notes || null,
-    },
+    data: parsed.data,
   })
 
   return NextResponse.json({ event })

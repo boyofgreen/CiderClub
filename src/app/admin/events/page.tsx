@@ -2,20 +2,17 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { formatDateTime } from '@/lib/utils'
+import { formatEventDateTime } from '@/lib/eventTime'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
-import { PartyPopper, Plus, X, ChevronRight } from 'lucide-react'
-import type { Metadata } from 'next'
-
-const EVENT_TYPES = [
-  { value: 'RELEASE_PARTY', label: 'Release Party' },
-  { value: 'TASTING', label: 'Tasting' },
-  { value: 'FARM_VISIT', label: 'Farm Visit' },
-  { value: 'WORKSHOP', label: 'Workshop' },
-  { value: 'OTHER', label: 'Other' },
-]
+import { PartyPopper, Plus, X, ChevronRight, Ticket } from 'lucide-react'
+import {
+  EVENT_TYPES,
+  EMPTY_EVENT_FORM,
+  EventFormFields,
+  type EventFormValues,
+} from '@/components/admin/EventFormFields'
+import { ImportPanel } from './ImportPanel'
 
 type ClubEvent = {
   id: string
@@ -26,12 +23,11 @@ type ClubEvent = {
   endsAt: string | null
   location: string | null
   isPublic: boolean
+  ticketUrl: string | null
+  source: string
 }
 
-const EMPTY_FORM = {
-  title: '', description: '', eventType: 'OTHER',
-  startsAt: '', endsAt: '', location: '', isPublic: true, notes: '',
-}
+const SOURCE_LABELS: Record<string, string> = { LINK: 'Imported from link', AI: 'Read from screenshot' }
 
 export default function AdminEventsPage() {
   const [events, setEvents] = useState<ClubEvent[]>([])
@@ -39,7 +35,7 @@ export default function AdminEventsPage() {
   const [modal, setModal] = useState(false)
   const [saving, setSaving] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [form, setForm] = useState(EMPTY_FORM)
+  const [form, setForm] = useState<EventFormValues>(EMPTY_EVENT_FORM)
 
   const refresh = () =>
     fetch('/api/admin/events')
@@ -62,7 +58,7 @@ export default function AdminEventsPage() {
     if (res.ok) {
       await refresh()
       setModal(false)
-      setForm(EMPTY_FORM)
+      setForm(EMPTY_EVENT_FORM)
     } else {
       setError(data.error ?? 'Failed to create event')
     }
@@ -81,10 +77,18 @@ export default function AdminEventsPage() {
         <h1 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 'clamp(22px,3vw,30px)', color: 'var(--ink)' }}>
           Club Events
         </h1>
-        <Button variant="saloon" onClick={() => setModal(true)} size="sm">
+        <Button variant="saloon" onClick={() => { setForm(EMPTY_EVENT_FORM); setError(null); setModal(true) }} size="sm">
           <Plus className="h-4 w-4" /> New Event
         </Button>
       </div>
+
+      <ImportPanel
+        onDraft={(draft) => {
+          setForm({ ...EMPTY_EVENT_FORM, ...draft })
+          setError(null)
+          setModal(true)
+        }}
+      />
 
       {loading ? (
         <p className="text-stone-500">Loading…</p>
@@ -107,11 +111,14 @@ export default function AdminEventsPage() {
                       </div>
                       <div>
                         <p className="font-semibold text-stone-900">{event.title}</p>
-                        <p className="text-sm text-stone-500">{typeLabel(event.eventType)} · {formatDateTime(event.startsAt)}</p>
+                        <p className="text-sm text-stone-500">{typeLabel(event.eventType)} · {formatEventDateTime(event.startsAt)}</p>
                         {event.location && <p className="text-xs text-stone-400">{event.location}</p>}
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
+                      {event.ticketUrl && (
+                        <span className="flex items-center gap-1 text-xs text-stone-500"><Ticket className="h-3.5 w-3.5" /> Ticketed</span>
+                      )}
                       {!event.isPublic && (
                         <span className="text-xs text-stone-400 italic">hidden</span>
                       )}
@@ -139,7 +146,7 @@ export default function AdminEventsPage() {
                       <span className="ml-2 text-sm text-stone-400">{typeLabel(event.eventType)}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-xs text-stone-400">{formatDateTime(event.startsAt)}</span>
+                      <span className="text-xs text-stone-400">{formatEventDateTime(event.startsAt)}</span>
                       <ChevronRight className="h-4 w-4 text-stone-400" />
                     </div>
                   </Link>
@@ -163,76 +170,18 @@ export default function AdminEventsPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-lg bg-cream-paper p-6 shadow-xl max-h-[90vh] overflow-y-auto" style={{ border: '1px solid var(--rule)' }}>
             <div className="flex items-center justify-between mb-4">
-              <h3 className="font-bold text-stone-900">New Club Event</h3>
+              <h3 className="font-bold text-stone-900">{form.source === 'MANUAL' ? 'New Club Event' : 'Review Imported Event'}</h3>
               <button onClick={() => setModal(false)}><X className="h-5 w-5 text-stone-400" /></button>
             </div>
             {error && <Alert type="error" message={error} className="mb-3" />}
             <form onSubmit={handleCreate} className="space-y-3">
-              <Input
-                label="Event title"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                placeholder="Spring Release Party"
-                required
-              />
-              <div className="space-y-1">
-                <label className="label">Event type</label>
-                <select
-                  className="input"
-                  value={form.eventType}
-                  onChange={(e) => setForm({ ...form, eventType: e.target.value })}
-                >
-                  {EVENT_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="label">Description (shown to members)</label>
-                <textarea
-                  className="input"
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                  placeholder="Join us to taste our newest batch…"
+              {form.source !== 'MANUAL' && (
+                <Alert
+                  type="info"
+                  message={`${SOURCE_LABELS[form.source] ?? 'Imported'} — check the details below, especially the date and time, before saving.`}
                 />
-              </div>
-              <Input
-                label="Location"
-                value={form.location}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
-                placeholder="Hill Country Cider House, 123 Main St"
-              />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input
-                  label="Start time"
-                  type="datetime-local"
-                  value={form.startsAt}
-                  onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
-                  required
-                />
-                <Input
-                  label="End time (optional)"
-                  type="datetime-local"
-                  value={form.endsAt}
-                  onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
-                />
-              </div>
-              <Input
-                label="Internal notes (admin only)"
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                placeholder="Setup details, vendor contact, etc."
-              />
-              <label className="flex items-center gap-2 text-sm text-stone-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.isPublic}
-                  onChange={(e) => setForm({ ...form, isPublic: e.target.checked })}
-                  className="accent-terracotta"
-                />
-                Show to members in their portal
-              </label>
+              )}
+              <EventFormFields form={form} setForm={setForm} />
               <div className="flex gap-2 pt-2">
                 <Button variant="secondary" onClick={() => setModal(false)} className="flex-1" type="button">
                   Cancel

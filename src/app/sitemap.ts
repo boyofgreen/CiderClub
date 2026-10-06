@@ -7,6 +7,7 @@ const PAGES: Array<{ path: string; priority: number; changeFrequency: MetadataRo
   { path: '/tasting-room', priority: 0.9, changeFrequency: 'weekly' },
   { path: '/saturdays-in-comfort', priority: 0.9, changeFrequency: 'monthly' },
   { path: '/cigars', priority: 0.8, changeFrequency: 'monthly' },
+  { path: '/events', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/club', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/apple-trees', priority: 0.7, changeFrequency: 'yearly' },
   { path: '/about', priority: 0.6, changeFrequency: 'yearly' },

@@ -1,9 +1,9 @@
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { formatDateTime } from '@/lib/utils'
+import { formatEventDateTime } from '@/lib/eventTime'
 import { Card } from '@/components/ui/Card'
-import { ArrowLeft, MapPin, Clock, Tag } from 'lucide-react'
+import { ArrowLeft, MapPin, Clock, Tag, Ticket } from 'lucide-react'
 import { EventActions } from './EventActions'
 import { EmailActionButton } from '@/components/admin/EmailActionButton'
 import type { Metadata } from 'next'
@@ -47,13 +47,24 @@ export default async function AdminEventDetailPage({
             </span>
             <span className="flex items-center gap-1">
               <Clock className="h-4 w-4" />
-              {formatDateTime(event.startsAt)}
-              {event.endsAt && ` – ${formatDateTime(event.endsAt)}`}
+              {formatEventDateTime(event.startsAt)}
+              {event.endsAt && ` – ${formatEventDateTime(event.endsAt)}`}
             </span>
             {event.location && (
               <span className="flex items-center gap-1">
                 <MapPin className="h-4 w-4" />{event.location}
               </span>
+            )}
+            {event.ticketUrl && (
+              <a
+                href={event.ticketUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-1 text-terracotta hover:underline"
+              >
+                <Ticket className="h-4 w-4" />
+                Tickets{event.priceText ? ` · ${event.priceText}` : ''}
+              </a>
             )}
           </div>
           {!event.isPublic && (
@@ -73,6 +84,11 @@ export default async function AdminEventDetailPage({
             location: event.location,
             isPublic: event.isPublic,
             notes: event.notes,
+            imageUrl: event.imageUrl,
+            ticketUrl: event.ticketUrl,
+            priceText: event.priceText,
+            source: event.source,
+            sourceUrl: event.sourceUrl,
           }}
         />
       </div>

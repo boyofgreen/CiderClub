@@ -456,6 +456,13 @@ model ClubEvent {
   isPublic    Boolean   @default(true)
   imageUrl    String?
   notes       String?
+  // Ticketed events link out to the ticketing page (TicketsCandy, etc.)
+  ticketUrl   String?
+  priceText   String?   // display only, e.g. "$125"
+  // Where the event came from: MANUAL | LINK (imported from a ticket page) | AI
+  // (read from a screenshot or pasted post). sourceUrl dedupes link imports.
+  source      String    @default("MANUAL")
+  sourceUrl   String?   @unique
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
 }

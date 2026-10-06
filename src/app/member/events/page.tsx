@@ -1,7 +1,8 @@
 import { redirect } from 'next/navigation'
 import { getAppSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
-import { formatDate, formatDateTime } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
+import { formatEventDateTime } from '@/lib/eventTime'
 import { Card } from '@/components/ui/Card'
 import { PartyPopper, MapPin, Clock } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -71,8 +72,8 @@ export default async function MemberEventsPage() {
                     <div className="mt-2 flex flex-wrap gap-4 text-sm text-stone-600">
                       <span className="flex items-center gap-1.5">
                         <Clock className="h-3.5 w-3.5 text-stone-400" />
-                        {formatDateTime(event.startsAt)}
-                        {event.endsAt && ` – ${formatDateTime(event.endsAt)}`}
+                        {formatEventDateTime(event.startsAt)}
+                        {event.endsAt && ` – ${formatEventDateTime(event.endsAt)}`}
                       </span>
                       {event.location && (
                         <span className="flex items-center gap-1.5">

@@ -3,17 +3,10 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { Alert } from '@/components/ui/Alert'
 import { Edit2, Trash2, X } from 'lucide-react'
-
-const EVENT_TYPES = [
-  { value: 'RELEASE_PARTY', label: 'Release Party' },
-  { value: 'TASTING', label: 'Tasting' },
-  { value: 'FARM_VISIT', label: 'Farm Visit' },
-  { value: 'WORKSHOP', label: 'Workshop' },
-  { value: 'OTHER', label: 'Other' },
-]
+import { dateToWallClock } from '@/lib/eventTime'
+import { EventFormFields, type EventFormValues } from '@/components/admin/EventFormFields'
 
 type ClubEvent = {
   id: string
@@ -25,10 +18,11 @@ type ClubEvent = {
   location: string | null
   isPublic: boolean
   notes: string | null
-}
-
-function toLocal(iso: string) {
-  return new Date(iso).toISOString().slice(0, 16)
+  imageUrl: string | null
+  ticketUrl: string | null
+  priceText: string | null
+  source: string
+  sourceUrl: string | null
 }
 
 export function EventActions({ event }: { event: ClubEvent }) {
@@ -39,16 +33,22 @@ export function EventActions({ event }: { event: ClubEvent }) {
   const [deleting, setDeleting] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  const [form, setForm] = useState({
+  const [form, setForm] = useState<EventFormValues>({
     title: event.title,
     description: event.description ?? '',
     eventType: event.eventType,
-    startsAt: toLocal(event.startsAt),
-    endsAt: event.endsAt ? toLocal(event.endsAt) : '',
+    startsAt: dateToWallClock(event.startsAt),
+    endsAt: event.endsAt ? dateToWallClock(event.endsAt) : '',
     location: event.location ?? '',
     isPublic: event.isPublic,
     notes: event.notes ?? '',
+    imageUrl: event.imageUrl ?? '',
+    ticketUrl: event.ticketUrl ?? '',
+    priceText: event.priceText ?? '',
+    source: event.source,
+    sourceUrl: event.sourceUrl ?? '',
   })
+
 
   async function handleEdit(e: React.FormEvent) {
     e.preventDefault()
@@ -111,67 +111,7 @@ export function EventActions({ event }: { event: ClubEvent }) {
             </div>
             {error && <Alert type="error" message={error} className="mb-3" />}
             <form onSubmit={handleEdit} className="space-y-3">
-              <Input
-                label="Event title"
-                value={form.title}
-                onChange={(e) => setForm({ ...form, title: e.target.value })}
-                required
-              />
-              <div className="space-y-1">
-                <label className="label">Event type</label>
-                <select
-                  className="input"
-                  value={form.eventType}
-                  onChange={(e) => setForm({ ...form, eventType: e.target.value })}
-                >
-                  {EVENT_TYPES.map((t) => (
-                    <option key={t.value} value={t.value}>{t.label}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="space-y-1">
-                <label className="label">Description (shown to members)</label>
-                <textarea
-                  className="input"
-                  rows={3}
-                  value={form.description}
-                  onChange={(e) => setForm({ ...form, description: e.target.value })}
-                />
-              </div>
-              <Input
-                label="Location"
-                value={form.location}
-                onChange={(e) => setForm({ ...form, location: e.target.value })}
-              />
-              <div className="grid gap-3 sm:grid-cols-2">
-                <Input
-                  label="Start time"
-                  type="datetime-local"
-                  value={form.startsAt}
-                  onChange={(e) => setForm({ ...form, startsAt: e.target.value })}
-                  required
-                />
-                <Input
-                  label="End time (optional)"
-                  type="datetime-local"
-                  value={form.endsAt}
-                  onChange={(e) => setForm({ ...form, endsAt: e.target.value })}
-                />
-              </div>
-              <Input
-                label="Internal notes (admin only)"
-                value={form.notes}
-                onChange={(e) => setForm({ ...form, notes: e.target.value })}
-              />
-              <label className="flex items-center gap-2 text-sm text-stone-700 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={form.isPublic}
-                  onChange={(e) => setForm({ ...form, isPublic: e.target.checked })}
-                  className="accent-terracotta"
-                />
-                Show to members in their portal
-              </label>
+              <EventFormFields form={form} setForm={setForm} />
               <div className="flex gap-2 pt-2">
                 <Button variant="secondary" onClick={() => setEditModal(false)} className="flex-1" type="button">
                   Cancel
