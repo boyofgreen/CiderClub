@@ -16,6 +16,8 @@ export interface EventDraft {
   priceText: string
   source: 'LINK' | 'AI'
   sourceUrl: string
+  /** Ticket availability the source page reported at import time, if any. */
+  ticketStatus?: TicketStatus | null
 }
 
 export class ImportError extends Error {}
@@ -155,11 +157,14 @@ export function ticketStatusFromAvailability(availability: unknown): TicketStatu
 }
 
 /**
- * Ask a ticket page whether tickets are still on sale. Returns null when the
- * page can't be read or doesn't publish availability (TicketsCandy omits it on
- * some events), so callers keep the last known value rather than guessing.
+ * What a ticket page currently says. NOT_LISTED means the page has the event
+ * but no ticket offer at all — what TicketsCandy does once an event sells out,
+ * but also possibly before tickets go on sale, so callers decide what it means.
+ * null means the page couldn't be read; keep the last known status.
  */
-export async function fetchTicketStatus(rawUrl: string): Promise<TicketStatus | null> {
+export type TicketPageStatus = TicketStatus | 'NOT_LISTED'
+
+export async function fetchTicketStatus(rawUrl: string): Promise<TicketPageStatus | null> {
   try {
     const url = assertPublicHttpsUrl(rawUrl)
     const res = await fetch(url, {
@@ -169,7 +174,11 @@ export async function fetchTicketStatus(rawUrl: string): Promise<TicketStatus | 
     })
     if (!res.ok) return null
     const event = eventFromHtml(await res.text())
-    const offers = (Array.isArray(event?.offers) ? event?.offers : [event?.offers]) as Array<JsonObject | undefined>
+    if (!event) return null
+    if (event.offers == null || (Array.isArray(event.offers) && event.offers.length === 0)) {
+      return 'NOT_LISTED'
+    }
+    const offers = (Array.isArray(event.offers) ? event.offers : [event.offers]) as Array<JsonObject | undefined>
     const statuses = offers.map((o) => ticketStatusFromAvailability(o?.availability)).filter(Boolean)
     if (statuses.length === 0) return null
     // Several ticket types: sold out only when every one is.
@@ -223,6 +232,7 @@ export async function importFromUrl(rawUrl: string): Promise<EventDraft> {
     priceText: offers ? formatPrice(offers.price ?? offers.lowPrice, offers.priceCurrency) : '',
     source: 'LINK',
     sourceUrl: url.toString(),
+    ticketStatus: ticketStatusFromAvailability(offers?.availability),
   }
 }
 

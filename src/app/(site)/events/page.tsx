@@ -69,7 +69,16 @@ async function refreshTicketStatuses(events: LoadedEvent[]): Promise<LoadedEvent
     events.map(async (e) => {
       const stale = !e.ticketStatusCheckedAt || e.ticketStatusCheckedAt.getTime() < cutoff
       if (!e.sourceUrl || !e.ticketUrl || !stale) return e
-      const status = await fetchTicketStatus(e.sourceUrl)
+      const pageStatus = await fetchTicketStatus(e.sourceUrl)
+      // TicketsCandy removes the ticket listing once an event sells out. A
+      // missing listing only means "sold out" if we've seen tickets on sale for
+      // this event before; otherwise sales may simply not have opened yet.
+      const status =
+        pageStatus === 'NOT_LISTED'
+          ? e.ticketStatus === 'AVAILABLE' || e.ticketStatus === 'SOLD_OUT'
+            ? 'SOLD_OUT'
+            : null
+          : pageStatus
       const updated = await prisma.clubEvent
         .update({
           where: { id: e.id },

@@ -29,7 +29,14 @@ export async function POST(req: Request) {
 
   try {
     const event = await prisma.clubEvent.create({
-      data: { ...parsed.data, source: parsed.source, sourceUrl: parsed.sourceUrl },
+      data: {
+        ...parsed.data,
+        source: parsed.source,
+        sourceUrl: parsed.sourceUrl,
+        ...(parsed.sourceUrl && parsed.ticketStatus
+          ? { ticketStatus: parsed.ticketStatus, ticketStatusCheckedAt: new Date() }
+          : {}),
+      },
     })
     return NextResponse.json({ event }, { status: 201 })
   } catch (err) {

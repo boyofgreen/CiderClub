@@ -36,6 +36,9 @@ export function parseEventBody(body: Record<string, unknown>) {
       soldOut: body.soldOut === true,
     },
     source: SOURCES.includes(body.source as string) ? (body.source as string) : 'MANUAL',
+    ticketStatus: ['AVAILABLE', 'SOLD_OUT'].includes(body.ticketStatus as string)
+      ? (body.ticketStatus as string)
+      : null,
     sourceUrl: httpsUrl(body.sourceUrl),
   } as const
 }

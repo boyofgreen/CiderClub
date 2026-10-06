@@ -28,6 +28,7 @@ export type EventFormValues = {
   soldOut: boolean
   source: string
   sourceUrl: string
+  ticketStatus?: string | null
 }
 
 export const EMPTY_EVENT_FORM: EventFormValues = {
