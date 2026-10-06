@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { SITE } from '@/lib/siteInfo'
 import { JsonLd, SITE_URL } from '@/lib/seo'
 import { eventDateParts, formatEventDateTime, formatEventTime, toVenueIso, venueNow } from '@/lib/eventTime'
+import { fetchTicketStatus } from '@/services/eventImport'
 
 export const metadata: Metadata = {
   title: 'Events',
@@ -44,12 +45,43 @@ async function getEvents() {
         take: 6,
       }),
     ])
-    return { upcoming, past }
+    return { upcoming: await refreshTicketStatuses(upcoming), past }
   } catch (err) {
     console.error('[events] failed to load events:', err)
     return { upcoming: [], past: [] }
   }
 }
+
+// How long a ticket page's sold-out status is trusted before re-checking.
+const TICKET_STATUS_TTL_MS = 20 * 60 * 1000
+
+type LoadedEvent = Awaited<ReturnType<typeof prisma.clubEvent.findMany>>[number]
+
+/**
+ * Re-check imported events against their ticket pages so a sell-out shows up
+ * without anyone touching the dashboard. Each event is checked at most every
+ * 20 minutes, with a short timeout, so a slow ticket site can't stall the page;
+ * on any failure the last known status stands.
+ */
+async function refreshTicketStatuses(events: LoadedEvent[]): Promise<LoadedEvent[]> {
+  const cutoff = Date.now() - TICKET_STATUS_TTL_MS
+  return Promise.all(
+    events.map(async (e) => {
+      const stale = !e.ticketStatusCheckedAt || e.ticketStatusCheckedAt.getTime() < cutoff
+      if (!e.sourceUrl || !e.ticketUrl || !stale) return e
+      const status = await fetchTicketStatus(e.sourceUrl)
+      const updated = await prisma.clubEvent
+        .update({
+          where: { id: e.id },
+          data: { ticketStatusCheckedAt: new Date(), ...(status ? { ticketStatus: status } : {}) },
+        })
+        .catch(() => e)
+      return updated
+    })
+  )
+}
+
+const isSoldOut = (e: Event) => Boolean(e.ticketUrl) && (e.soldOut || e.ticketStatus === 'SOLD_OUT')
 
 function eventSchema(e: Event) {
   return {
@@ -72,7 +104,7 @@ function eventSchema(e: Event) {
       ? {
           '@type': 'Offer',
           url: e.ticketUrl,
-          availability: 'https://schema.org/InStock',
+          availability: isSoldOut(e) ? 'https://schema.org/SoldOut' : 'https://schema.org/InStock',
           ...(e.priceText && /\d/.test(e.priceText)
             ? { price: e.priceText.replace(/[^\d.]/g, ''), priceCurrency: 'USD' }
             : {}),
@@ -145,16 +177,43 @@ function EventCard({ e }: { e: Event }) {
             {e.description}
           </p>
         )}
-        {e.ticketUrl && (
-          <div className="flex flex-wrap items-center" style={{ gap: 18, marginTop: 30 }}>
-            <a href={e.ticketUrl} target="_blank" rel="noopener noreferrer" className="hc-btn hc-btn--accent">
-              Get Tickets
-            </a>
-            {e.priceText && (
-              <span style={{ fontSize: 16, color: 'rgba(245,238,227,0.6)' }}>{e.priceText}</span>
-            )}
-          </div>
-        )}
+        <div className="flex flex-wrap items-center" style={{ gap: 18, marginTop: 30 }}>
+          {!e.ticketUrl ? (
+            <p style={{ fontSize: 15.5, color: 'rgba(245,238,227,0.6)', margin: 0, letterSpacing: '0.01em' }}>
+              No tickets required{e.priceText && /free/i.test(e.priceText) ? ' — free to attend' : ''}. Just come on by.
+            </p>
+          ) : isSoldOut(e) ? (
+            <>
+              <span
+                aria-disabled="true"
+                className="hc-btn"
+                style={{
+                  background: 'rgba(245,238,227,0.08)',
+                  color: 'rgba(245,238,227,0.45)',
+                  border: '1px solid rgba(245,238,227,0.14)',
+                  cursor: 'not-allowed',
+                  boxShadow: 'none',
+                }}
+              >
+                Sold Out
+              </span>
+              <span style={{ fontSize: 15, color: 'rgba(245,238,227,0.5)' }}>
+                Follow us on{' '}
+                <a href={SITE.instagram} target="_blank" rel="noopener noreferrer" style={{ textDecoration: 'underline' }}>
+                  Instagram
+                </a>{' '}
+                for the next one.
+              </span>
+            </>
+          ) : (
+            <>
+              <a href={e.ticketUrl} target="_blank" rel="noopener noreferrer" className="hc-btn hc-btn--accent">
+                Get Tickets
+              </a>
+              {e.priceText && <span style={{ fontSize: 16, color: 'rgba(245,238,227,0.6)' }}>{e.priceText}</span>}
+            </>
+          )}
+        </div>
       </div>
     </article>
   )

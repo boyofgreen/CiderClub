@@ -25,6 +25,8 @@ type ClubEvent = {
   isPublic: boolean
   ticketUrl: string | null
   source: string
+  soldOut: boolean
+  ticketStatus: string | null
 }
 
 const SOURCE_LABELS: Record<string, string> = { LINK: 'Imported from link', AI: 'Read from screenshot' }
@@ -116,9 +118,11 @@ export default function AdminEventsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3">
-                      {event.ticketUrl && (
+                      {event.ticketUrl && (event.soldOut || event.ticketStatus === 'SOLD_OUT') ? (
+                        <span className="text-xs font-semibold uppercase tracking-wide text-red-700">Sold out</span>
+                      ) : event.ticketUrl ? (
                         <span className="flex items-center gap-1 text-xs text-stone-500"><Ticket className="h-3.5 w-3.5" /> Ticketed</span>
-                      )}
+                      ) : null}
                       {!event.isPublic && (
                         <span className="text-xs text-stone-400 italic">hidden</span>
                       )}

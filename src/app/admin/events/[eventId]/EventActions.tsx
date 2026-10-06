@@ -23,6 +23,8 @@ type ClubEvent = {
   priceText: string | null
   source: string
   sourceUrl: string | null
+  soldOut: boolean
+  ticketStatus: string | null
 }
 
 export function EventActions({ event }: { event: ClubEvent }) {
@@ -45,6 +47,7 @@ export function EventActions({ event }: { event: ClubEvent }) {
     imageUrl: event.imageUrl ?? '',
     ticketUrl: event.ticketUrl ?? '',
     priceText: event.priceText ?? '',
+    soldOut: event.soldOut,
     source: event.source,
     sourceUrl: event.sourceUrl ?? '',
   })
@@ -111,7 +114,7 @@ export function EventActions({ event }: { event: ClubEvent }) {
             </div>
             {error && <Alert type="error" message={error} className="mb-3" />}
             <form onSubmit={handleEdit} className="space-y-3">
-              <EventFormFields form={form} setForm={setForm} />
+              <EventFormFields form={form} setForm={setForm} ticketStatus={event.ticketStatus} />
               <div className="flex gap-2 pt-2">
                 <Button variant="secondary" onClick={() => setEditModal(false)} className="flex-1" type="button">
                   Cancel

@@ -463,8 +463,24 @@ model ClubEvent {
   // (read from a screenshot or pasted post). sourceUrl dedupes link imports.
   source      String    @default("MANUAL")
   sourceUrl   String?   @unique
+  // Sold out = the admin's checkbox OR the ticket page reporting it. The
+  // checkbox always wins; ticketStatus is refreshed from sourceUrl on page view.
+  soldOut               Boolean   @default(false)
+  ticketStatus          String?   // AVAILABLE | SOLD_OUT, from the ticket page
+  ticketStatusCheckedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+}
+
+// Images uploaded for events. Stored in Postgres rather than on disk because
+// Azure App Service replaces the app's files on every deploy.
+model EventImage {
+  id          String   @id @default(cuid())
+  data        Bytes
+  contentType String
+  width       Int
+  height      Int
+  createdAt   DateTime @default(now())
 }
 
 // ─── Analytics Snapshots ──────────────────────────────────────────────────────

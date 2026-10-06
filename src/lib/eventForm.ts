@@ -33,6 +33,7 @@ export function parseEventBody(body: Record<string, unknown>) {
       notes: text(body.notes),
       ticketUrl: httpsUrl(body.ticketUrl),
       priceText: text(body.priceText, 60),
+      soldOut: body.soldOut === true,
     },
     source: SOURCES.includes(body.source as string) ? (body.source as string) : 'MANUAL',
     sourceUrl: httpsUrl(body.sourceUrl),

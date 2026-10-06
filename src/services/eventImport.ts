@@ -129,6 +129,56 @@ function locationFrom(v: unknown): string {
   return name || address
 }
 
+function eventFromHtml(html: string): JsonObject | null {
+  for (const m of html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
+    try {
+      const event = findEvent(JSON.parse(m[1]))
+      if (event) return event
+    } catch {
+      continue
+    }
+  }
+  return null
+}
+
+export type TicketStatus = 'AVAILABLE' | 'SOLD_OUT'
+
+/** Map schema.org availability to our two states; null when the page doesn't say. */
+export function ticketStatusFromAvailability(availability: unknown): TicketStatus | null {
+  const a = typeof availability === 'string' ? availability.split('/').pop()?.toLowerCase() : ''
+  if (!a) return null
+  if (['soldout', 'outofstock', 'discontinued'].includes(a)) return 'SOLD_OUT'
+  if (['instock', 'limitedavailability', 'preorder', 'presale', 'onlineonly', 'instoreonly'].includes(a)) {
+    return 'AVAILABLE'
+  }
+  return null
+}
+
+/**
+ * Ask a ticket page whether tickets are still on sale. Returns null when the
+ * page can't be read or doesn't publish availability (TicketsCandy omits it on
+ * some events), so callers keep the last known value rather than guessing.
+ */
+export async function fetchTicketStatus(rawUrl: string): Promise<TicketStatus | null> {
+  try {
+    const url = assertPublicHttpsUrl(rawUrl)
+    const res = await fetch(url, {
+      headers: { 'User-Agent': 'HillCountryCiderHouse-EventImport/1.0', Accept: 'text/html' },
+      redirect: 'follow',
+      signal: AbortSignal.timeout(4000),
+    })
+    if (!res.ok) return null
+    const event = eventFromHtml(await res.text())
+    const offers = (Array.isArray(event?.offers) ? event?.offers : [event?.offers]) as Array<JsonObject | undefined>
+    const statuses = offers.map((o) => ticketStatusFromAvailability(o?.availability)).filter(Boolean)
+    if (statuses.length === 0) return null
+    // Several ticket types: sold out only when every one is.
+    return statuses.every((s) => s === 'SOLD_OUT') ? 'SOLD_OUT' : 'AVAILABLE'
+  } catch {
+    return null
+  }
+}
+
 export async function importFromUrl(rawUrl: string): Promise<EventDraft> {
   const url = assertPublicHttpsUrl(rawUrl)
 
@@ -146,15 +196,7 @@ export async function importFromUrl(rawUrl: string): Promise<EventDraft> {
     throw new ImportError("Couldn't reach that page. Check the link and try again.")
   }
 
-  let event: JsonObject | null = null
-  for (const m of html.matchAll(/<script[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
-    try {
-      event = findEvent(JSON.parse(m[1]))
-    } catch {
-      continue
-    }
-    if (event) break
-  }
+  const event = eventFromHtml(html)
   if (!event) {
     throw new ImportError(
       "That page doesn't publish event details we can read. Try the screenshot import instead."

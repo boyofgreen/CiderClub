@@ -5,20 +5,9 @@ import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { Link2, ImagePlus, X } from 'lucide-react'
 import type { EventFormValues } from '@/components/admin/EventFormFields'
+import { compressImage } from '@/lib/imageClient'
 
-type Draft = Omit<EventFormValues, 'isPublic' | 'notes'>
-
-/** Shrink a screenshot to a sensible size and return base64 JPEG (no data: prefix). */
-async function compressImage(file: File): Promise<{ base64: string; type: string }> {
-  const bitmap = await createImageBitmap(file)
-  const scale = Math.min(1, 1600 / Math.max(bitmap.width, bitmap.height))
-  const canvas = document.createElement('canvas')
-  canvas.width = Math.round(bitmap.width * scale)
-  canvas.height = Math.round(bitmap.height * scale)
-  canvas.getContext('2d')!.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-  const dataUrl = canvas.toDataURL('image/jpeg', 0.85)
-  return { base64: dataUrl.split(',')[1], type: 'image/jpeg' }
-}
+type Draft = Omit<EventFormValues, 'isPublic' | 'notes' | 'soldOut'>
 
 export function ImportPanel({ onDraft }: { onDraft: (draft: Draft) => void }) {
   const [tab, setTab] = useState<'link' | 'shot'>('link')
@@ -42,8 +31,8 @@ export function ImportPanel({ onDraft }: { onDraft: (draft: Draft) => void }) {
     if (!file || !file.type.startsWith('image/')) return
     setError(null)
     try {
-      const { base64, type } = await compressImage(file)
-      setImage({ base64, type, preview: `data:${type};base64,${base64}` })
+      const { base64, type, dataUrl } = await compressImage(file, 1600)
+      setImage({ base64, type, preview: dataUrl })
     } catch {
       setError("Couldn't read that image. Try a PNG or JPEG screenshot.")
     }

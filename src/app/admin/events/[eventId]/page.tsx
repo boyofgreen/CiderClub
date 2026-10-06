@@ -89,6 +89,8 @@ export default async function AdminEventDetailPage({
             priceText: event.priceText,
             source: event.source,
             sourceUrl: event.sourceUrl,
+            soldOut: event.soldOut,
+            ticketStatus: event.ticketStatus,
           }}
         />
       </div>
