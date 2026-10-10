@@ -10,6 +10,7 @@ const PAGES: Array<{ path: string; priority: number; changeFrequency: MetadataRo
   { path: '/events', priority: 0.8, changeFrequency: 'weekly' },
   { path: '/club', priority: 0.8, changeFrequency: 'monthly' },
   { path: '/apple-trees', priority: 0.7, changeFrequency: 'yearly' },
+  { path: '/cider-making', priority: 0.5, changeFrequency: 'yearly' },
   { path: '/about', priority: 0.6, changeFrequency: 'yearly' },
   { path: '/contact', priority: 0.6, changeFrequency: 'yearly' },
 ]
