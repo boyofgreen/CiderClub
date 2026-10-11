@@ -5,7 +5,7 @@ import Link from 'next/link'
 export const metadata: Metadata = {
   title: 'Cider Making Supplies',
   description:
-    'The yeast, nutrient, sanitizer and fermenter we point home cider makers to when they ask how to get started.',
+    'The yeast, nutrient, sanitizer, fermenter and siphon we point home cider makers to when they ask how to get started.',
   alternates: { canonical: '/cider-making' },
 }
 
@@ -59,6 +59,15 @@ const SUPPLIES: Supply[] = [
       'A one-gallon glass jug with a drilled rubber stopper, airlock and screw cap — the right size for a first batch. Fill it with juice, add yeast, and let the airlock do its thing.',
     url: amazonLink('B09KNYXB2D'),
   },
+  {
+    step: 'Transfer',
+    name: 'Fermtech Mini Auto-Siphon',
+    image: '/photos/supply-auto-siphon.webp',
+    alt: 'A Fermtech mini auto-siphon wand with clip and a coil of clear tubing',
+    description:
+      'When fermentation is done, this moves your cider off the yeast at the bottom and into bottles — one pump starts the flow. The 14-inch wand fits openings as small as 1 inch, so it works with the gallon jug. Comes with 6 ft of food-safe tubing and a clip.',
+    url: amazonLink('B00SDLLZDY'),
+  },
 ]
 
 export default function CiderMakingPage() {
@@ -86,7 +95,7 @@ export default function CiderMakingPage() {
             }}
           >
             People ask us all the time how to make cider at home. Here&rsquo;s what we&rsquo;d start
-            with: four things, plus a gallon of good apple juice.
+            with: a few simple tools, plus a gallon of good apple juice.
           </p>
           <p style={{ fontSize: 14, color: 'rgba(245,238,227,0.5)', margin: '18px 0 0' }}>
             As an Amazon Associate we earn from qualifying purchases.
