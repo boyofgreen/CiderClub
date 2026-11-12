@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import { formatDate, formatCents } from '@/lib/utils'
+import { formatDate } from '@/lib/utils'
 import { StatusBadge } from '@/components/ui/Badge'
 import { ChevronRight } from 'lucide-react'
 import type { Metadata } from 'next'
@@ -126,7 +126,7 @@ export default async function AdminMembersPage({
                 <div className="ml-4 flex shrink-0 items-center gap-4">
                   <div className="hidden sm:block text-right">
                     <p className="text-xs text-stone-500">{member.plan.name}</p>
-                    <p className="text-xs text-stone-400">{formatCents(member.plan.priceInCents)}/qtr</p>
+                    <p className="text-xs text-stone-400">{member.plan.packsPerOrder} bottles · {member.plan.discountPercent}% off</p>
                   </div>
                   <StatusBadge status={member.status} />
                   <span className="hidden md:block text-xs text-stone-400">{formatDate(member.joinedAt)}</span>

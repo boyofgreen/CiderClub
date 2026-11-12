@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 
 // Map Resend event types to our EmailLog status values
 const EVENT_STATUS: Record<string, string> = {
+  'email.sent': 'SENT',
   'email.delivered': 'DELIVERED',
   'email.bounced': 'BOUNCED',
   'email.complained': 'COMPLAINED',
@@ -45,7 +46,9 @@ export async function POST(req: Request) {
   }
 
   const updated = await prisma.emailLog.updateMany({
-    where: { resendId },
+    // email.sent only matters for a scheduled email finally going out; for
+    // everything else it could arrive late and overwrite DELIVERED.
+    where: event.type === 'email.sent' ? { resendId, status: 'SCHEDULED' } : { resendId },
     data: { status: newStatus },
   }).catch((err) => {
     console.error('[webhook/resend] DB update failed:', err)

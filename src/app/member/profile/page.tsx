@@ -8,21 +8,25 @@ import { Input } from '@/components/ui/Input'
 import { Spinner } from '@/components/ui/Spinner'
 import { User, Bell } from 'lucide-react'
 import { PaymentMethodCard } from './PaymentMethodCard'
-import { formatCents } from '@/lib/utils'
 import { RejoinButton } from '@/components/member/RejoinButton'
 
 type MemberProfile = {
   id: string; firstName: string; lastName: string; email: string; phone: string | null
   address1: string | null; city: string | null; state: string | null; zip: string | null
-  squareCardId: string | null; planId: string; plan: { name: string; priceInCents: number; packsPerOrder: number }
+  squareCardId: string | null; planId: string; plan: { name: string; packsPerOrder: number; discountPercent: number }
   status: string; eventAlertsOptIn: boolean
 }
 
 type Plan = {
   id: string; name: string; description: string | null
-  packsPerOrder: number; priceInCents: number; maxCapacity: number | null
+  packsPerOrder: number; discountPercent: number; maxCapacity: number | null
   _count?: { members: number }
 }
+
+// A box has no set price — it depends on the bottles picked — so describe a
+// plan by its size and discount instead.
+const planTerms = (plan: { packsPerOrder: number; discountPercent: number }) =>
+  `${plan.packsPerOrder} ciders per quarter` + (plan.discountPercent > 0 ? `, ${plan.discountPercent}% off` : '')
 
 export default function MemberProfilePage() {
   const [member, setMember] = useState<MemberProfile | null>(null)
@@ -55,7 +59,7 @@ export default function MemberProfilePage() {
 
   async function switchPlan(plan: Plan) {
     if (!window.confirm(
-      `Switch to ${plan.name} (${formatCents(plan.priceInCents)}/quarter)? ` +
+      `Switch to ${plan.name} (${planTerms(plan)})? ` +
       `Your new plan takes effect with your next quarterly box.`
     )) return
     setSwitchingTo(plan.id)
@@ -149,7 +153,9 @@ export default function MemberProfilePage() {
                 <span className="text-stone-500">Plan</span>
                 <span className="font-medium text-stone-800">
                   {member.plan.name}
-                  <span className="text-stone-400 font-normal"> · {formatCents(member.plan.priceInCents)}/quarter</span>
+                  {member.plan.discountPercent > 0 && (
+                    <span className="text-stone-400 font-normal"> · {member.plan.discountPercent}% off club bottles</span>
+                  )}
                 </span>
               </div>
               <div className="flex justify-between">
@@ -211,7 +217,7 @@ export default function MemberProfilePage() {
                           {isCurrent && <span className="ml-2 text-xs font-medium text-terracotta">Current plan</span>}
                         </p>
                         <p className="text-xs text-stone-500 mt-0.5">
-                          {plan.packsPerOrder} ciders per quarter · {formatCents(plan.priceInCents)}/quarter
+                          {planTerms(plan)}
                         </p>
                         {plan.description && <p className="text-xs text-stone-400 mt-0.5 line-clamp-1">{plan.description}</p>}
                       </div>

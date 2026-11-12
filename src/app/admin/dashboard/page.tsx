@@ -46,17 +46,20 @@ export default async function AdminDashboardPage() {
     prisma.emailLog.count({ where: { status: { in: ['BOUNCED', 'COMPLAINED', 'FAILED'] } } }),
   ])
 
-  const activePlanRevenue = await prisma.member.groupBy({
-    by: ['planId'],
-    where: { status: 'ACTIVE' },
-    _count: { _all: true },
-  })
-
-  const planPriceMap = Object.fromEntries(plans.map((p) => [p.id, p.priceInCents]))
-  const qrr = activePlanRevenue.reduce(
-    (sum, g) => sum + g._count._all * (planPriceMap[g.planId] ?? 0),
-    0
-  )
+  // Revenue comes from what members actually ordered, not a per-plan price:
+  // a box costs whatever its bottles add up to.
+  const now = new Date()
+  const calendarQuarterStart = new Date(now.getFullYear(), Math.floor(now.getMonth() / 3) * 3, 1)
+  const [billedThisQuarter, openOrderValue] = await Promise.all([
+    prisma.order.aggregate({
+      where: { status: 'BILLED', billedAt: { gte: calendarQuarterStart } },
+      _sum: { totalInCents: true },
+    }),
+    prisma.order.aggregate({
+      where: { status: { notIn: ['BILLED', 'CANCELLED'] } },
+      _sum: { totalInCents: true },
+    }),
+  ])
 
   return (
     <div className="space-y-8">
@@ -98,7 +101,7 @@ export default async function AdminDashboardPage() {
       {/* KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <KpiCard label="Active Members" value={activeMembers} sub={`${legacyMembers} legacy · ${pausedMembers} paused · ${cancelledMembers} cancelled`} icon={Users} color="amber" />
-        <KpiCard label="Quarterly Revenue" value={formatCents(qrr)} sub={`~${formatCents(Math.round(qrr / 3))}/mo`} icon={DollarSign} color="green" />
+        <KpiCard label="Billed This Quarter" value={formatCents(billedThisQuarter._sum.totalInCents ?? 0)} sub={`${formatCents(openOrderValue._sum.totalInCents ?? 0)} in open orders`} icon={DollarSign} color="green" />
         <KpiCard label="Open Orders" value={currentQuarterOrders} sub="awaiting billing or pickup" icon={ShoppingBag} color="blue" />
         <KpiCard label="Waitlist" value={waitlistCount} sub="across all plans" icon={List} color="purple" />
       </div>

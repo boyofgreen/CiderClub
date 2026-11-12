@@ -118,7 +118,7 @@ export default async function MemberDetailPage({
             <div className="space-y-2 text-sm">
               {[
                 ['Plan', member.plan.name],
-                ['Price', `${formatCents(member.plan.priceInCents)}/qtr`],
+                ['Box', `${member.plan.packsPerOrder} bottles · ${member.plan.discountPercent}% off`],
                 ['Joined', formatDate(member.joinedAt)],
                 ['Total Billed', formatCents(totalBilled)],
                 ['Orders', member.orders.length.toString()],

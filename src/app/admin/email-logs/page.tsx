@@ -6,6 +6,17 @@ import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Email Logs' }
 
+/** When a still-scheduled email is due to go out, if it hasn't been sent yet. */
+function scheduledFor(log: { status: string; metadata: string | null }): string | null {
+  if (log.status !== 'SCHEDULED' || !log.metadata) return null
+  try {
+    const at = (JSON.parse(log.metadata) as { scheduledAt?: unknown }).scheduledAt
+    return typeof at === 'string' ? at : null
+  } catch {
+    return null
+  }
+}
+
 export default async function EmailLogsPage({
   searchParams,
 }: {
@@ -83,7 +94,9 @@ export default async function EmailLogsPage({
               </div>
               <div className="ml-4 flex shrink-0 items-center gap-3">
                 <StatusBadge status={log.status} />
-                <span className="text-xs text-stone-400">{formatDateTime(log.createdAt)}</span>
+                <span className="text-xs text-stone-400">
+                  {scheduledFor(log) ? `sends ${formatDateTime(scheduledFor(log)!)}` : formatDateTime(log.createdAt)}
+                </span>
               </div>
             </div>
           ))}

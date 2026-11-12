@@ -40,7 +40,9 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
         console.error('[Email] From:', params.from ?? fromEmail)
       } else {
         resendId = (result.data as { id?: string })?.id
-        console.log('[Email] Sent', params.type, 'to', params.to, '— id:', resendId)
+        // Resend is holding this one until scheduledAt — it hasn't gone out yet.
+        if (params.scheduledAt) status = 'SCHEDULED'
+        console.log('[Email]', params.scheduledAt ? `Scheduled for ${params.scheduledAt}` : 'Sent', params.type, 'to', params.to, '— id:', resendId)
       }
     } catch (err) {
       status = 'FAILED'
@@ -57,7 +59,10 @@ export async function sendEmail(params: SendEmailParams): Promise<void> {
       memberId: params.memberId,
       resendId,
       status,
-      metadata: params.metadata ? JSON.stringify(params.metadata) : undefined,
+      metadata:
+        params.metadata || params.scheduledAt
+          ? JSON.stringify({ ...params.metadata, ...(params.scheduledAt ? { scheduledAt: params.scheduledAt } : {}) })
+          : undefined,
     },
   }).catch(() => {}) // never throw on log failure
 }
