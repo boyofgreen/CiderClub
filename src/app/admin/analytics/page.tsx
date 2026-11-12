@@ -361,6 +361,7 @@ export default async function AnalyticsPage({ searchParams }: { searchParams: Se
           <div className="space-y-3">
             {[
               { key: 'ACTIVE', label: 'Active', color: 'bg-green-500' },
+              { key: 'LEGACY', label: 'Legacy', color: 'bg-yellow-600' },
               { key: 'PAUSED', label: 'Paused', color: 'bg-amber-400' },
               { key: 'CANCELLED', label: 'Cancelled', color: 'bg-red-400' },
               { key: 'WAITLIST', label: 'Waitlist', color: 'bg-blue-400' },

@@ -87,12 +87,15 @@ model Member {
   // Club membership
   planId              String
   plan                Plan         @relation(fields: [planId], references: [id])
-  status              String       @default("ACTIVE") // ACTIVE | PAUSED | CANCELLED | WAITLIST
+  // LEGACY = no automatic quarterly order; invited to opt in each quarter at the
+  // legacy discount, with none of the other club benefits.
+  status              String       @default("ACTIVE") // ACTIVE | PAUSED | CANCELLED | WAITLIST | LEGACY
   joinedAt            DateTime     @default(now())
   pausedAt            DateTime?
   pausedUntilQuarter  String?      // e.g. "2025-Q3" — auto-reactivate after this quarter
   cancelledAt         DateTime?
   cancellationReason  String?
+  legacyAt            DateTime?    // when they moved to the legacy club
 
   // Referrals
   referralCode       String  @unique @default(cuid())
@@ -250,6 +253,12 @@ model Order {
   status String @default("PENDING_CUSTOMIZATION")
 
   totalInCents Int @default(0)
+
+  // Terms captured when the order was created, overriding the member's plan.
+  // Set on legacy opt-in orders so the price holds even if the member's status
+  // changes before billing. Null = use the plan's discount and bottle count.
+  discountPercent Int?
+  minBottles      Int?
 
   // Square payment
   squarePaymentId      String?

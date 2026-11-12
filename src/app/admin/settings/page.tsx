@@ -14,6 +14,8 @@ export default function AdminSettingsPage() {
   const [salesTaxPercent, setSalesTaxPercent] = useState('')
   const [adminNotifyEmail, setAdminNotifyEmail] = useState('')
   const [welcomeFollowupFrom, setWelcomeFollowupFrom] = useState('')
+  const [legacyDiscountPercent, setLegacyDiscountPercent] = useState('')
+  const [legacyMinBottles, setLegacyMinBottles] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
@@ -24,6 +26,8 @@ export default function AdminSettingsPage() {
         setSalesTaxPercent(d.settings?.salesTaxPercent ?? '8.25')
         setAdminNotifyEmail(d.settings?.adminNotifyEmail ?? '')
         setWelcomeFollowupFrom(d.settings?.welcomeFollowupFrom ?? '')
+        setLegacyDiscountPercent(d.settings?.legacyDiscountPercent ?? '10')
+        setLegacyMinBottles(d.settings?.legacyMinBottles ?? '3')
       })
       .finally(() => setLoading(false))
   }, [])
@@ -35,7 +39,7 @@ export default function AdminSettingsPage() {
     const res = await fetch('/api/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ salesTaxPercent, adminNotifyEmail, welcomeFollowupFrom }),
+      body: JSON.stringify({ salesTaxPercent, adminNotifyEmail, welcomeFollowupFrom, legacyDiscountPercent, legacyMinBottles }),
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
@@ -80,6 +84,33 @@ export default function AdminSettingsPage() {
               value={salesTaxPercent}
               onChange={(e) => setSalesTaxPercent(e.target.value)}
               hint="Applied to order subtotal (after any member discount). Set to 0 to disable."
+            />
+          </div>
+
+          <h2 className="font-semibold text-stone-900 mb-1 mt-8">Legacy Club</h2>
+          <p className="text-sm text-stone-500 mb-4">
+            Legacy members don&apos;t get an automatic quarterly order. They&apos;re invited to
+            build one each quarter at this discount, with none of the other club benefits.
+          </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <Input
+              label="Legacy order discount %"
+              type="number"
+              step="1"
+              min="0"
+              max="100"
+              value={legacyDiscountPercent}
+              onChange={(e) => setLegacyDiscountPercent(e.target.value)}
+              hint="Applies to orders started after you save."
+            />
+            <Input
+              label="Minimum bottles per legacy order"
+              type="number"
+              step="1"
+              min="1"
+              value={legacyMinBottles}
+              onChange={(e) => setLegacyMinBottles(e.target.value)}
+              hint="Fewest bottles a legacy member can order."
             />
           </div>
 

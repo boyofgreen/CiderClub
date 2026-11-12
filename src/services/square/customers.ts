@@ -134,6 +134,8 @@ export async function changeMemberPlanInSquare(
   squareCustomerId: string,
   oldPlanName: string,
   newPlanName: string,
+  /** Overrides the default "Tier changed" line appended to the customer note */
+  note?: string,
 ): Promise<void> {
   const changeDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
 
@@ -154,7 +156,7 @@ export async function changeMemberPlanInSquare(
   try {
     const current = await squareClient.customers.get({ customerId: squareCustomerId })
     const existingNote = current.customer?.note ?? ''
-    const appendLine = `Tier changed: ${oldPlanName} → ${newPlanName} on ${changeDate}.`
+    const appendLine = note ? `${note} on ${changeDate}.` : `Tier changed: ${oldPlanName} → ${newPlanName} on ${changeDate}.`
     const updatedNote = existingNote ? `${existingNote}\n${appendLine}` : appendLine
     await squareClient.customers.update({ customerId: squareCustomerId, note: updatedNote })
   } catch (err) {

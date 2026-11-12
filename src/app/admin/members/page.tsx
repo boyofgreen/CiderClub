@@ -48,7 +48,7 @@ export default async function AdminMembersPage({
   ])
 
   const totalPages = Math.ceil(total / pageSize)
-  const statuses = ['ACTIVE', 'PAUSED', 'CANCELLED', 'WAITLIST']
+  const statuses = ['ACTIVE', 'LEGACY', 'PAUSED', 'CANCELLED', 'WAITLIST']
 
   return (
     <div className="space-y-6">

@@ -209,6 +209,7 @@ export async function pauseMember(
     where: { id: memberId },
     data: {
       status: 'PAUSED',
+      legacyAt: null,
       pausedAt: new Date(),
       pausedUntilQuarter: pausedUntilQuarter ?? null,
       notes: reason
@@ -224,6 +225,7 @@ export async function cancelMember(memberId: string, reason?: string): Promise<v
     where: { id: memberId },
     data: {
       status: 'CANCELLED',
+      legacyAt: null,
       cancelledAt: new Date(),
       cancellationReason: reason,
     },

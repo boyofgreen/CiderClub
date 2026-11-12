@@ -17,6 +17,7 @@ export default async function AdminDashboardPage() {
     pausedMembers,
     cancelledMembers,
     waitlistCount,
+    legacyMembers,
     plans,
     currentQuarterOrders,
     recentOrders,
@@ -28,6 +29,7 @@ export default async function AdminDashboardPage() {
     prisma.member.count({ where: { status: 'PAUSED' } }),
     prisma.member.count({ where: { status: 'CANCELLED' } }),
     prisma.member.count({ where: { status: 'WAITLIST' } }),
+    prisma.member.count({ where: { status: 'LEGACY' } }),
     prisma.plan.findMany({ where: { isActive: true }, include: { _count: { select: { members: true } } } }),
     prisma.order.count({ where: { status: { notIn: ['BILLED', 'CANCELLED'] } } }),
     prisma.order.findMany({
@@ -95,7 +97,7 @@ export default async function AdminDashboardPage() {
 
       {/* KPI cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <KpiCard label="Active Members" value={activeMembers} sub={`${pausedMembers} paused · ${cancelledMembers} cancelled`} icon={Users} color="amber" />
+        <KpiCard label="Active Members" value={activeMembers} sub={`${legacyMembers} legacy · ${pausedMembers} paused · ${cancelledMembers} cancelled`} icon={Users} color="amber" />
         <KpiCard label="Quarterly Revenue" value={formatCents(qrr)} sub={`~${formatCents(Math.round(qrr / 3))}/mo`} icon={DollarSign} color="green" />
         <KpiCard label="Open Orders" value={currentQuarterOrders} sub="awaiting billing or pickup" icon={ShoppingBag} color="blue" />
         <KpiCard label="Waitlist" value={waitlistCount} sub="across all plans" icon={List} color="purple" />

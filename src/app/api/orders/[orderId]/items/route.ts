@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { getAppSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
 import { getSalesTaxPercent } from '@/lib/settings'
+import { orderDiscountPercent, orderMinBottles, orderTotalInCents } from '@/lib/pricing'
 
 // PUT /api/orders/[orderId]/items
 // Replaces all order items. Body: { items: { productId: string; quantity: number }[] }
@@ -31,9 +32,9 @@ export async function PUT(
   const { items } = await req.json() as { items: { productId: string; quantity: number }[] }
 
   const total = items.reduce((sum, i) => sum + i.quantity, 0)
-  const packsPerOrder = order.member.plan?.packsPerOrder ?? 0
+  const packsPerOrder = orderMinBottles(order, order.member.plan)
 
-  // Must include at least the plan's base bottle count
+  // Must include at least the plan's base bottle count (or the legacy minimum)
   if (total < packsPerOrder) {
     return NextResponse.json(
       { error: `Order must include at least ${packsPerOrder} bottles` },
@@ -79,11 +80,12 @@ export async function PUT(
       unitPriceInCents: priceMap.get(i.productId) ?? 2100,
     }))
 
-  const discount = Math.max(0, Math.min(100, order.member.plan?.discountPercent ?? 0))
   const subtotal = itemsWithPrice.reduce((sum, i) => sum + i.quantity * i.unitPriceInCents, 0)
-  const afterDiscount = Math.round(subtotal * (1 - discount / 100))
-  const taxRatePercent = await getSalesTaxPercent()
-  const totalInCents = Math.round(afterDiscount * (1 + taxRatePercent / 100))
+  const totalInCents = orderTotalInCents(
+    subtotal,
+    orderDiscountPercent(order, order.member.plan),
+    await getSalesTaxPercent()
+  )
 
   await prisma.$transaction([
     prisma.orderItem.deleteMany({ where: { orderId: params.orderId } }),

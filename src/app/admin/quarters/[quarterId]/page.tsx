@@ -36,12 +36,19 @@ export default async function QuarterDetailPage({
 
   if (!quarter) notFound()
 
-  const [allProducts, allPlans, rawItems] = await Promise.all([
+  const [allProducts, allPlans, rawItems, legacyWaiting] = await Promise.all([
     prisma.product.findMany({ where: { isActive: true }, orderBy: { name: 'asc' } }),
     prisma.plan.findMany({ where: { isActive: true }, orderBy: { sortOrder: 'asc' } }),
     prisma.orderItem.findMany({
       where: { order: { quarterId: params.quarterId, status: { notIn: ['CANCELLED'] } } },
       include: { product: true },
+    }),
+    // Legacy members who've been offered this quarter but haven't built an order
+    prisma.member.count({
+      where: {
+        status: 'LEGACY',
+        orders: { none: { quarterId: params.quarterId, status: { not: 'CANCELLED' } } },
+      },
     }),
   ])
 
@@ -234,6 +241,14 @@ export default async function QuarterDetailPage({
                 successText="Reminded {n} member{s}."
               />
             )}
+            {quarter.status === 'OPEN' && legacyWaiting > 0 && (
+              <EmailActionButton
+                endpoint={`/api/quarters/${quarter.id}/legacy-reminders`}
+                label="Send legacy last call"
+                confirm={`Send a last-call email to the ${legacyWaiting} legacy member${legacyWaiting !== 1 ? 's' : ''} who haven't built an order this quarter?`}
+                successText="Reminded {n} legacy member{s}."
+              />
+            )}
             <Link href={`/admin/orders?quarter=${quarter.id}`} className="text-xs text-terracotta hover:text-terracotta-deep">
               View all →
             </Link>
@@ -253,6 +268,9 @@ export default async function QuarterDetailPage({
               >
                 <span className="text-sm font-medium text-stone-800">
                   {order.member.firstName} {order.member.lastName}
+                  {order.minBottles != null && (
+                    <span className="ml-2 text-xs font-normal text-amber-700">Legacy opt-in</span>
+                  )}
                 </span>
                 <div className="flex items-center gap-3">
                   <span className="text-sm text-stone-500">{formatCents(order.totalInCents)}</span>

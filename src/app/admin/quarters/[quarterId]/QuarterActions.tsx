@@ -62,7 +62,10 @@ export function QuarterActions({
     const res = await fetch(`/api/quarters/${quarterId}/generate-orders`, { method: 'POST' })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
-      setResult(`Created ${data.created} orders, sent ${data.emailsSent} emails. ${data.skipped} skipped.`)
+      setResult(
+        `Created ${data.created} orders, sent ${data.emailsSent} emails. ${data.skipped} skipped.` +
+          (data.legacyInvited ? ` Invited ${data.legacyInvited} legacy member${data.legacyInvited === 1 ? '' : 's'}.` : '')
+      )
       router.refresh()
     } else {
       setError(data.error ?? 'Failed to generate orders')

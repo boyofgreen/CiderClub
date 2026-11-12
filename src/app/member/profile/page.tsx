@@ -9,6 +9,7 @@ import { Spinner } from '@/components/ui/Spinner'
 import { User, Bell } from 'lucide-react'
 import { PaymentMethodCard } from './PaymentMethodCard'
 import { formatCents } from '@/lib/utils'
+import { RejoinButton } from '@/components/member/RejoinButton'
 
 type MemberProfile = {
   id: string; firstName: string; lastName: string; email: string; phone: string | null
@@ -137,25 +138,45 @@ export default function MemberProfilePage() {
         {planError && <Alert type="error" message={planError} className="mb-4" />}
 
         <div className="space-y-2 text-sm">
-          <div className="flex justify-between">
-            <span className="text-stone-500">Plan</span>
-            <span className="font-medium text-stone-800">
-              {member.plan.name}
-              <span className="text-stone-400 font-normal"> · {formatCents(member.plan.priceInCents)}/quarter</span>
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-stone-500">Ciders per box</span>
-            <span className="font-medium text-stone-800">{member.plan.packsPerOrder}</span>
-          </div>
+          {member.status === 'LEGACY' ? (
+            <div className="flex justify-between">
+              <span className="text-stone-500">Plan</span>
+              <span className="font-medium text-stone-800">Legacy club</span>
+            </div>
+          ) : (
+            <>
+              <div className="flex justify-between">
+                <span className="text-stone-500">Plan</span>
+                <span className="font-medium text-stone-800">
+                  {member.plan.name}
+                  <span className="text-stone-400 font-normal"> · {formatCents(member.plan.priceInCents)}/quarter</span>
+                </span>
+              </div>
+              <div className="flex justify-between">
+                <span className="text-stone-500">Ciders per box</span>
+                <span className="font-medium text-stone-800">{member.plan.packsPerOrder}</span>
+              </div>
+            </>
+          )}
           <div className="flex justify-between">
             <span className="text-stone-500">Status</span>
             <span className={`font-medium ${
               member.status === 'ACTIVE' ? 'text-green-700' :
-              member.status === 'PAUSED' ? 'text-yellow-700' : 'text-red-700'
+              member.status === 'PAUSED' ? 'text-yellow-700' :
+              member.status === 'LEGACY' ? 'text-amber-700' : 'text-red-700'
             }`}>{member.status}</span>
           </div>
         </div>
+
+        {member.status === 'LEGACY' && (
+          <div className="mt-4 pt-4 text-sm text-stone-600" style={{ borderTop: '1px solid var(--rule)' }}>
+            <p className="mb-3">
+              No automatic orders or charges. We&apos;ll email you each quarter with an invitation to build
+              your own order at a member discount. Want your quarterly box and {member.plan.name} perks back?
+            </p>
+            <RejoinButton planName={member.plan.name} onRejoined={() => window.location.reload()} />
+          </div>
+        )}
 
         {/* Plan switcher */}
         {member.status === 'ACTIVE' && plans.length > 1 && (

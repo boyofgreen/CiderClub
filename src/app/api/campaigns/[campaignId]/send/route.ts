@@ -41,7 +41,7 @@ export async function POST(
     }
   }
   if (statusFilter.includes('ALL')) {
-    statusFilter = ['ACTIVE', 'PAUSED', 'CANCELLED', 'WAITLIST']
+    statusFilter = ['ACTIVE', 'LEGACY', 'PAUSED', 'CANCELLED', 'WAITLIST']
   }
 
   try {

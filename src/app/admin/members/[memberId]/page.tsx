@@ -68,7 +68,17 @@ export default async function MemberDetailPage({
             </div>
           </div>
         </div>
-        <MemberActions memberId={member.id} status={member.status} squareCustomerId={member.squareCustomerId} hasCard={!!member.squareCardId} currentPlanId={member.planId} plans={plans} />
+        <MemberActions
+          memberId={member.id}
+          status={member.status}
+          squareCustomerId={member.squareCustomerId}
+          hasCard={!!member.squareCardId}
+          currentPlanId={member.planId}
+          plans={plans}
+          openOrders={member.orders
+            .filter((o) => !o.pickedUpAt && ['PENDING_CUSTOMIZATION', 'CUSTOMIZED', 'LOCKED', 'AWAITING_PICKUP', 'PAYMENT_FAILED'].includes(o.status))
+            .map((o) => o.quarter?.label ?? 'Ad hoc')}
+        />
       </div>
 
       <div className="grid gap-6 lg:grid-cols-3">

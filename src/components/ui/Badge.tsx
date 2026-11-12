@@ -39,6 +39,7 @@ export function StatusBadge({ status }: { status: string }) {
     PAUSED: { label: 'Paused', color: 'yellow' },
     CANCELLED: { label: 'Cancelled', color: 'red' },
     WAITLIST: { label: 'Waitlist', color: 'blue' },
+    LEGACY: { label: 'Legacy', color: 'amber' },
     PENDING_CUSTOMIZATION: { label: 'Pending', color: 'yellow' },
     CUSTOMIZED: { label: 'Customized', color: 'blue' },
     LOCKED: { label: 'Locked', color: 'purple' },

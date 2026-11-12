@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getSalesTaxPercent } from '@/lib/settings'
+import { getSalesTaxPercent, getLegacyDiscountPercent } from '@/lib/settings'
+import { orderDiscountPercent, orderTotalInCents } from '@/lib/pricing'
 
 // POST /api/orders/ad-hoc — admin composes a one-off order outside the
 // quarterly cycle. Items are priced at the product's real per-bottle price
@@ -54,10 +55,14 @@ export async function POST(req: Request) {
       sum + i.quantity * (productMap.get(i.productId)!.priceInCents ?? 2100),
     0
   )
-  const discount = Math.max(0, Math.min(100, member.plan?.discountPercent ?? 0))
-  const afterDiscount = Math.round(subtotal * (1 - discount / 100))
-  const taxRatePercent = await getSalesTaxPercent()
-  const totalInCents = Math.round(afterDiscount * (1 + taxRatePercent / 100))
+  // Legacy members no longer get their old tier's discount — they get the legacy
+  // rate, stored on the order so billing charges the same amount.
+  const legacyDiscount = member.status === 'LEGACY' ? await getLegacyDiscountPercent() : null
+  const totalInCents = orderTotalInCents(
+    subtotal,
+    orderDiscountPercent({ discountPercent: legacyDiscount }, member.plan),
+    await getSalesTaxPercent()
+  )
 
   const order = await prisma.order.create({
     data: {
@@ -65,6 +70,7 @@ export async function POST(req: Request) {
       quarterId: null,
       status: 'AWAITING_PICKUP',
       totalInCents,
+      discountPercent: legacyDiscount,
       adminNotes,
       lastCustomizedAt: new Date(),
       items: {

@@ -281,6 +281,94 @@ export const EMAIL_TEMPLATE_DEFS: EmailTemplateDef[] = [
     ],
     sample: { firstName: 'Sam', eventTitle: 'Summer Release Party', eventDate: 'Saturday, August 9 · 5–9pm', eventLocation: 'The Cider House Patio', eventDetails: 'Live music, food trucks, and the first pours of our summer seasonal. Bring a friend!', portalUrl: 'https://club.hillcountryciderhouse.com' },
   },
+  {
+    key: 'LEGACY_WELCOME',
+    label: 'Legacy club — how it works',
+    description: 'Sent when you move a member to the legacy club. Explains what changes and how the quarterly offer works.',
+    defaultSubject: `You're now a ${clubName} legacy member`,
+    defaultBody: `
+    <h2>Welcome to the legacy club</h2>
+    <p>Hi {{firstName}},</p>
+    <p>We've moved your membership over to our legacy club, so we can stay in touch without the commitment. Here's how it works:</p>
+    <ul>
+      <li><strong>No automatic orders.</strong> We won't build or bill a quarterly order for you.</li>
+      <li><strong>An invitation every quarter.</strong> When each new release is ready, we'll email you a link to put together your own order at <strong>{{discountPercent}}% off</strong> (minimum {{minBottles}} bottles).</li>
+      <li><strong>Only if you want it.</strong> If you don't click, nothing happens and you're never charged.</li>
+      <li><strong>Other club perks are paused.</strong> The tasting room discount, free pours and other benefits of the {{planName}} tier go with a full membership.</li>
+    </ul>
+    <p>Miss the full club? You can switch back any time from your member page, and everything picks up right where you left off.</p>
+    ${CTA('{{portalUrl}}', 'Visit My Member Page')}
+    <p>Thanks for being part of the Cider House family. We hope to see you soon.</p>`,
+    vars: [
+      { name: 'firstName', description: "Member's first name" },
+      { name: 'discountPercent', description: 'Legacy order discount (number only, e.g. 10)' },
+      { name: 'minBottles', description: 'Minimum bottles per legacy order' },
+      { name: 'planName', description: 'The tier they were on' },
+      { name: 'portalUrl', description: 'Link to their member page' },
+    ],
+    sample: { firstName: 'Sam', discountPercent: '10', minBottles: '3', planName: 'The Pressers', portalUrl: 'https://club.hillcountryciderhouse.com/magic?t=demo' },
+  },
+  {
+    key: 'LEGACY_ORDER_INVITE',
+    label: 'Legacy club — quarterly order invitation',
+    description: 'Sent to legacy members when you generate orders for a quarter. No order exists unless they click and build one.',
+    defaultSubject: 'The {{quarterLabel}} release is here — {{discountPercent}}% off if you want in',
+    defaultBody: `
+    <h2>The {{quarterLabel}} release is ready</h2>
+    <p>Hi {{firstName}},</p>
+    <p>Our club members are picking their ciders for this quarter, and as a legacy member you're invited to join in. Build your own order by <strong>{{deadline}}</strong> and take <strong>{{discountPercent}}% off</strong>.</p>
+    ${CTA('{{orderUrl}}', 'Build My Order')}
+    <p>Pick any {{minBottles}} or more bottles from this quarter's lineup. We'll charge your card on file with the rest of the club and let you know when it's ready to pick up.</p>
+    <p>Not this time? No need to do anything. We won't create an order or charge you unless you click.</p>`,
+    vars: [
+      { name: 'firstName', description: "Member's first name" },
+      { name: 'quarterLabel', description: 'The quarter (e.g. 2026-Q3)' },
+      { name: 'deadline', description: 'Last day to build an order' },
+      { name: 'discountPercent', description: 'Legacy order discount (number only, e.g. 10)' },
+      { name: 'minBottles', description: 'Minimum bottles per legacy order' },
+      { name: 'orderUrl', description: 'Link to build their order' },
+    ],
+    sample: { firstName: 'Sam', quarterLabel: '2026-Q3', deadline: 'July 15, 2026', discountPercent: '10', minBottles: '3', orderUrl: 'https://club.hillcountryciderhouse.com/magic?t=demo' },
+  },
+  {
+    key: 'LEGACY_ORDER_REMINDER',
+    label: 'Legacy club — last call',
+    description: 'A nudge for legacy members who haven’t built an order yet. Sent when you click "Send reminders" on a quarter.',
+    defaultSubject: 'Last call for {{quarterLabel}} — {{discountPercent}}% off',
+    defaultBody: `
+    <h2>Last call for the {{quarterLabel}} release</h2>
+    <p>Hi {{firstName}},</p>
+    <p>A quick reminder that your legacy member offer closes on <strong>{{deadline}}</strong>. Until then you can build an order from this quarter's lineup at <strong>{{discountPercent}}% off</strong>.</p>
+    ${CTA('{{orderUrl}}', 'Build My Order')}
+    <p>If you'd rather sit this one out, you don't need to do a thing.</p>`,
+    vars: [
+      { name: 'firstName', description: "Member's first name" },
+      { name: 'quarterLabel', description: 'The quarter (e.g. 2026-Q3)' },
+      { name: 'deadline', description: 'Last day to build an order' },
+      { name: 'discountPercent', description: 'Legacy order discount (number only, e.g. 10)' },
+      { name: 'minBottles', description: 'Minimum bottles per legacy order' },
+      { name: 'orderUrl', description: 'Link to build their order' },
+    ],
+    sample: { firstName: 'Sam', quarterLabel: '2026-Q3', deadline: 'July 15, 2026', discountPercent: '10', minBottles: '3', orderUrl: 'https://club.hillcountryciderhouse.com/magic?t=demo' },
+  },
+  {
+    key: 'LEGACY_REJOINED',
+    label: 'Legacy club — welcome back to the club',
+    description: 'Sent when a legacy member switches back to a full membership.',
+    defaultSubject: `Welcome back to ${clubName}`,
+    defaultBody: `
+    <h2>Welcome back, {{firstName}}!</h2>
+    <p>You're a full club member again on the <strong>{{planName}}</strong> tier, with all the perks that come with it.</p>
+    <p>Your quarterly orders start again with the next release. We'll email you when it's ready to customize.</p>
+    ${CTA('{{portalUrl}}', 'Visit My Member Page')}
+    <p>We're glad to have you back. Cheers!</p>`,
+    vars: [
+      { name: 'firstName', description: "Member's first name" },
+      { name: 'planName', description: 'Their tier' },
+      { name: 'portalUrl', description: 'Link to their member page' },
+    ],
+    sample: { firstName: 'Sam', planName: 'The Pressers', portalUrl: 'https://club.hillcountryciderhouse.com/magic?t=demo' },
+  },
 ]
 
 function SAMPLE_ITEMS_TABLE(): string {

@@ -6,6 +6,7 @@ import { renderEmail, buildReceiptItemsTable } from '@/lib/emailTemplates'
 import { appUrl } from '@/lib/resend'
 import { getMemberPortalToken } from '@/services/orders'
 import { getSalesTaxPercent } from '@/lib/settings'
+import { orderDiscountPercent } from '@/lib/pricing'
 
 type BillingMethod = 'CARD_ON_FILE' | 'PAYMENT_LINK' | 'IN_PERSON'
 
@@ -105,7 +106,7 @@ export async function billOrder(
         memberName: `${member.firstName} ${member.lastName}`,
         memberEmail: member.email,
         quarterLabel: order.quarter?.label ?? 'Ad Hoc',
-        discountPercent: member.plan.discountPercent ?? 0,
+        discountPercent: orderDiscountPercent(order, member.plan),
         taxRatePercent,
         items: order.items.map((i) => ({
           productName: i.product.name,
@@ -192,7 +193,7 @@ export async function billOrder(
         memberEmail: member.email,
         memberName: `${member.firstName} ${member.lastName}`,
         quarterLabel: order.quarter?.label ?? 'Ad Hoc',
-        discountPercent: member.plan.discountPercent ?? 0,
+        discountPercent: orderDiscountPercent(order, member.plan),
         taxRatePercent,
         items: order.items.map((i) => ({
           productName: i.product.name,

@@ -6,6 +6,8 @@ import { formatCents, formatDate } from '@/lib/utils'
 import { StatusBadge } from '@/components/ui/Badge'
 import { Card } from '@/components/ui/Card'
 import { Beer, Package, Calendar, ChevronRight, Edit3, Gift } from 'lucide-react'
+import { getLegacyOffer } from '@/services/legacy'
+import { RejoinButton } from '@/components/member/RejoinButton'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'My Dashboard' }
@@ -36,6 +38,9 @@ export default async function MemberDashboardPage() {
     ['PENDING_CUSTOMIZATION', 'CUSTOMIZED', 'LOCKED', 'AWAITING_PICKUP'].includes(o.status)
   )
 
+  const isLegacy = member.status === 'LEGACY'
+  const legacyOffer = isLegacy ? await getLegacyOffer(member.id) : null
+
   const upcomingPickup = await prisma.pickupEvent.findFirst({
     where: {
       startsAt: { gte: new Date() },
@@ -53,7 +58,7 @@ export default async function MemberDashboardPage() {
           Welcome back, {member.firstName}.
         </h1>
         <p className="mt-1 text-stone-500">
-          <span className="font-medium text-stone-700">{member.plan.name}</span> member since{' '}
+          <span className="font-medium text-stone-700">{isLegacy ? 'Legacy' : member.plan.name}</span> member since{' '}
           {formatDate(member.joinedAt)}
         </p>
       </div>
@@ -67,6 +72,41 @@ export default async function MemberDashboardPage() {
             : 'Contact us to resume.'}{' '}
           <Link href="/member/profile" className="underline font-medium">Manage membership →</Link>
         </div>
+      )}
+
+      {isLegacy && (
+        <div className="border p-4 text-sm" style={{ borderColor: 'var(--rule)', backgroundColor: 'var(--cream-deep)', color: 'var(--ink-soft)' }}>
+          <p>
+            <strong style={{ color: 'var(--ink)' }}>You&apos;re a legacy member.</strong> We don&apos;t create or
+            bill a quarterly order for you. When each release is ready we&apos;ll email you an invitation
+            to build your own at a member discount — and only charge you if you do.
+          </p>
+          <div className="mt-3 flex flex-wrap items-center gap-3">
+            <RejoinButton planName={member.plan.name} />
+            <span className="text-xs">Get your quarterly box and all the {member.plan.name} perks back.</span>
+          </div>
+        </div>
+      )}
+
+      {/* Legacy offer for the open quarter */}
+      {legacyOffer?.eligible && !legacyOffer.orderId && (
+        <Card>
+          <div className="flex flex-wrap items-center justify-between gap-4">
+            <div>
+              <p className="smallcaps" style={{ color: 'var(--ink-soft)' }}>This Quarter&apos;s Offer</p>
+              <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 400, fontSize: 20, color: 'var(--ink)', marginTop: 4 }}>
+                {legacyOffer.quarter.label} — {legacyOffer.discountPercent}% off your order
+              </h2>
+              <p className="mt-1 text-sm text-stone-500">
+                Pick {legacyOffer.minBottles} or more bottles from this quarter&apos;s lineup by{' '}
+                {formatDate(legacyOffer.quarter.endsAt)}.
+              </p>
+            </div>
+            <Link href="/member/orders/legacy" className="btn-saloon" style={{ fontSize: 10, padding: '10px 18px' }}>
+              Build My Order
+            </Link>
+          </div>
+        </Card>
       )}
 
       {/* Current order */}
@@ -141,7 +181,9 @@ export default async function MemberDashboardPage() {
             <div>
               <p className="font-semibold text-stone-800">No active order yet</p>
               <p className="text-sm text-stone-500">
-                We'll email you when your next quarterly order is ready.
+                {isLegacy
+                  ? "We'll email you when the next release is ready to order."
+                  : "We'll email you when your next quarterly order is ready."}
               </p>
             </div>
           </div>

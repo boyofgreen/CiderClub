@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { getAppSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
+import { getSalesTaxPercent } from '@/lib/settings'
 
 export async function GET(
   _req: Request,
@@ -27,7 +28,8 @@ export async function GET(
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  return NextResponse.json({ order })
+  // taxRatePercent lets the member page show a running total while they edit
+  return NextResponse.json({ order, taxRatePercent: await getSalesTaxPercent() })
 }
 
 export async function DELETE(

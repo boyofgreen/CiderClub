@@ -5,6 +5,7 @@ import { appUrl } from '@/lib/resend'
 import { generateOpaqueToken } from '@/lib/tokens'
 import { addDays, format } from 'date-fns'
 import { getSalesTaxPercent } from '@/lib/settings'
+import { orderTotalInCents } from '@/lib/pricing'
 
 /**
  * Generate a quarterly order for every active, non-paused member.
@@ -94,11 +95,8 @@ export async function generateQuarterOrders(
     }
 
     // Sum item prices, apply plan discount, then add sales tax
-    const discount = Math.max(0, Math.min(100, member.plan.discountPercent ?? 0))
     const subtotal = items.reduce((sum, i) => sum + i.quantity * (i.unitPriceInCents || 2100), 0)
-    const afterDiscount = Math.round(subtotal * (1 - discount / 100))
-    const taxRatePercent = await getSalesTaxPercent()
-    const totalInCents = Math.round(afterDiscount * (1 + taxRatePercent / 100))
+    const totalInCents = orderTotalInCents(subtotal, member.plan.discountPercent ?? 0, await getSalesTaxPercent())
 
     const order = await prisma.order.create({
       data: {

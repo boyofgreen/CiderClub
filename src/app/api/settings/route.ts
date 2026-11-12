@@ -39,6 +39,28 @@ export async function PATCH(req: Request) {
     await setSetting(SETTING_KEYS.WELCOME_FOLLOWUP_FROM, String(body.welcomeFollowupFrom).trim())
   }
 
+  if (typeof body.legacyDiscountPercent !== 'undefined') {
+    const n = Number(body.legacyDiscountPercent)
+    if (!Number.isInteger(n) || n < 0 || n > 100) {
+      return NextResponse.json(
+        { error: 'Legacy discount must be a whole number between 0 and 100' },
+        { status: 400 }
+      )
+    }
+    await setSetting(SETTING_KEYS.LEGACY_DISCOUNT_PERCENT, String(n))
+  }
+
+  if (typeof body.legacyMinBottles !== 'undefined') {
+    const n = Number(body.legacyMinBottles)
+    if (!Number.isInteger(n) || n < 1 || n > 100) {
+      return NextResponse.json(
+        { error: 'Legacy minimum bottles must be a whole number of 1 or more' },
+        { status: 400 }
+      )
+    }
+    await setSetting(SETTING_KEYS.LEGACY_MIN_BOTTLES, String(n))
+  }
+
   const settings = await getAllSettings()
   return NextResponse.json({ settings })
 }

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { Input, Select } from '@/components/ui/Input'
-import { Pause, UserX, UserCheck, RefreshCw, ChevronDown, ArrowLeftRight, CreditCard } from 'lucide-react'
+import { Pause, UserX, UserCheck, RefreshCw, ChevronDown, ArrowLeftRight, CreditCard, Hourglass } from 'lucide-react'
 
 interface Plan { id: string; name: string; packsPerOrder: number }
 
@@ -16,6 +16,7 @@ export function MemberActions({
   hasCard,
   currentPlanId,
   plans,
+  openOrders = [],
 }: {
   memberId: string
   status: string
@@ -23,14 +24,17 @@ export function MemberActions({
   hasCard: boolean
   currentPlanId: string
   plans: Plan[]
+  /** Quarter labels of orders not yet billed or picked up */
+  openOrders?: string[]
 }) {
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [action, setAction] = useState<'PAUSE' | 'CANCEL' | 'REACTIVATE' | 'CHANGE_TIER' | null>(null)
+  const [action, setAction] = useState<'PAUSE' | 'CANCEL' | 'REACTIVATE' | 'CHANGE_TIER' | 'LEGACY' | null>(null)
   const [pauseUntil, setPauseUntil] = useState('')
   const [cancelReason, setCancelReason] = useState('')
+  const [cancelOpenOrders, setCancelOpenOrders] = useState(true)
   const [newPlanId, setNewPlanId] = useState(currentPlanId)
   const [sendingCardLink, setSendingCardLink] = useState(false)
   const [cardLinkResult, setCardLinkResult] = useState<string | null>(null)
@@ -39,9 +43,10 @@ export function MemberActions({
     if (!action) return
     setLoading(true)
     setError(null)
-    const body: Record<string, string> = { action }
+    const body: Record<string, string | boolean> = { action }
     if (action === 'PAUSE' && pauseUntil) body.pausedUntilQuarter = pauseUntil
     if (action === 'CANCEL' && cancelReason) body.cancellationReason = cancelReason
+    if (action === 'LEGACY') body.cancelOpenOrders = openOrders.length > 0 && cancelOpenOrders
 
     if (action === 'CHANGE_TIER') {
       const res = await fetch(`/api/members/${memberId}/plan`, {
@@ -67,6 +72,7 @@ export function MemberActions({
     })
     if (res.ok) {
       setOpen(false)
+      setAction(null)
       router.refresh()
     } else {
       const data = await res.json().catch(() => ({}))
@@ -108,12 +114,20 @@ export function MemberActions({
 
       {open && (
         <div className="absolute right-0 top-full mt-1 z-20 w-56 border bg-cream-paper shadow-lg py-1" style={{ borderColor: 'var(--rule)' }}>
-          {status !== 'PAUSED' && status !== 'CANCELLED' && (
+          {status !== 'PAUSED' && status !== 'CANCELLED' && status !== 'LEGACY' && (
             <button
               onClick={() => { setAction('PAUSE'); setOpen(false) }}
               className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
             >
               <Pause className="h-4 w-4 text-yellow-500" /> Pause Membership
+            </button>
+          )}
+          {status !== 'LEGACY' && status !== 'WAITLIST' && (
+            <button
+              onClick={() => { setAction('LEGACY'); setOpen(false) }}
+              className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
+            >
+              <Hourglass className="h-4 w-4 text-amber-600" /> Move to Legacy Club
             </button>
           )}
           {status !== 'CANCELLED' && (
@@ -124,12 +138,12 @@ export function MemberActions({
               <UserX className="h-4 w-4 text-red-500" /> Cancel Membership
             </button>
           )}
-          {(status === 'PAUSED' || status === 'CANCELLED') && (
+          {(status === 'PAUSED' || status === 'CANCELLED' || status === 'LEGACY') && (
             <button
               onClick={() => { setAction('REACTIVATE'); setOpen(false) }}
               className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-stone-700 hover:bg-cream-deep"
             >
-              <UserCheck className="h-4 w-4 text-green-500" /> Reactivate
+              <UserCheck className="h-4 w-4 text-green-500" /> {status === 'LEGACY' ? 'Return to Full Membership' : 'Reactivate'}
             </button>
           )}
           <button
@@ -172,6 +186,8 @@ export function MemberActions({
               {action === 'PAUSE' ? 'Pause Membership' :
                action === 'CANCEL' ? 'Cancel Membership' :
                action === 'CHANGE_TIER' ? 'Change Tier' :
+               action === 'LEGACY' ? 'Move to Legacy Club' :
+               status === 'LEGACY' ? 'Return to Full Membership' :
                'Reactivate Membership'}
             </h3>
 
@@ -195,8 +211,37 @@ export function MemberActions({
             )}
             {action === 'REACTIVATE' && (
               <p className="text-sm text-stone-600 mb-4">
-                This will reactivate the membership and clear the pause/cancellation.
+                {status === 'LEGACY'
+                  ? 'This restores the full membership on their tier, moves them back to the tier group in Square, and emails them a welcome back. Run Generate Orders on an open quarter if they should get a box this time.'
+                  : 'This will reactivate the membership and clear the pause/cancellation.'}
               </p>
+            )}
+            {action === 'LEGACY' && (
+              <div className="space-y-3 text-sm text-stone-600">
+                <p>
+                  Legacy members get no automatic quarterly order and none of the tier benefits. Each
+                  quarter they&apos;re emailed an invitation to build their own order at the legacy
+                  discount, and are only charged if they do.
+                </p>
+                <p>
+                  We&apos;ll email them how it works and move them from their tier group to
+                  &ldquo;Legacy Club&rdquo; in Square.
+                </p>
+                {openOrders.length > 0 && (
+                  <label className="flex items-start gap-2 cursor-pointer text-stone-700">
+                    <input
+                      type="checkbox"
+                      checked={cancelOpenOrders}
+                      onChange={(e) => setCancelOpenOrders(e.target.checked)}
+                      className="accent-terracotta mt-1"
+                    />
+                    <span>
+                      Cancel their open order{openOrders.length > 1 ? 's' : ''} ({openOrders.join(', ')}) so
+                      they aren&apos;t charged. Leave unchecked to bill it as usual.
+                    </span>
+                  </label>
+                )}
+              </div>
             )}
             {action === 'CHANGE_TIER' && (
               <div className="space-y-3 mb-2">

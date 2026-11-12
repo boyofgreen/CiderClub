@@ -69,7 +69,7 @@ export default function NewCampaignPage() {
         <div className="space-y-1">
           <label className="label">Recipients</label>
           <div className="flex gap-2">
-            {['ACTIVE', 'PAUSED', 'ALL'].map((s) => (
+            {['ACTIVE', 'LEGACY', 'PAUSED', 'ALL'].map((s) => (
               <label key={s} className={`flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm ${
                 filter.status === s ? 'border-terracotta text-terracotta' : 'border-stone-200 text-stone-600'
               }`} style={filter.status === s ? { backgroundColor: 'var(--cream-deep)' } : {}}>
