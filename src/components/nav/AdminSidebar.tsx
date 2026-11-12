@@ -20,12 +20,14 @@ import {
   Settings,
   PartyPopper,
   UserPlus,
+  Hourglass,
 } from 'lucide-react'
 
 const nav = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
   { href: '/admin/members', label: 'Members', icon: Users },
   { href: '/admin/leads', label: 'Leads', icon: UserPlus },
+  { href: '/admin/legacy', label: 'Legacy Club', icon: Hourglass },
   { href: '/admin/quarters', label: 'Quarters', icon: Calendar },
   { href: '/admin/orders', label: 'Orders', icon: ShoppingBag },
   { href: '/admin/products', label: 'Products', icon: Beer },

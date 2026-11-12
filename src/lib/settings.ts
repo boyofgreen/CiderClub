@@ -6,6 +6,7 @@ export const SETTING_KEYS = {
   WELCOME_FOLLOWUP_FROM: 'welcomeFollowupFrom',
   LEGACY_DISCOUNT_PERCENT: 'legacyDiscountPercent',
   LEGACY_MIN_BOTTLES: 'legacyMinBottles',
+  LEGACY_EXPIRY_QUARTERS: 'legacyExpiryQuarters',
 } as const
 
 const DEFAULTS: Record<string, string> = {
@@ -14,6 +15,7 @@ const DEFAULTS: Record<string, string> = {
   [SETTING_KEYS.WELCOME_FOLLOWUP_FROM]: 'JB · Hill Country Cider House <jb@hillcountryciderhouse.com>',
   [SETTING_KEYS.LEGACY_DISCOUNT_PERCENT]: '10',
   [SETTING_KEYS.LEGACY_MIN_BOTTLES]: '3',
+  [SETTING_KEYS.LEGACY_EXPIRY_QUARTERS]: '4',
 }
 
 export async function getSetting(key: string): Promise<string | null> {
@@ -37,6 +39,15 @@ export async function getLegacyDiscountPercent(): Promise<number> {
 export async function getLegacyMinBottles(): Promise<number> {
   const n = Number(await getSetting(SETTING_KEYS.LEGACY_MIN_BOTTLES))
   return Number.isFinite(n) && n >= 1 ? Math.round(n) : 1
+}
+
+/**
+ * Quarterly offers a legacy member can pass on before the next one becomes a
+ * final notice. 0 = legacy memberships never expire.
+ */
+export async function getLegacyExpiryQuarters(): Promise<number> {
+  const n = Number(await getSetting(SETTING_KEYS.LEGACY_EXPIRY_QUARTERS))
+  return Number.isFinite(n) && n >= 0 ? Math.round(n) : 4
 }
 
 /** Address that receives the internal "new member joined" alert. */

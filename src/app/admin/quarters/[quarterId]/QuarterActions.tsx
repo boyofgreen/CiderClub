@@ -64,7 +64,9 @@ export function QuarterActions({
     if (res.ok) {
       setResult(
         `Created ${data.created} orders, sent ${data.emailsSent} emails. ${data.skipped} skipped.` +
-          (data.legacyInvited ? ` Invited ${data.legacyInvited} legacy member${data.legacyInvited === 1 ? '' : 's'}.` : '')
+          (data.legacyInvited ? ` Invited ${data.legacyInvited} legacy member${data.legacyInvited === 1 ? '' : 's'}.` : '') +
+          (data.legacyWarned ? ` Sent ${data.legacyWarned} legacy final notice${data.legacyWarned === 1 ? '' : 's'}.` : '') +
+          (data.legacyExpired ? ` ${data.legacyExpired} legacy membership${data.legacyExpired === 1 ? '' : 's'} expired.` : '')
       )
       router.refresh()
     } else {

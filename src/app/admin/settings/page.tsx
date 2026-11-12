@@ -16,6 +16,7 @@ export default function AdminSettingsPage() {
   const [welcomeFollowupFrom, setWelcomeFollowupFrom] = useState('')
   const [legacyDiscountPercent, setLegacyDiscountPercent] = useState('')
   const [legacyMinBottles, setLegacyMinBottles] = useState('')
+  const [legacyExpiryQuarters, setLegacyExpiryQuarters] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
@@ -28,6 +29,7 @@ export default function AdminSettingsPage() {
         setWelcomeFollowupFrom(d.settings?.welcomeFollowupFrom ?? '')
         setLegacyDiscountPercent(d.settings?.legacyDiscountPercent ?? '10')
         setLegacyMinBottles(d.settings?.legacyMinBottles ?? '3')
+        setLegacyExpiryQuarters(d.settings?.legacyExpiryQuarters ?? '4')
       })
       .finally(() => setLoading(false))
   }, [])
@@ -39,7 +41,7 @@ export default function AdminSettingsPage() {
     const res = await fetch('/api/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ salesTaxPercent, adminNotifyEmail, welcomeFollowupFrom, legacyDiscountPercent, legacyMinBottles }),
+      body: JSON.stringify({ salesTaxPercent, adminNotifyEmail, welcomeFollowupFrom, legacyDiscountPercent, legacyMinBottles, legacyExpiryQuarters }),
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
@@ -111,6 +113,15 @@ export default function AdminSettingsPage() {
               value={legacyMinBottles}
               onChange={(e) => setLegacyMinBottles(e.target.value)}
               hint="Fewest bottles a legacy member can order."
+            />
+            <Input
+              label="Quarters without an order before final notice"
+              type="number"
+              step="1"
+              min="0"
+              value={legacyExpiryQuarters}
+              onChange={(e) => setLegacyExpiryQuarters(e.target.value)}
+              hint="After this many passed-up offers, the next invitation is a final notice. If they skip that too, the membership is cancelled when the following quarter's orders are generated. 0 = never expire."
             />
           </div>
 

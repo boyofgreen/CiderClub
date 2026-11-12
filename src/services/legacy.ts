@@ -9,10 +9,11 @@ import { sendEmail } from '@/services/email/sender'
 import { renderEmail, baseTemplate } from '@/lib/emailTemplates'
 import { appUrl } from '@/lib/resend'
 import { getMemberPortalToken } from '@/services/orders'
-import { changeMemberPlanInSquare } from '@/services/square/customers'
+import { changeMemberPlanInSquare, removeMemberFromSquareGroup } from '@/services/square/customers'
 import {
   getAdminNotifyEmail,
   getLegacyDiscountPercent,
+  getLegacyExpiryQuarters,
   getLegacyMinBottles,
   getSalesTaxPercent,
 } from '@/lib/settings'
@@ -196,27 +197,143 @@ export async function rejoinFromLegacy(memberId: string, opts: { selfServe?: boo
 
 type QuarterInfo = { id: string; label: string; endsAt: Date | null }
 
+/** Emails that count as "we offered them this quarter" */
+const OFFER_EMAIL_TYPES = ['LEGACY_ORDER_INVITE', 'LEGACY_EXPIRY_WARNING']
+
+export const LEGACY_EXPIRED_REASON = 'Legacy membership expired'
+
+export interface LegacyStanding {
+  /** Most recent order that wasn't cancelled, since joining the legacy club */
+  lastOrderAt: Date | null
+  /** Quarterly offers sent since their last order (or since they went legacy) */
+  offersSinceLastOrder: number
+  /** A final notice has gone out since their last order */
+  warned: boolean
+}
+
+/**
+ * Where each legacy member stands against the expiry rule: how many quarterly
+ * offers they've passed on since they last ordered. Failed sends don't count —
+ * we only hold an offer against someone if it actually went out.
+ */
+export async function getLegacyStanding(
+  members: { id: string; legacyAt: Date | null }[],
+  opts: { excludeQuarterId?: string } = {}
+): Promise<Map<string, LegacyStanding>> {
+  const ids = members.map((m) => m.id)
+  const [lastOrders, offers] = await Promise.all([
+    prisma.order.groupBy({
+      by: ['memberId'],
+      where: { memberId: { in: ids }, status: { not: 'CANCELLED' } },
+      _max: { createdAt: true },
+    }),
+    prisma.emailLog.findMany({
+      where: { memberId: { in: ids }, type: { in: OFFER_EMAIL_TYPES }, status: { not: 'FAILED' } },
+      select: { memberId: true, type: true, createdAt: true, metadata: true },
+    }),
+  ])
+  const lastOrderByMember = new Map(lastOrders.map((o) => [o.memberId, o._max.createdAt]))
+
+  const standing = new Map<string, LegacyStanding>()
+  for (const member of members) {
+    const since = member.legacyAt ?? new Date(0)
+    const lastOrder = lastOrderByMember.get(member.id) ?? null
+    const lastOrderAt = lastOrder && lastOrder >= since ? lastOrder : null
+    const anchor = lastOrderAt ?? since
+
+    const quarters = new Set<string>()
+    let warned = false
+    for (const log of offers) {
+      if (log.memberId !== member.id || log.createdAt <= anchor) continue
+      const quarterId = offerQuarterId(log.metadata)
+      if (opts.excludeQuarterId && quarterId === opts.excludeQuarterId) continue
+      quarters.add(quarterId ?? log.createdAt.toISOString())
+      if (log.type === 'LEGACY_EXPIRY_WARNING') warned = true
+    }
+    standing.set(member.id, { lastOrderAt, offersSinceLastOrder: quarters.size, warned })
+  }
+  return standing
+}
+
+function offerQuarterId(metadata: string | null): string | null {
+  if (!metadata) return null
+  try {
+    const id = (JSON.parse(metadata) as { quarterId?: unknown }).quarterId
+    return typeof id === 'string' ? id : null
+  } catch {
+    return null
+  }
+}
+
 /**
  * Email every legacy member the opt-in offer for a quarter. Safe to re-run:
  * members who already have an order or were already invited are skipped.
+ *
+ * This is also where the expiry rule runs, since generating a quarter's orders
+ * is the one thing that reliably happens every quarter:
+ *  - passed on `expiryQuarters` offers in a row → this quarter's invitation is
+ *    a final notice instead;
+ *  - got a final notice and still didn't order → membership is cancelled.
  */
-export async function inviteLegacyMembers(quarter: QuarterInfo): Promise<{ invited: number }> {
-  const members = await legacyMembersWithoutOrder(quarter.id)
-  if (members.length === 0) return { invited: 0 }
+export async function inviteLegacyMembers(
+  quarter: QuarterInfo
+): Promise<{ invited: number; warned: number; expired: number }> {
+  const waiting = await legacyMembersWithoutOrder(quarter.id)
+  if (waiting.length === 0) return { invited: 0, warned: 0, expired: 0 }
 
   const alreadyInvited = await prisma.emailLog.findMany({
     where: {
-      type: 'LEGACY_ORDER_INVITE',
+      type: { in: OFFER_EMAIL_TYPES },
       status: { not: 'FAILED' }, // a failed send should be retried
-      memberId: { in: members.map((m) => m.id) },
+      memberId: { in: waiting.map((m) => m.id) },
       metadata: { contains: quarter.id },
     },
     select: { memberId: true },
   })
   const invitedIds = new Set(alreadyInvited.map((l) => l.memberId))
+  const members = waiting.filter((m) => !invitedIds.has(m.id))
 
-  const sent = await sendLegacyOffer('LEGACY_ORDER_INVITE', quarter, members.filter((m) => !invitedIds.has(m.id)))
-  return { invited: sent }
+  const expiryQuarters = await getLegacyExpiryQuarters()
+  const standing = await getLegacyStanding(members, { excludeQuarterId: quarter.id })
+
+  const toInvite: typeof members = []
+  const toWarn: typeof members = []
+  let expired = 0
+  for (const member of members) {
+    const s = standing.get(member.id)!
+    if (expiryQuarters > 0 && s.warned) {
+      await expireLegacyMember(member, s.offersSinceLastOrder)
+      expired++
+    } else if (expiryQuarters > 0 && s.offersSinceLastOrder >= expiryQuarters) {
+      toWarn.push(member)
+    } else {
+      toInvite.push(member)
+    }
+  }
+
+  const invited = await sendLegacyOffer('LEGACY_ORDER_INVITE', quarter, toInvite)
+  const warned = await sendLegacyOffer('LEGACY_EXPIRY_WARNING', quarter, toWarn)
+  return { invited, warned, expired }
+}
+
+/** End a legacy membership that went unanswered through its final notice. */
+async function expireLegacyMember(
+  member: { id: string; squareCustomerId: string | null },
+  offersIgnored: number
+): Promise<void> {
+  await prisma.member.update({
+    where: { id: member.id },
+    data: {
+      status: 'CANCELLED',
+      cancelledAt: new Date(),
+      cancellationReason: `${LEGACY_EXPIRED_REASON} (no order in ${offersIgnored} quarters)`,
+    },
+  })
+  if (member.squareCustomerId) {
+    await removeMemberFromSquareGroup(member.squareCustomerId, LEGACY_GROUP_NAME, 'Legacy membership expired').catch(
+      (err) => console.error('[legacy] Square group removal failed:', err)
+    )
+  }
 }
 
 /** "Last call" for legacy members who haven't built an order for the quarter. */
@@ -236,7 +353,7 @@ async function legacyMembersWithoutOrder(quarterId: string) {
 }
 
 async function sendLegacyOffer(
-  templateKey: 'LEGACY_ORDER_INVITE' | 'LEGACY_ORDER_REMINDER',
+  templateKey: 'LEGACY_ORDER_INVITE' | 'LEGACY_ORDER_REMINDER' | 'LEGACY_EXPIRY_WARNING',
   quarter: QuarterInfo,
   members: { id: string; email: string; firstName: string }[]
 ): Promise<number> {

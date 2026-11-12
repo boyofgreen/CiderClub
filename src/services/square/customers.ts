@@ -164,6 +164,32 @@ export async function changeMemberPlanInSquare(
   }
 }
 
+/** Take a Square customer out of a group (e.g. when a legacy membership expires) and append a note */
+export async function removeMemberFromSquareGroup(
+  squareCustomerId: string,
+  groupName: string,
+  note: string,
+): Promise<void> {
+  try {
+    const groupId = await findOrCreateGroup(groupName)
+    await squareClient.customers.groups.remove({ customerId: squareCustomerId, groupId })
+  } catch (err) {
+    console.error('[Square] Failed to remove group:', err)
+  }
+  try {
+    const changeDate = new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })
+    const current = await squareClient.customers.get({ customerId: squareCustomerId })
+    const existingNote = current.customer?.note ?? ''
+    const appendLine = `${note} on ${changeDate}.`
+    await squareClient.customers.update({
+      customerId: squareCustomerId,
+      note: existingNote ? `${existingNote}\n${appendLine}` : appendLine,
+    })
+  } catch (err) {
+    console.error('[Square] Failed to update customer note:', err)
+  }
+}
+
 /** Search Square for a customer by email; returns customerId or null */
 export async function searchSquareCustomerByEmail(email: string): Promise<string | null> {
   try {

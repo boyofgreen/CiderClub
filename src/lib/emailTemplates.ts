@@ -352,6 +352,27 @@ export const EMAIL_TEMPLATE_DEFS: EmailTemplateDef[] = [
     sample: { firstName: 'Sam', quarterLabel: '2026-Q3', deadline: 'July 15, 2026', discountPercent: '10', minBottles: '3', orderUrl: 'https://club.hillcountryciderhouse.com/magic?t=demo' },
   },
   {
+    key: 'LEGACY_EXPIRY_WARNING',
+    label: 'Legacy club — final notice before expiry',
+    description: 'Sent in place of the quarterly invitation when a legacy member has gone a year without ordering. If they don’t order this quarter, their legacy membership ends.',
+    defaultSubject: 'Your legacy membership expires after this release',
+    defaultBody: `
+    <h2>We'd hate to lose you, {{firstName}}</h2>
+    <p>It's been a while since your last order, so we wanted to give you a heads up: legacy memberships stay open as long as there's an order at least once a year, and yours is due.</p>
+    <p>The <strong>{{quarterLabel}}</strong> release is ready now. Build an order by <strong>{{deadline}}</strong> at <strong>{{discountPercent}}% off</strong> and your legacy membership carries on as usual.</p>
+    ${CTA('{{orderUrl}}', 'Build My Order')}
+    <p>If we don't see an order this quarter, your legacy membership will expire and these invitations will stop. No hard feelings — you're always welcome in the tasting room, and you can rejoin the club any time.</p>`,
+    vars: [
+      { name: 'firstName', description: "Member's first name" },
+      { name: 'quarterLabel', description: 'The quarter (e.g. 2026-Q3)' },
+      { name: 'deadline', description: 'Last day to build an order' },
+      { name: 'discountPercent', description: 'Legacy order discount (number only, e.g. 10)' },
+      { name: 'minBottles', description: 'Minimum bottles per legacy order' },
+      { name: 'orderUrl', description: 'Link to build their order' },
+    ],
+    sample: { firstName: 'Sam', quarterLabel: '2026-Q3', deadline: 'July 15, 2026', discountPercent: '10', minBottles: '3', orderUrl: 'https://club.hillcountryciderhouse.com/magic?t=demo' },
+  },
+  {
     key: 'LEGACY_REJOINED',
     label: 'Legacy club — welcome back to the club',
     description: 'Sent when a legacy member switches back to a full membership.',

@@ -61,6 +61,17 @@ export async function PATCH(req: Request) {
     await setSetting(SETTING_KEYS.LEGACY_MIN_BOTTLES, String(n))
   }
 
+  if (typeof body.legacyExpiryQuarters !== 'undefined') {
+    const n = Number(body.legacyExpiryQuarters)
+    if (!Number.isInteger(n) || n < 0 || n > 40) {
+      return NextResponse.json(
+        { error: 'Legacy expiry must be a whole number of quarters (0 to never expire)' },
+        { status: 400 }
+      )
+    }
+    await setSetting(SETTING_KEYS.LEGACY_EXPIRY_QUARTERS, String(n))
+  }
+
   const settings = await getAllSettings()
   return NextResponse.json({ settings })
 }

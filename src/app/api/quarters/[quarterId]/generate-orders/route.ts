@@ -19,15 +19,21 @@ export async function POST(
 
     // Legacy members get no order — just an invitation to build one. A failure
     // here shouldn't hide the fact that the orders above were created.
-    let legacyInvited = 0
+    let legacy = { invited: 0, warned: 0, expired: 0 }
     try {
       const quarter = await prisma.quarter.findUniqueOrThrow({ where: { id: params.quarterId } })
-      legacyInvited = (await inviteLegacyMembers(quarter)).invited
+      legacy = await inviteLegacyMembers(quarter)
     } catch (err) {
       console.error('[generate-orders] legacy invitations failed:', err)
     }
 
-    return NextResponse.json({ ok: true, ...result, legacyInvited })
+    return NextResponse.json({
+      ok: true,
+      ...result,
+      legacyInvited: legacy.invited,
+      legacyWarned: legacy.warned,
+      legacyExpired: legacy.expired,
+    })
   } catch (err) {
     return NextResponse.json({ error: String(err) }, { status: 500 })
   }
