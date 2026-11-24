@@ -81,7 +81,7 @@ export function DeliveryPicker({
         Delivery
       </p>
       <div className="flex flex-col gap-2 sm:flex-row">
-        {option('PICKUP', <Store className="h-4 w-4 text-terracotta" />, 'Pick up', 'At the cider house during the pickup window. No charge.')}
+        {option('PICKUP', <Store className="h-4 w-4 text-terracotta" />, 'Pick up', 'At the cider house. No charge.')}
         {option(
           'SHIP',
           <Truck className="h-4 w-4 text-terracotta" />,
