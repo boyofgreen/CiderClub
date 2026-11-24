@@ -7,6 +7,8 @@ import { Card } from '@/components/ui/Card'
 import { ArrowLeft } from 'lucide-react'
 import { OrderAdminActions } from './OrderAdminActions'
 import { AdminOrderItemsEditor } from './AdminOrderItemsEditor'
+import { DeliveryAdmin } from './DeliveryAdmin'
+import { shipToFromMember } from '@/services/shipping'
 import type { Metadata } from 'next'
 
 export const metadata: Metadata = { title: 'Order Detail' }
@@ -77,6 +79,12 @@ export default async function AdminOrderDetailPage({
               <span className="text-stone-500">Total</span>
               <span className="font-semibold">{formatCents(order.totalInCents)}</span>
             </div>
+            {order.shippingInCents > 0 && (
+              <div className="flex justify-between">
+                <span className="text-stone-500">Includes shipping</span>
+                <span>{formatCents(order.shippingInCents)}</span>
+              </div>
+            )}
             {order.billedAt && (
               <div className="flex justify-between">
                 <span className="text-stone-500">Paid on</span>
@@ -129,8 +137,30 @@ export default async function AdminOrderDetailPage({
         />
       </Card>
 
+      {/* Delivery */}
+      <Card>
+        <DeliveryAdmin
+          orderId={order.id}
+          status={order.status}
+          fulfillment={order.fulfillment}
+          shippingInCents={order.shippingInCents}
+          shipTo={{
+            shipName: order.shipName ?? '',
+            shipPhone: order.shipPhone ?? '',
+            shipAddress1: order.shipAddress1 ?? '',
+            shipAddress2: order.shipAddress2 ?? '',
+            shipCity: order.shipCity ?? '',
+            shipState: order.shipState ?? '',
+            shipZip: order.shipZip ?? '',
+          }}
+          defaultShipTo={shipToFromMember(order.member)}
+          shippedAt={order.shippedAt?.toISOString() ?? null}
+          trackingNumber={order.trackingNumber}
+        />
+      </Card>
+
       {/* Pickup */}
-      {order.pickupEvent && (
+      {order.pickupEvent && order.fulfillment !== 'SHIP' && (
         <Card>
           <h2 className="font-semibold text-stone-900 mb-3">Pickup</h2>
           <p className="font-medium text-stone-700">{order.pickupEvent.title}</p>

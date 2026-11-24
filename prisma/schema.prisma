@@ -260,6 +260,20 @@ model Order {
   discountPercent Int?
   minBottles      Int?
 
+  // Delivery. PICKUP (default) or SHIP to the address below, which is a
+  // snapshot taken when the member chose shipping for this order.
+  fulfillment     String    @default("PICKUP") // PICKUP | SHIP
+  shippingInCents Int       @default(0)        // flat fee per box, before tax
+  shipName        String?
+  shipPhone       String?
+  shipAddress1    String?
+  shipAddress2    String?
+  shipCity        String?
+  shipState       String?
+  shipZip         String?
+  shippedAt       DateTime?
+  trackingNumber  String?
+
   // Square payment
   squarePaymentId      String?
   squareReceiptUrl     String?

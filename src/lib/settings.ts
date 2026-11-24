@@ -7,6 +7,11 @@ export const SETTING_KEYS = {
   LEGACY_DISCOUNT_PERCENT: 'legacyDiscountPercent',
   LEGACY_MIN_BOTTLES: 'legacyMinBottles',
   LEGACY_EXPIRY_QUARTERS: 'legacyExpiryQuarters',
+  SHIPPING_ENABLED: 'shippingEnabled',
+  SHIPPING_FEE_CENTS: 'shippingFeeCents',
+  SHIPPING_BOTTLES_PER_BOX: 'shippingBottlesPerBox',
+  SHIPPING_TAXABLE: 'shippingTaxable',
+  SHIPPING_STATES: 'shippingStates',
 } as const
 
 const DEFAULTS: Record<string, string> = {
@@ -16,6 +21,12 @@ const DEFAULTS: Record<string, string> = {
   [SETTING_KEYS.LEGACY_DISCOUNT_PERCENT]: '10',
   [SETTING_KEYS.LEGACY_MIN_BOTTLES]: '3',
   [SETTING_KEYS.LEGACY_EXPIRY_QUARTERS]: '4',
+  [SETTING_KEYS.SHIPPING_ENABLED]: 'true',
+  [SETTING_KEYS.SHIPPING_FEE_CENTS]: '2500',
+  [SETTING_KEYS.SHIPPING_BOTTLES_PER_BOX]: '3',
+  // Texas taxes delivery charges on taxable items
+  [SETTING_KEYS.SHIPPING_TAXABLE]: 'true',
+  [SETTING_KEYS.SHIPPING_STATES]: 'TX',
 }
 
 export async function getSetting(key: string): Promise<string | null> {
@@ -48,6 +59,40 @@ export async function getLegacyMinBottles(): Promise<number> {
 export async function getLegacyExpiryQuarters(): Promise<number> {
   const n = Number(await getSetting(SETTING_KEYS.LEGACY_EXPIRY_QUARTERS))
   return Number.isFinite(n) && n >= 0 ? Math.round(n) : 4
+}
+
+export interface ShippingSettings {
+  enabled: boolean
+  /** Flat fee for each box, in cents */
+  feePerBoxCents: number
+  /** Bottles that fit in one box; the fee is charged per started box */
+  bottlesPerBox: number
+  /** Whether sales tax applies to the shipping fee */
+  taxable: boolean
+  /** Two-letter states we ship to */
+  states: string[]
+}
+
+export async function getShippingSettings(): Promise<ShippingSettings> {
+  const [enabled, fee, perBox, taxable, states] = await Promise.all([
+    getSetting(SETTING_KEYS.SHIPPING_ENABLED),
+    getSetting(SETTING_KEYS.SHIPPING_FEE_CENTS),
+    getSetting(SETTING_KEYS.SHIPPING_BOTTLES_PER_BOX),
+    getSetting(SETTING_KEYS.SHIPPING_TAXABLE),
+    getSetting(SETTING_KEYS.SHIPPING_STATES),
+  ])
+  const feeN = Number(fee)
+  const perBoxN = Number(perBox)
+  return {
+    enabled: enabled !== 'false',
+    feePerBoxCents: Number.isFinite(feeN) && feeN >= 0 ? Math.round(feeN) : 2500,
+    bottlesPerBox: Number.isFinite(perBoxN) && perBoxN >= 1 ? Math.round(perBoxN) : 3,
+    taxable: taxable !== 'false',
+    states: (states ?? 'TX')
+      .split(/[\s,]+/)
+      .map((s) => s.trim().toUpperCase())
+      .filter((s) => /^[A-Z]{2}$/.test(s)),
+  }
 }
 
 /** Address that receives the internal "new member joined" alert. */

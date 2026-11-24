@@ -72,6 +72,41 @@ export async function PATCH(req: Request) {
     await setSetting(SETTING_KEYS.LEGACY_EXPIRY_QUARTERS, String(n))
   }
 
+  if (typeof body.shippingEnabled !== 'undefined') {
+    await setSetting(SETTING_KEYS.SHIPPING_ENABLED, body.shippingEnabled === true || body.shippingEnabled === 'true' ? 'true' : 'false')
+  }
+
+  if (typeof body.shippingTaxable !== 'undefined') {
+    await setSetting(SETTING_KEYS.SHIPPING_TAXABLE, body.shippingTaxable === true || body.shippingTaxable === 'true' ? 'true' : 'false')
+  }
+
+  if (typeof body.shippingFee !== 'undefined') {
+    const dollars = Number(body.shippingFee)
+    if (!Number.isFinite(dollars) || dollars < 0 || dollars > 1000) {
+      return NextResponse.json({ error: 'Shipping fee must be a dollar amount between 0 and 1000' }, { status: 400 })
+    }
+    await setSetting(SETTING_KEYS.SHIPPING_FEE_CENTS, String(Math.round(dollars * 100)))
+  }
+
+  if (typeof body.shippingBottlesPerBox !== 'undefined') {
+    const n = Number(body.shippingBottlesPerBox)
+    if (!Number.isInteger(n) || n < 1 || n > 48) {
+      return NextResponse.json({ error: 'Bottles per box must be a whole number of 1 or more' }, { status: 400 })
+    }
+    await setSetting(SETTING_KEYS.SHIPPING_BOTTLES_PER_BOX, String(n))
+  }
+
+  if (typeof body.shippingStates !== 'undefined') {
+    const states = String(body.shippingStates)
+      .split(/[\s,]+/)
+      .map((x) => x.trim().toUpperCase())
+      .filter(Boolean)
+    if (states.some((x) => !/^[A-Z]{2}$/.test(x))) {
+      return NextResponse.json({ error: 'Ship-to states must be two-letter codes, like TX' }, { status: 400 })
+    }
+    await setSetting(SETTING_KEYS.SHIPPING_STATES, states.join(','))
+  }
+
   const settings = await getAllSettings()
   return NextResponse.json({ settings })
 }

@@ -16,8 +16,10 @@ import {
   getLegacyExpiryQuarters,
   getLegacyMinBottles,
   getSalesTaxPercent,
+  getShippingSettings,
 } from '@/lib/settings'
 import { orderTotalInCents } from '@/lib/pricing'
+import { fulfillmentData, recalcOrderTotal, shipToFromMember } from '@/services/shipping'
 import { format } from 'date-fns'
 
 /** Square customer group legacy members are moved into, so staff can see it at the register. */
@@ -407,13 +409,19 @@ export async function getLegacyOffer(memberId: string) {
     select: { id: true, status: true },
   })
 
-  const [terms, taxRatePercent] = await Promise.all([getLegacyTerms(), getSalesTaxPercent()])
+  const [terms, taxRatePercent, shipping] = await Promise.all([
+    getLegacyTerms(),
+    getSalesTaxPercent(),
+    getShippingSettings(),
+  ])
   return {
     eligible: true as const,
     quarter,
     orderId: existing && existing.status !== 'CANCELLED' ? existing.id : null,
     hasCard: !!member.squareCardId,
     taxRatePercent,
+    shipping,
+    defaultShipTo: shipToFromMember(member),
     ...terms,
   }
 }
@@ -421,7 +429,8 @@ export async function getLegacyOffer(memberId: string) {
 /** Create the legacy member's order for the open quarter from the bottles they picked. */
 export async function createLegacyOrder(
   memberId: string,
-  items: { productId: string; quantity: number }[]
+  items: { productId: string; quantity: number }[],
+  delivery: { fulfillment?: unknown; shipTo?: Record<string, unknown> | null } = {}
 ): Promise<{ orderId: string }> {
   const offer = await getLegacyOffer(memberId)
   if (!offer.eligible) {
@@ -448,10 +457,15 @@ export async function createLegacyOrder(
     throw new LegacyError(`Order must include at least ${offer.minBottles} bottle${offer.minBottles === 1 ? '' : 's'}.`)
   }
 
+  // Throws ShippingError (a LegacyError's sibling) for a bad address
+  const deliveryFields = fulfillmentData(delivery, offer.shipping)
+
   const orderItems = picked.map((i) => ({ ...i, unitPriceInCents: priceById.get(i.productId)! }))
   const subtotal = orderItems.reduce((sum, i) => sum + i.quantity * i.unitPriceInCents, 0)
   const data = {
     status: 'CUSTOMIZED',
+    ...deliveryFields,
+    // Placeholder until recalcOrderTotal() adds shipping below
     totalInCents: orderTotalInCents(subtotal, offer.discountPercent, offer.taxRatePercent),
     discountPercent: offer.discountPercent,
     minBottles: offer.minBottles,
@@ -468,14 +482,20 @@ export async function createLegacyOrder(
   if (cancelled) {
     await prisma.$transaction([
       prisma.orderItem.deleteMany({ where: { orderId: cancelled.id } }),
-      prisma.order.update({ where: { id: cancelled.id }, data: { ...data, items: { create: orderItems } } }),
+      prisma.order.update({
+        where: { id: cancelled.id },
+        // Reset delivery too: a reused slot shouldn't keep an old shipped/tracking state
+        data: { ...data, shippedAt: null, trackingNumber: null, items: { create: orderItems } },
+      }),
     ])
+    await recalcOrderTotal(cancelled.id)
     return { orderId: cancelled.id }
   }
 
   const order = await prisma.order.create({
     data: { memberId, quarterId: offer.quarter.id, ...data, items: { create: orderItems } },
   })
+  await recalcOrderTotal(order.id)
   return { orderId: order.id }
 }
 

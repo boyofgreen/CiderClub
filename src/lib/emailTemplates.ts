@@ -209,6 +209,67 @@ export const EMAIL_TEMPLATE_DEFS: EmailTemplateDef[] = [
     },
   },
   {
+    key: 'RECEIPT_SHIPPING',
+    label: 'Receipt — will be shipped',
+    description: 'Sent when an order the member asked to have shipped is billed.',
+    defaultSubject: 'Payment Received — Your {{quarterLabel}} Order is Getting Ready to Ship',
+    defaultBody: `
+    <h2>Payment Received — We're Packing Your Cider</h2>
+    <p>Hi {{firstName}},</p>
+    <p>We've charged the card on file for your <strong>{{quarterLabel}}</strong> cider order. We'll box it up and ship it to:</p>
+    <p><strong>{{shipTo}}</strong></p>
+    {{itemsTable}}
+    {{receiptLink}}
+    <p>We'll email you a tracking number as soon as it's on its way. Someone 21 or older will need to sign for the delivery.</p>
+    ${CTA('{{portalUrl}}', 'View My Order')}
+    <p>Cheers!</p>`,
+    vars: [
+      { name: 'firstName', description: "Member's first name" },
+      { name: 'quarterLabel', description: 'The quarter (e.g. 2026-Q3)' },
+      { name: 'shipTo', description: 'Shipping address' },
+      { name: 'itemsTable', description: 'Auto-generated order line items, shipping and total' },
+      { name: 'receiptLink', description: 'Auto-generated Square receipt link (hidden if none)' },
+      { name: 'portalUrl', description: 'Link to their order' },
+    ],
+    sample: {
+      firstName: 'Sam',
+      quarterLabel: '2026-Q3',
+      shipTo: 'Sam Smith, 123 Main St, San Antonio, TX 78205',
+      itemsTable: SAMPLE_ITEMS_TABLE(),
+      receiptLink: '<p><a href="#">View Square Receipt</a></p>',
+      portalUrl: 'https://club.hillcountryciderhouse.com/magic?t=demo',
+    },
+  },
+  {
+    key: 'ORDER_SHIPPED',
+    label: 'Order shipped',
+    description: 'Sent when you mark a shipping order as shipped.',
+    defaultSubject: 'Your {{quarterLabel}} Cider is On Its Way',
+    defaultBody: `
+    <h2>Your Cider is On Its Way!</h2>
+    <p>Hi {{firstName}},</p>
+    <p>Your <strong>{{quarterLabel}}</strong> order just left the cider house, headed to:</p>
+    <p><strong>{{shipTo}}</strong></p>
+    {{trackingLine}}
+    <p>Someone 21 or older will need to sign for it, so keep an eye out. If no one's home, the carrier will leave a notice to arrange another delivery.</p>
+    ${CTA('{{portalUrl}}', 'View My Order')}
+    <p>Enjoy every bottle. Cheers!</p>`,
+    vars: [
+      { name: 'firstName', description: "Member's first name" },
+      { name: 'quarterLabel', description: 'The quarter (e.g. 2026-Q3)' },
+      { name: 'shipTo', description: 'Shipping address' },
+      { name: 'trackingLine', description: 'Auto-generated tracking number line (hidden if none)' },
+      { name: 'portalUrl', description: 'Link to their order' },
+    ],
+    sample: {
+      firstName: 'Sam',
+      quarterLabel: '2026-Q3',
+      shipTo: 'Sam Smith, 123 Main St, San Antonio, TX 78205',
+      trackingLine: '<p>Tracking number: <strong>1Z999AA10123456784</strong></p>',
+      portalUrl: 'https://club.hillcountryciderhouse.com/magic?t=demo',
+    },
+  },
+  {
     key: 'PAYMENT_FAILED',
     label: 'Payment issue',
     description: 'Sent when a card declines or no card is on file at billing time.',
@@ -412,12 +473,14 @@ export function interpolate(tpl: string, vars: Record<string, string>): string {
 /** Build the receipt line-item table (injected as the {{itemsTable}} variable) */
 export function buildReceiptItemsTable(
   items: Array<{ name: string; quantity: number }>,
-  totalInCents: number
+  totalInCents: number,
+  shippingInCents = 0
 ): string {
-  const rows = items
-    .map((i) => `<tr><td>${i.name}</td><td>${i.quantity}</td></tr>`)
-    .join('')
-  const total = (totalInCents / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+  const money = (c: number) => (c / 100).toLocaleString('en-US', { style: 'currency', currency: 'USD' })
+  const rows =
+    items.map((i) => `<tr><td>${i.name}</td><td>${i.quantity}</td></tr>`).join('') +
+    (shippingInCents > 0 ? `<tr><td>Shipping</td><td>${money(shippingInCents)}</td></tr>` : '')
+  const total = money(totalInCents)
   return `<table class="order"><thead><tr><th>Item</th><th>Qty</th></tr></thead><tbody>${rows}</tbody><tr class="total-row"><td>Total Charged</td><td>${total}</td></tr></table>`
 }
 

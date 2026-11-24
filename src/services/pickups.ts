@@ -18,7 +18,8 @@ export async function sendPickupReminders(
   })
 
   const orders = await prisma.order.findMany({
-    where: { quarterId: event.quarterId, status: { notIn: ['CANCELLED'] } },
+    // Shipping orders aren't coming to a pickup
+    where: { quarterId: event.quarterId, status: { notIn: ['CANCELLED'] }, fulfillment: { not: 'SHIP' } },
     include: { member: true },
   })
 

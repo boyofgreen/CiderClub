@@ -3,6 +3,19 @@ import { prisma } from '@/lib/prisma'
 import { clubName } from '@/lib/resend'
 import type { Square } from 'square'
 
+/** Where and how much to ship, when the member chose shipping */
+export interface ShippingParam {
+  feeInCents: number
+  taxable: boolean
+  name: string
+  phone: string | null
+  address1: string
+  address2: string | null
+  city: string
+  state: string
+  zip: string
+}
+
 export interface LineItemParam {
   productName: string
   squareVariationId: string | null
@@ -20,10 +33,13 @@ interface ChargeParams {
   discountPercent: number
   taxRatePercent: number
   items: LineItemParam[]
+  shipping?: ShippingParam | null
 }
 
 interface ChargeResult {
   paymentId: string
+  /** Square's calculated total — what was actually charged */
+  totalInCents: number
   receiptUrl: string | null
   status: string
 }
@@ -36,6 +52,7 @@ interface PaymentLinkParams {
   discountPercent: number
   taxRatePercent: number
   items: LineItemParam[]
+  shipping?: ShippingParam | null
   redirectUrl?: string
 }
 
@@ -50,6 +67,7 @@ function buildOrderBody(params: {
   discountPercent: number
   taxRatePercent: number
   items: LineItemParam[]
+  shipping?: ShippingParam | null
 }): Square.Order {
   const lineItems = params.items.map((item) => ({
     // Link to catalog variation so Square shows the real product name on the receipt.
@@ -96,19 +114,52 @@ function buildOrderBody(params: {
     lineItems,
     discounts,
     taxes,
-    fulfillments: [
-      {
-        type: 'PICKUP' as const,
-        state: 'PROPOSED' as const,
-        pickupDetails: {
-          scheduleType: 'ASAP' as const,
-          note: `${params.quarterLabel} — ${clubName} quarterly pickup`,
-          recipient: {
-            displayName: params.memberName,
-            emailAddress: params.memberEmail,
+    // Shipping is a flat service charge: after the member discount (which only
+    // covers the cider) and, in Texas, subject to sales tax.
+    serviceCharges: params.shipping
+      ? [
+          {
+            name: 'Shipping',
+            amountMoney: { amount: BigInt(params.shipping.feeInCents), currency: 'USD' as const },
+            calculationPhase: 'SUBTOTAL_PHASE' as const,
+            taxable: params.shipping.taxable,
           },
-        },
-      },
+        ]
+      : [],
+    fulfillments: [
+      params.shipping
+        ? {
+            type: 'SHIPMENT' as const,
+            state: 'PROPOSED' as const,
+            shipmentDetails: {
+              shippingNote: `${params.quarterLabel} — ${clubName} quarterly order (adult signature required)`,
+              recipient: {
+                displayName: params.shipping.name,
+                emailAddress: params.memberEmail,
+                ...(params.shipping.phone ? { phoneNumber: params.shipping.phone } : {}),
+                address: {
+                  addressLine1: params.shipping.address1,
+                  ...(params.shipping.address2 ? { addressLine2: params.shipping.address2 } : {}),
+                  locality: params.shipping.city,
+                  administrativeDistrictLevel1: params.shipping.state,
+                  postalCode: params.shipping.zip,
+                  country: 'US' as const,
+                },
+              },
+            },
+          }
+        : {
+            type: 'PICKUP' as const,
+            state: 'PROPOSED' as const,
+            pickupDetails: {
+              scheduleType: 'ASAP' as const,
+              note: `${params.quarterLabel} — ${clubName} quarterly pickup`,
+              recipient: {
+                displayName: params.memberName,
+                emailAddress: params.memberEmail,
+              },
+            },
+          },
     ],
   }
 }
@@ -186,6 +237,7 @@ async function chargeAttempt(
       discountPercent: params.discountPercent,
       taxRatePercent: params.taxRatePercent,
       items: params.items,
+      shipping: params.shipping,
     }),
   })
 
@@ -224,7 +276,12 @@ async function chargeAttempt(
     },
   })
 
-  return { paymentId: payment.id, receiptUrl: payment.receiptUrl ?? null, status: payment.status ?? 'UNKNOWN' }
+  return {
+    paymentId: payment.id,
+    totalInCents: squareOrderTotal,
+    receiptUrl: payment.receiptUrl ?? null,
+    status: payment.status ?? 'UNKNOWN',
+  }
 }
 
 /** Generate a Square payment link backed by a proper itemized order */
@@ -252,6 +309,7 @@ export async function createPaymentLink(
       discountPercent: params.discountPercent,
       taxRatePercent: params.taxRatePercent,
       items: params.items,
+      shipping: params.shipping,
     }),
     checkoutOptions: {
       redirectUrl: params.redirectUrl,

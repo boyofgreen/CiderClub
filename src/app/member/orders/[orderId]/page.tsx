@@ -9,7 +9,8 @@ import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Alert } from '@/components/ui/Alert'
 import { Spinner } from '@/components/ui/Spinner'
-import { Beer, ArrowLeft, Plus, Minus, Save, CheckCircle, X } from 'lucide-react'
+import { Beer, ArrowLeft, Plus, Minus, Save, CheckCircle, X, Truck } from 'lucide-react'
+import { DeliveryPicker, shippingFee, type ShipTo, type ShippingTerms } from './DeliveryPicker'
 
 type Product = { id: string; name: string; style: string | null; description: string | null; imageUrl: string | null; priceInCents: number | null }
 type OrderItem = { productId: string; quantity: number; product: Product }
@@ -25,13 +26,31 @@ type Order = {
   quarter: { id: string; label: string; name: string | null; status: string; endsAt: string } | null
   items: OrderItem[]
   pickupEvent: { title: string; startsAt: string; location: string | null } | null
-  member: { plan: { packsPerOrder: number } }
-}
+  member: { plan: { packsPerOrder: number; discountPercent?: number } }
+  fulfillment?: string
+  shippingInCents?: number
+  shippedAt?: string | null
+  trackingNumber?: string | null
+} & Partial<Record<keyof ShipTo, string | null>>
 type QuarterProduct = { product: Product; isDefault: boolean }
 
 // "/member/orders/legacy" is a legacy member building this quarter's order.
 // Nothing exists in the database until they save.
 const DRAFT_ID = 'legacy'
+
+const EMPTY_SHIP_TO: ShipTo = {
+  shipName: '', shipPhone: '', shipAddress1: '', shipAddress2: '', shipCity: '', shipState: '', shipZip: '',
+}
+
+/** The order's saved address if it has one, otherwise the member's profile address. */
+function initialShipTo(order: Partial<Record<keyof ShipTo, string | null>>, fallback?: ShipTo): ShipTo {
+  if (order.shipAddress1) {
+    return Object.fromEntries(
+      Object.keys(EMPTY_SHIP_TO).map((k) => [k, order[k as keyof ShipTo] ?? ''])
+    ) as ShipTo
+  }
+  return { ...EMPTY_SHIP_TO, ...fallback }
+}
 
 export default function OrderDetailPage() {
   const { orderId } = useParams<{ orderId: string }>()
@@ -49,6 +68,9 @@ export default function OrderDetailPage() {
   const [saving, setSaving] = useState(false)
   const [saved, setSaved] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [shippingTerms, setShippingTerms] = useState<ShippingTerms | null>(null)
+  const [fulfillment, setFulfillment] = useState<'PICKUP' | 'SHIP'>('PICKUP')
+  const [shipTo, setShipTo] = useState<ShipTo>(EMPTY_SHIP_TO)
 
   useEffect(() => {
     if (isDraft) {
@@ -68,6 +90,8 @@ export default function OrderDetailPage() {
             return
           }
           setTaxRatePercent(offer.taxRatePercent ?? 0)
+          setShippingTerms(offer.shipping ?? null)
+          setShipTo(initialShipTo({}, offer.defaultShipTo))
           setNeedsCard(!offer.hasCard)
           setQuarterProducts(offer.quarter.products ?? [])
           setOrder({
@@ -97,6 +121,9 @@ export default function OrderDetailPage() {
       .then((data) => {
         setOrder(data.order)
         setTaxRatePercent(data.taxRatePercent ?? 0)
+        setShippingTerms(data.shipping ?? null)
+        setFulfillment(data.order.fulfillment === 'SHIP' ? 'SHIP' : 'PICKUP')
+        setShipTo(initialShipTo(data.order, data.defaultShipTo))
         const sel: Record<string, number> = {}
         data.order.items.forEach((i: OrderItem) => { sel[i.productId] = i.quantity })
         setSelections(sel)
@@ -132,14 +159,20 @@ export default function OrderDetailPage() {
     (isDraft || ['PENDING_CUSTOMIZATION', 'CUSTOMIZED'].includes(order.status)) &&
     order.quarter?.status === 'OPEN'
 
-  // Running total for legacy orders, which are priced per bottle
-  const discountPercent = order.discountPercent ?? 0
+  // Running total: bottles → discount → shipping → tax (same order as billing)
+  const discountPercent = order.discountPercent ?? order.member.plan.discountPercent ?? 0
   const subtotal = quarterProducts.reduce(
     (sum, { product }) => sum + (selections[product.id] ?? 0) * (product.priceInCents ?? 2100),
     0
   )
   const discountAmount = subtotal - Math.round(subtotal * (1 - discountPercent / 100))
-  const taxAmount = Math.round((subtotal - discountAmount) * (taxRatePercent / 100))
+  // Offer shipping if it's on, or keep showing it on an order that already ships
+  const canShip = !!shippingTerms && (shippingTerms.enabled || order.fulfillment === 'SHIP')
+  const shippingAmount =
+    fulfillment === 'SHIP' && shippingTerms ? shippingFee(totalSelected, shippingTerms) : 0
+  const taxableAmount = subtotal - discountAmount + (shippingTerms?.taxable ? shippingAmount : 0)
+  const taxAmount = Math.round(taxableAmount * (taxRatePercent / 100))
+  const delivery = canShip ? { fulfillment, shipTo } : {}
 
   // Split products into in-box vs available-to-add
   const inBox = quarterProducts.filter(({ product }) => (selections[product.id] ?? 0) > 0)
@@ -168,7 +201,7 @@ export default function OrderDetailPage() {
       const res = await fetch('/api/members/me/legacy-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ items }),
+        body: JSON.stringify({ items, ...delivery }),
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
@@ -183,7 +216,7 @@ export default function OrderDetailPage() {
     const res = await fetch(`/api/orders/${orderId}/items`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, ...delivery }),
     })
 
     if (res.ok) {
@@ -239,7 +272,12 @@ export default function OrderDetailPage() {
       {error && <Alert type="error" message={error} />}
       {saved && <Alert type="success" message="Your order has been saved! We'll send a confirmation shortly." />}
       {placed && !saved && (
-        <Alert type="success" message="Your order is in! You can change it any time before the deadline. We'll email you when it's ready to pick up." />
+        <Alert
+          type="success"
+          message={`Your order is in! You can change it any time before the deadline. ${
+            order.fulfillment === 'SHIP' ? "We'll email you a tracking number when it ships." : "We'll email you when it's ready to pick up."
+          }`}
+        />
       )}
       {isDraft && needsCard && (
         <div className="border border-yellow-200 bg-yellow-50 p-4 text-sm text-yellow-800">
@@ -389,7 +427,18 @@ export default function OrderDetailPage() {
             </div>
           )}
 
-          {isLegacy && totalSelected > 0 && (
+          {canShip && shippingTerms && (
+            <DeliveryPicker
+              fulfillment={fulfillment}
+              onFulfillment={setFulfillment}
+              shipTo={shipTo}
+              onShipTo={setShipTo}
+              terms={shippingTerms}
+              bottles={totalSelected}
+            />
+          )}
+
+          {totalSelected > 0 && (
             <div className="mt-6 space-y-1 text-sm" style={{ borderTop: '1px solid var(--rule)', paddingTop: 16 }}>
               <div className="flex justify-between text-stone-600">
                 <span>{totalSelected} bottle{totalSelected === 1 ? '' : 's'}</span>
@@ -397,8 +446,14 @@ export default function OrderDetailPage() {
               </div>
               {discountAmount > 0 && (
                 <div className="flex justify-between text-green-700">
-                  <span>Legacy member discount ({discountPercent}%)</span>
+                  <span>{isLegacy ? 'Legacy member' : 'Member'} discount ({discountPercent}%)</span>
                   <span>−{formatCents(discountAmount)}</span>
+                </div>
+              )}
+              {shippingAmount > 0 && (
+                <div className="flex justify-between text-stone-600">
+                  <span>Shipping</span>
+                  <span>{formatCents(shippingAmount)}</span>
                 </div>
               )}
               {taxAmount > 0 && (
@@ -409,7 +464,7 @@ export default function OrderDetailPage() {
               )}
               <div className="flex justify-between font-semibold text-stone-900 pt-1">
                 <span>Total</span>
-                <span>{formatCents(subtotal - discountAmount + taxAmount)}</span>
+                <span>{formatCents(subtotal - discountAmount + shippingAmount + taxAmount)}</span>
               </div>
             </div>
           )}
@@ -431,7 +486,9 @@ export default function OrderDetailPage() {
           {isLegacy && (
             <p className="mt-3 text-xs text-center text-stone-500">
               {isDraft
-                ? "We'll charge your card on file when the club's orders are billed, and email you when it's ready to pick up."
+                ? `We'll charge your card on file when the club's orders are billed, and email you when it's ${
+                    fulfillment === 'SHIP' ? 'on its way' : 'ready to pick up'
+                  }.`
                 : 'Your card on file is charged when the club’s orders are billed.'}
             </p>
           )}
@@ -479,14 +536,36 @@ export default function OrderDetailPage() {
 
           {order.status === 'LOCKED' && (
             <p className="mt-4 text-sm text-stone-500">
-              The customization window has closed. Your order is locked in and ready for pickup.
+              The customization window has closed. Your order is locked in
+              {order.fulfillment === 'SHIP' ? ' and will ship once it’s billed.' : ' and ready for pickup.'}
             </p>
           )}
         </Card>
       )}
 
+      {/* Shipping info (once the order can't be edited) */}
+      {!canCustomize && order.fulfillment === 'SHIP' && (
+        <Card>
+          <h2 className="flex items-center gap-2" style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 600, fontSize: 18, color: 'var(--ink)', marginBottom: 12 }}>
+            <Truck className="h-5 w-5 text-terracotta" /> {order.shippedAt ? 'Shipped' : 'Shipping to'}
+          </h2>
+          <div className="text-sm text-stone-600 space-y-0.5">
+            <p className="font-medium text-stone-800">{order.shipName}</p>
+            <p>{order.shipAddress1}{order.shipAddress2 ? `, ${order.shipAddress2}` : ''}</p>
+            <p>{order.shipCity}, {order.shipState} {order.shipZip}</p>
+            {!!order.shippingInCents && <p className="pt-1 text-stone-500">Shipping: {formatCents(order.shippingInCents)}</p>}
+            {order.shippedAt && (
+              <p className="pt-2 text-green-700">
+                Shipped {formatDate(order.shippedAt)}
+                {order.trackingNumber ? <> · Tracking <strong>{order.trackingNumber}</strong></> : null}
+              </p>
+            )}
+          </div>
+        </Card>
+      )}
+
       {/* Pickup info */}
-      {order.pickupEvent && (
+      {order.pickupEvent && order.fulfillment !== 'SHIP' && (
         <Card>
           <h2 style={{ fontFamily: 'var(--font-serif)', fontStyle: 'italic', fontWeight: 600, fontSize: 18, color: 'var(--ink)', marginBottom: 12 }}>
             Pickup Details

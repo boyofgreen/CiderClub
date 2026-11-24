@@ -17,6 +17,11 @@ export default function AdminSettingsPage() {
   const [legacyDiscountPercent, setLegacyDiscountPercent] = useState('')
   const [legacyMinBottles, setLegacyMinBottles] = useState('')
   const [legacyExpiryQuarters, setLegacyExpiryQuarters] = useState('')
+  const [shippingEnabled, setShippingEnabled] = useState(true)
+  const [shippingFee, setShippingFee] = useState('')
+  const [shippingBottlesPerBox, setShippingBottlesPerBox] = useState('')
+  const [shippingTaxable, setShippingTaxable] = useState(true)
+  const [shippingStates, setShippingStates] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [success, setSuccess] = useState<string | null>(null)
 
@@ -30,6 +35,11 @@ export default function AdminSettingsPage() {
         setLegacyDiscountPercent(d.settings?.legacyDiscountPercent ?? '10')
         setLegacyMinBottles(d.settings?.legacyMinBottles ?? '3')
         setLegacyExpiryQuarters(d.settings?.legacyExpiryQuarters ?? '4')
+        setShippingEnabled((d.settings?.shippingEnabled ?? 'true') !== 'false')
+        setShippingFee(String(Number(d.settings?.shippingFeeCents ?? 2500) / 100))
+        setShippingBottlesPerBox(d.settings?.shippingBottlesPerBox ?? '3')
+        setShippingTaxable((d.settings?.shippingTaxable ?? 'true') !== 'false')
+        setShippingStates(d.settings?.shippingStates ?? 'TX')
       })
       .finally(() => setLoading(false))
   }, [])
@@ -41,7 +51,8 @@ export default function AdminSettingsPage() {
     const res = await fetch('/api/settings', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ salesTaxPercent, adminNotifyEmail, welcomeFollowupFrom, legacyDiscountPercent, legacyMinBottles, legacyExpiryQuarters }),
+      body: JSON.stringify({ salesTaxPercent, adminNotifyEmail, welcomeFollowupFrom, legacyDiscountPercent, legacyMinBottles, legacyExpiryQuarters,
+        shippingEnabled, shippingFee, shippingBottlesPerBox, shippingTaxable, shippingStates }),
     })
     const data = await res.json().catch(() => ({}))
     if (res.ok) {
@@ -123,6 +134,61 @@ export default function AdminSettingsPage() {
               onChange={(e) => setLegacyExpiryQuarters(e.target.value)}
               hint="After this many passed-up offers, the next invitation is a final notice. If they skip that too, the membership is cancelled when the following quarter's orders are generated. 0 = never expire."
             />
+          </div>
+
+          <h2 className="font-semibold text-stone-900 mb-1 mt-8">Shipping</h2>
+          <p className="text-sm text-stone-500 mb-4">
+            Members can choose to have their quarterly order shipped while they pick their ciders.
+            The fee is charged per box: with 3 bottles per box, 1&ndash;3 bottles is one box and 4&ndash;6 is two.
+          </p>
+          <div className="space-y-4">
+            <label className="flex items-center gap-2 text-sm text-stone-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={shippingEnabled}
+                onChange={(e) => setShippingEnabled(e.target.checked)}
+                className="accent-terracotta"
+              />
+              Offer shipping to members
+            </label>
+            <div className="grid gap-4 sm:grid-cols-3">
+              <Input
+                label="Fee per box ($)"
+                type="number"
+                step="0.01"
+                min="0"
+                value={shippingFee}
+                onChange={(e) => setShippingFee(e.target.value)}
+              />
+              <Input
+                label="Bottles per box"
+                type="number"
+                step="1"
+                min="1"
+                value={shippingBottlesPerBox}
+                onChange={(e) => setShippingBottlesPerBox(e.target.value)}
+              />
+              <Input
+                label="Ship to states"
+                value={shippingStates}
+                onChange={(e) => setShippingStates(e.target.value)}
+                placeholder="TX"
+                hint="Two-letter codes, comma separated."
+              />
+            </div>
+            <label className="flex items-center gap-2 text-sm text-stone-700 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={shippingTaxable}
+                onChange={(e) => setShippingTaxable(e.target.checked)}
+                className="accent-terracotta"
+              />
+              Charge sales tax on shipping (Texas taxes delivery charges on taxable items)
+            </label>
+            <p className="text-xs text-stone-400">
+              Fee changes apply to orders the next time they&apos;re saved; orders already set to ship keep
+              their fee until then.
+            </p>
           </div>
 
           <h2 className="font-semibold text-stone-900 mb-1 mt-8">Notifications</h2>

@@ -27,7 +27,7 @@ export default async function QuarterDetailPage({
         orderBy: { sortOrder: 'asc' },
       },
       orders: {
-        include: { member: true },
+        include: { member: true, items: { select: { quantity: true } } },
         orderBy: { createdAt: 'desc' },
       },
       pickupEvents: { orderBy: { startsAt: 'asc' } },
@@ -64,6 +64,7 @@ export default async function QuarterDetailPage({
   }
   const ledger = [...ledgerMap.values()].sort((a, b) => b.total - a.total)
   const ledgerTotalBottles = ledger.reduce((s, r) => s + r.total, 0)
+  const toShip = quarter.orders.filter((o) => o.fulfillment === 'SHIP' && o.status !== 'CANCELLED')
   const pendingCount = quarter.orders.filter((o) => o.status === 'PENDING_CUSTOMIZATION').length
 
   const orderStats = {
@@ -228,6 +229,51 @@ export default async function QuarterDetailPage({
         )}
       </div>
 
+      {/* Shipping list */}
+      {toShip.length > 0 && (
+        <div className="border bg-cream-paper shadow-sm overflow-x-auto" style={{ borderColor: 'var(--rule)' }}>
+          <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
+            <h2 className="font-semibold text-stone-900">
+              To Ship ({toShip.filter((o) => !o.shippedAt).length} of {toShip.length} left)
+            </h2>
+            <span className="text-xs text-stone-500">Mark each order shipped from its order page.</span>
+          </div>
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-stone-100 text-left text-xs uppercase tracking-wide text-stone-500">
+                <th className="px-6 py-2 font-semibold">Member</th>
+                <th className="px-4 py-2 font-semibold">Ship to</th>
+                <th className="px-4 py-2 font-semibold text-right">Bottles</th>
+                <th className="px-4 py-2 font-semibold">Status</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-stone-100">
+              {toShip.map((o) => (
+                <tr key={o.id}>
+                  <td className="px-6 py-3">
+                    <Link href={`/admin/orders/${o.id}`} className="font-medium text-stone-900 hover:text-terracotta">
+                      {o.member.firstName} {o.member.lastName}
+                    </Link>
+                  </td>
+                  <td className="px-4 py-3 text-stone-600">
+                    {o.shipName}, {o.shipAddress1}{o.shipAddress2 ? ` ${o.shipAddress2}` : ''}, {o.shipCity}, {o.shipState} {o.shipZip}
+                    {o.shipPhone ? ` · ${o.shipPhone}` : ''}
+                  </td>
+                  <td className="px-4 py-3 text-right text-stone-700">{o.items.reduce((s, i) => s + i.quantity, 0)}</td>
+                  <td className="px-4 py-3">
+                    {o.shippedAt ? (
+                      <span className="text-green-700">Shipped{o.trackingNumber ? ` · ${o.trackingNumber}` : ''}</span>
+                    ) : (
+                      <StatusBadge status={o.status} />
+                    )}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
       {/* Orders table */}
       <div className="border bg-cream-paper shadow-sm overflow-hidden" style={{ borderColor: 'var(--rule)' }}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-stone-100">
@@ -270,6 +316,9 @@ export default async function QuarterDetailPage({
                   {order.member.firstName} {order.member.lastName}
                   {order.minBottles != null && (
                     <span className="ml-2 text-xs font-normal text-amber-700">Legacy opt-in</span>
+                  )}
+                  {order.fulfillment === 'SHIP' && (
+                    <span className="ml-2 text-xs font-normal text-blue-700">Ships</span>
                   )}
                 </span>
                 <div className="flex items-center gap-3">

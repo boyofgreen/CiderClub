@@ -1,11 +1,13 @@
 import { NextResponse } from 'next/server'
 import { getAppSession } from '@/lib/session'
 import { prisma } from '@/lib/prisma'
-import { getSalesTaxPercent } from '@/lib/settings'
-import { orderDiscountPercent, orderMinBottles, orderTotalInCents } from '@/lib/pricing'
+import { getShippingSettings } from '@/lib/settings'
+import { orderMinBottles } from '@/lib/pricing'
+import { fulfillmentData, recalcOrderTotal, ShippingError } from '@/services/shipping'
 
 // PUT /api/orders/[orderId]/items
 // Replaces all order items. Body: { items: { productId: string; quantity: number }[] }
+// Optionally also sets delivery: { fulfillment: 'PICKUP' | 'SHIP', shipTo: {...} }
 export async function PUT(
   req: Request,
   { params }: { params: { orderId: string } }
@@ -29,7 +31,23 @@ export async function PUT(
     return NextResponse.json({ error: 'Order cannot be modified in its current state' }, { status: 409 })
   }
 
-  const { items } = await req.json() as { items: { productId: string; quantity: number }[] }
+  const body = await req.json() as {
+    items: { productId: string; quantity: number }[]
+    fulfillment?: string
+    shipTo?: Record<string, unknown>
+  }
+  const { items } = body
+
+  // Validate the delivery choice up front so a bad address doesn't half-save the order
+  let delivery: Awaited<ReturnType<typeof fulfillmentData>> | undefined
+  if (body.fulfillment !== undefined) {
+    try {
+      delivery = fulfillmentData(body, await getShippingSettings())
+    } catch (err) {
+      if (err instanceof ShippingError) return NextResponse.json({ error: err.message }, { status: err.status })
+      throw err
+    }
+  }
 
   const total = items.reduce((sum, i) => sum + i.quantity, 0)
   const packsPerOrder = orderMinBottles(order, order.member.plan)
@@ -80,25 +98,21 @@ export async function PUT(
       unitPriceInCents: priceMap.get(i.productId) ?? 2100,
     }))
 
-  const subtotal = itemsWithPrice.reduce((sum, i) => sum + i.quantity * i.unitPriceInCents, 0)
-  const totalInCents = orderTotalInCents(
-    subtotal,
-    orderDiscountPercent(order, order.member.plan),
-    await getSalesTaxPercent()
-  )
-
   await prisma.$transaction([
     prisma.orderItem.deleteMany({ where: { orderId: params.orderId } }),
     prisma.orderItem.createMany({ data: itemsWithPrice }),
     prisma.order.update({
       where: { id: params.orderId },
       data: {
-        totalInCents,
+        ...(delivery ?? {}),
         lastCustomizedAt: new Date(),
         ...(isAdmin ? {} : { status: 'CUSTOMIZED' }),
       },
     }),
   ])
+
+  // Shipping is charged per box, so the fee follows the bottle count
+  await recalcOrderTotal(params.orderId)
 
   const updated = await prisma.order.findUnique({
     where: { id: params.orderId },

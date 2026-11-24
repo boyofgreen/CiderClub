@@ -102,6 +102,9 @@ export default async function AdminOrdersPage({
                       Customized
                     </span>
                   )}
+                  {order.fulfillment === 'SHIP' && (
+                    <span className="text-xs font-medium text-amber-700">{order.shippedAt ? 'Shipped' : 'Ships'}</span>
+                  )}
                   <StatusBadge status={order.status} />
                   <ChevronRight className="h-4 w-4 text-stone-400" />
                 </div>

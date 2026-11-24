@@ -21,7 +21,24 @@ export function orderMinBottles(order: OrderTerms, plan: PlanTerms): number {
   return order.minBottles ?? plan?.packsPerOrder ?? 0
 }
 
-export function orderTotalInCents(subtotalInCents: number, discountPercent: number, taxRatePercent: number): number {
+/**
+ * Order total: subtotal → discount → shipping → sales tax. The discount never
+ * applies to shipping; tax applies to it only when shippingTaxable.
+ */
+export function orderTotalInCents(
+  subtotalInCents: number,
+  discountPercent: number,
+  taxRatePercent: number,
+  shipping: { feeInCents: number; taxable: boolean } = { feeInCents: 0, taxable: false }
+): number {
   const afterDiscount = Math.round(subtotalInCents * (1 - clampPercent(discountPercent) / 100))
-  return Math.round(afterDiscount * (1 + taxRatePercent / 100))
+  const taxableBase = afterDiscount + (shipping.taxable ? shipping.feeInCents : 0)
+  const untaxed = shipping.taxable ? 0 : shipping.feeInCents
+  return Math.round(taxableBase * (1 + taxRatePercent / 100)) + untaxed
+}
+
+/** Flat fee per started box: 1–3 bottles is one box, 4–6 is two, and so on. */
+export function shippingFeeInCents(bottles: number, feePerBoxCents: number, bottlesPerBox: number): number {
+  if (bottles <= 0) return 0
+  return Math.ceil(bottles / Math.max(1, bottlesPerBox)) * feePerBoxCents
 }

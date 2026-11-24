@@ -5,8 +5,10 @@ import { sendEmail } from '@/services/email/sender'
 import { renderEmail, buildReceiptItemsTable } from '@/lib/emailTemplates'
 import { appUrl } from '@/lib/resend'
 import { getMemberPortalToken } from '@/services/orders'
-import { getSalesTaxPercent } from '@/lib/settings'
+import { getSalesTaxPercent, getShippingSettings } from '@/lib/settings'
 import { orderDiscountPercent } from '@/lib/pricing'
+import { formatShipTo } from '@/services/shipping'
+import type { ShippingParam } from '@/services/square/payments'
 
 type BillingMethod = 'CARD_ON_FILE' | 'PAYMENT_LINK' | 'IN_PERSON'
 
@@ -54,7 +56,8 @@ export async function billOrder(
     // "already picked up" receipt.
     const itemsTable = buildReceiptItemsTable(
       order.items.map((i) => ({ name: i.product.name, quantity: i.quantity })),
-      order.totalInCents
+      order.totalInCents,
+      order.shippingInCents
     )
     const receipt = await renderEmail('RECEIPT_PICKEDUP', {
       firstName: member.firstName,
@@ -108,6 +111,7 @@ export async function billOrder(
         quarterLabel: order.quarter?.label ?? 'Ad Hoc',
         discountPercent: orderDiscountPercent(order, member.plan),
         taxRatePercent,
+        shipping: await shippingParamFor(order),
         items: order.items.map((i) => ({
           productName: i.product.name,
           squareVariationId: i.product.squareVariationId,
@@ -129,18 +133,21 @@ export async function billOrder(
       const token = await getMemberPortalToken(member.id)
       const itemsTable = buildReceiptItemsTable(
         order.items.map((i) => ({ name: i.product.name, quantity: i.quantity })),
-        order.totalInCents
+        result.totalInCents,
+        order.shippingInCents
       )
       const receiptLink = result.receiptUrl
         ? `<p style="text-align:center"><a href="${result.receiptUrl}">View Square Receipt</a></p>`
         : ''
+      const isShipping = order.fulfillment === 'SHIP'
       const receipt = await renderEmail(
-        alreadyPickedUp ? 'RECEIPT_PICKEDUP' : 'RECEIPT_PICKUP_NEEDED',
+        isShipping ? 'RECEIPT_SHIPPING' : alreadyPickedUp ? 'RECEIPT_PICKEDUP' : 'RECEIPT_PICKUP_NEEDED',
         {
           firstName: member.firstName,
           quarterLabel: order.quarter?.label ?? 'Ad Hoc',
           itemsTable,
           receiptLink,
+          shipTo: formatShipTo(order),
           portalUrl: `${appUrl}/magic?t=${token}&next=/member/orders/${orderId}`,
         }
       )
@@ -150,7 +157,7 @@ export async function billOrder(
         html: receipt.html,
         type: 'RECEIPT',
         memberId: member.id,
-        metadata: { pickedUp: alreadyPickedUp },
+        metadata: { pickedUp: alreadyPickedUp, shipping: isShipping },
       })
 
       return { orderId, success: true, method, paymentId: result.paymentId }
@@ -195,6 +202,7 @@ export async function billOrder(
         quarterLabel: order.quarter?.label ?? 'Ad Hoc',
         discountPercent: orderDiscountPercent(order, member.plan),
         taxRatePercent,
+        shipping: await shippingParamFor(order),
         items: order.items.map((i) => ({
           productName: i.product.name,
           squareVariationId: i.product.squareVariationId,
@@ -212,6 +220,62 @@ export async function billOrder(
 
   return { orderId, success: false, method, error: 'Unknown billing method' }
 }
+
+/** Shipping details for Square, or null for a pickup order. */
+async function shippingParamFor(order: {
+  fulfillment: string
+  shippingInCents: number
+  shipName: string | null
+  shipPhone: string | null
+  shipAddress1: string | null
+  shipAddress2: string | null
+  shipCity: string | null
+  shipState: string | null
+  shipZip: string | null
+}): Promise<ShippingParam | null> {
+  if (order.fulfillment !== 'SHIP' || order.shippingInCents <= 0) return null
+  const { taxable } = await getShippingSettings()
+  return {
+    feeInCents: order.shippingInCents,
+    taxable,
+    name: order.shipName ?? '',
+    phone: order.shipPhone,
+    address1: order.shipAddress1 ?? '',
+    address2: order.shipAddress2,
+    city: order.shipCity ?? '',
+    state: order.shipState ?? '',
+    zip: order.shipZip ?? '',
+  }
+}
+
+/** Tell the member their shipping order is on its way (with tracking, if we have it). */
+export async function sendShippedEmail(orderId: string): Promise<void> {
+  const order = await prisma.order.findUniqueOrThrow({
+    where: { id: orderId },
+    include: { member: true, quarter: true },
+  })
+  const token = await getMemberPortalToken(order.memberId)
+  const email = await renderEmail('ORDER_SHIPPED', {
+    firstName: order.member.firstName,
+    quarterLabel: order.quarter?.label ?? 'Ad Hoc',
+    shipTo: formatShipTo(order),
+    trackingLine: order.trackingNumber
+      ? `<p>Tracking number: <strong>${escapeHtml(order.trackingNumber)}</strong></p>`
+      : '',
+    portalUrl: `${appUrl}/magic?t=${token}&next=/member/orders/${orderId}`,
+  })
+  await sendEmail({
+    to: order.member.email,
+    subject: email.subject,
+    html: email.html,
+    type: 'ORDER_SHIPPED',
+    memberId: order.memberId,
+    metadata: { orderId, trackingNumber: order.trackingNumber },
+  })
+}
+
+const escapeHtml = (s: string) =>
+  s.replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]!)
 
 /** Bill all eligible orders for an entire quarter */
 export async function billQuarter(
